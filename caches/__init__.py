@@ -16,8 +16,13 @@ def get_redis_name(name):
     prefix = get_prefix()
     return prefix + '_' + name
 
+def redis_client():
+    redis_conf = get_config().get('redis')
+    return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', '127.0.0.1'),
+                       decode_responses=True)
 
-_redis = StrictRedis(host=get_config().get('host', '127.0.0.1'), decode_responses=True)
+
+_redis = redis_client()
 sms_url = get_redis_name('sms_url')
 session_info_recent_qs = get_redis_name('session_info_recent_qs')
 session_info_recommend_qs = get_redis_name('session_info_recommend_qs')
