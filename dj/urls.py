@@ -23,7 +23,6 @@ from mall.views import UserAddressViewSet, HotSearchViewSet, ResourceViewSet, \
     ShareQrcodeBackgroundViewSet, ExpressCompanyViewSet
 from mall.views import UserViewSet, ReceiptViewset
 # Routers provide an easy way of automatically determining the URL conf.
-from ajax_select import urls as ajax_select_urls
 from restframework_ext.views import page_not_found
 from mp.views import JsApiViewSet, MpApi, MpWebView, MpClientView
 from shopping_points.urls import router as shopping_points_router
