@@ -4,6 +4,7 @@ from django.shortcuts import render
 from home.views import ReturnNoDetailViewSet
 from renovation.models import OpenScreenMedia
 from renovation.serializers import OpenScreenMediaSerializer
+from rest_framework.response import Response
 
 
 class OpenScreenMediaSet(ReturnNoDetailViewSet):
@@ -14,4 +15,4 @@ class OpenScreenMediaSet(ReturnNoDetailViewSet):
 
     def list(self, request, *args, **kwargs):
         obj = self.queryset.first()
-        return self.serializer_class(obj, context={'request': request}).data
+        return Response(self.serializer_class(obj, context={'request': request}).data)
