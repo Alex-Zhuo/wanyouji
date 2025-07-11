@@ -1,0 +1,407 @@
+{% load i18n static simpletags %}
+{% if result_hidden_fields %}
+    <div class="hiddenfields">{# DIV for HTML validation #}
+        {% for item in result_hidden_fields %}{{ item }}{% endfor %}
+    </div>
+{% endif %}
+{#{% if results %}#}
+<div class="results" id="result_list">
+    <table>
+        <thead>
+        <tr>
+            {% for header in result_headers %}
+                <th scope="col" {{ header.class_attrib }}>
+                    {% if header.sortable %}
+                        {% if header.sort_priority > 0 %}
+                            <div class="sortoptions">
+                                <a class="sortremove" href="{{ header.url_remove }}"
+                                   title="{% trans "Remove from sorting" %}"></a>
+                                {% if num_sorted_fields > 1 %}<span class="sortpriority"
+                                                                    title="{% blocktrans with priority_number=header.sort_priority %}Sorting priority: {{ priority_number }}{% endblocktrans %}">{{ header.sort_priority }}</span>{% endif %}
+                                <a href="{{ header.url_toggle }}"
+                                   class="toggle {% if header.ascending %}ascending{% else %}descending{% endif %}"
+                                   title="{% trans "Toggle sorting" %}"></a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    <div class="text">{% if header.sortable %}
+                        <a href="{{ header.url_primary }}">{{ header.text|capfirst }}</a>{% else %}
+                        <span>{{ header.text|capfirst }}</span>{% endif %}</div>
+                    <div class="clear"></div>
+                </th>{% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for result in results %}
+            {% if result.form.non_field_errors %}
+                <tr>
+                    <td colspan="{{ result|length }}">{{ result.form.non_field_errors }}</td>
+                </tr>
+            {% endif %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+                {% for item in result %}
+                    {{ item }}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <!-- 弹窗复制场次功能 -->
+    <el-dialog title="复制场次" :visible.sync="dialogFormVisible">
+        <el-form :model="form">
+          <el-form-item label="演出开始时间" :label-width="formLabelWidth">
+            <el-time-select
+                style="width: 100%;"
+                v-model="form.start_at"
+                :picker-options="{
+                    start: '07:00',
+                    step: '00:15',
+                    end: '23:30'
+                }"
+                placeholder="选择时间">
+                </el-time-select>
+          </el-form-item>
+          <el-form-item label="演出结束时间" :label-width="formLabelWidth">
+            <el-time-select
+                v-model="form.end_at"
+                style="width: 100%;"
+                :picker-options="{
+                    start: '07:00',
+                    step: '00:15',
+                    end: '23:30'
+                }"
+                placeholder="选择时间">
+                </el-time-select>
+          </el-form-item>
+          <el-form-item :label="item.title" :label-width="formLabelWidth" v-for="(item, index) in form.levelStock" :key="index">
+            <el-input-number v-model="item.stock" :min="0"></el-input-number>
+          </el-form-item>
+          <el-form-item label="复制日期" :label-width="formLabelWidth">
+            <el-date-picker
+                v-model="form.date"
+                style="width: 100%;"
+                type="dates"
+                value-format="yyyy-MM-dd"
+                :picker-options="isDisabled"
+                placeholder="选择日期">
+                </el-date-picker>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">取 消</el-button>
+          <el-button type="primary" @click="confirmCopy">确 定</el-button>
+        </div>
+    </el-dialog>
+</div>
+{#{% endif %}#}
+<script type="text/javascript">
+    const resultListApp = new Vue({
+        el: '#result_list',
+        data: {
+            formLabelWidth: '120px',
+            form: {
+                start_at: [],
+                end_at: '',
+                date: '',
+                levelStock: [],
+                alt: ''
+            },
+            has_seat: 1,
+            selectedCount: 0,
+            maxSelectionCount: 10, // 设置最大选择数为 5
+            isDisabled: {
+                disabledDate(time){
+                    let myDate = new Date().getTime() - 24*60*60*1000
+                    return time.getTime() < myDate
+                },
+            },
+            dialogFormVisible: false,
+        },
+        mounted () {
+            let that = this
+            if(window.location.href.indexOf('/ticket/showproject/')>=0){
+                $('button[data-name="set_on"]').hide()
+                $('button[data-name="set_off"]').hide()
+                this.cancel()
+                //上架
+                $('.item_set_on').click(function(event){
+                    that.openPopup($('button[data-name="set_on"]'), event)
+                })
+                 //下架
+                 $('.item_set_off').click(function(event){
+                    that.openPopup($('button[data-name="set_off"]'), event)
+                })
+            }
+
+            if(window.location.href.indexOf('/ticket/ticketorder/')>=0){
+                $('button[data-name="cancel_lock_seats"]').hide()
+                this.cancel()
+                 //取消出票
+                 $('.item_cancel_lock_seats').click(function(event){
+                    that.openPopup($('button[data-name="cancel_lock_seats"]'), event)
+                })
+            }
+
+            if(window.location.href.indexOf('/ticket/sessioninfo/')>=0){
+                $('button[data-name="set_on_session"]').hide()
+                $('button[data-name="set_off_session"]').hide()
+                $('button[data-name="push_to_tiktok"]').hide()
+                $('button[data-name="refresh_to_tiktok"]').hide()
+                $('button[data-name="change_end_at"]').hide()
+                $('button[data-name="copy_session"]').hide()
+                $('button[data-name="dy_set_on_session"]').hide()
+                $('button[data-name="dy_set_off_session"]').hide()
+                $('button[data-name="change_sale_time"]').hide()
+                $('button[data-name="pull_maizuo"]').hide()
+                $('button[data-name="ks_update"]').hide()
+                $('button[data-name="ks_set_on_session"]').hide()
+                $('button[data-name="ks_set_off_session"]').hide()
+
+                // 小红书
+                $('button[data-name="xhs_set_on_session"]').hide()
+                $('button[data-name="xhs_set_off_session"]').hide()
+                $('button[data-name="xhs_update"]').hide()
+
+                this.cancel()
+                //上架
+                $('.item_set_on_session').click(function(event){
+                    that.openPopup($('button[data-name="set_on_session"]'), event)
+                })
+                 //下架
+                 $('.item_set_off_session').click(function(event){
+                    that.openPopup($('button[data-name="set_off_session"]'), event)
+                })
+
+                //推送商品到抖音
+                $('.item_push_to_tiktok').click(function(event){
+                    that.openPopup($('button[data-name="push_to_tiktok"]'), event)
+                })
+
+                //刷新抖音商品
+                $('.item_refresh_to_tiktok').click(function(event){
+                    that.openPopup($('button[data-name="refresh_to_tiktok"]'), event)
+                })
+
+                 //推迟延后
+                 $('.item_change_end_at').click(function(event){
+                    that.openPopup($('button[data-name="change_end_at"]'), event)
+                })
+
+                let that = this
+                 //复制场次
+                 $('.item_copy_session').click(function(event){
+                    that.form.alt = $(event.target).attr('alt')
+                    let start_at = $(event.target).attr('start_at')
+                    let end_at = $(event.target).attr('end_at')
+                    that.has_seat = $(event.target).attr('has_seat')
+                    that.form.start_at = start_at.split('T')[1]
+                    that.form.end_at = end_at.split('T')[1]
+                    that.form.levelStock = []
+                    that.form.date = []
+                    if(that.has_seat == 2){
+                        that.getLevel(that.form.alt)
+                        return
+                    }
+                    that.openPopup($('button[data-name="copy_session"]'), event)
+                })
+                
+                //抖音上架
+                $('.item_dy_set_on_session').click(function (event) {
+                    that.openPopup($('button[data-name="dy_set_on_session"]'), event)
+                })
+                //抖音下架
+                $('.item_dy_set_off_session').click(function (event) {
+                    that.openPopup($('button[data-name="dy_set_off_session"]'), event)
+                })
+
+                //修改抖音开售时间
+                $('.item_change_sale_time').click(function (event) {
+                    that.openPopup($('button[data-name="change_sale_time"]'), event)
+                })
+                
+                 //同步麦座
+                 $('.item_pull_maizuo').click(function (event) {
+                    that.openPopup($('button[data-name="pull_maizuo"]'), event)
+                })
+
+                //快手推送
+                $('.item_ks_update').click(function (event) {
+                    that.openPopup($('button[data-name="ks_update"]'), event)
+                })
+                //快手上架
+                $('.item_ks_set_on_session').click(function (event) {
+                    that.openPopup($('button[data-name="ks_set_on_session"]'), event)
+                })
+                //快手下架
+                $('.item_ks_set_off_session').click(function (event) {
+                    that.openPopup($('button[data-name="ks_set_off_session"]'), event)
+                })
+
+
+                 //小红书上架
+                 $('.item_xhs_set_on_session').click(function (event) {
+                    that.openPopup($('button[data-name="xhs_set_on_session"]'), event)
+                })
+                //小红书下架
+                $('.item_xhs_set_off_session').click(function (event) {
+                    that.openPopup($('button[data-name="xhs_set_off_session"]'), event)
+                })
+                //小红书推送
+                $('.item_xhs_update').click(function (event) {
+                    that.openPopup($('button[data-name="xhs_update"]'), event)
+                })
+                
+            }
+
+
+            // if(window.location.href.indexOf('/ticket/ticketorder/')>=0){
+            //     $('button[data-name="set_refund"]').hide()
+            //     this.cancel()
+            //     //申请退款
+            //     $('.item_set_refund').click(function (event) {
+            //         that.openPopup($('button[data-name="set_refund"]'), event)
+            //     })
+            // }
+
+            if(window.location.href.indexOf('/ticket/ticketorderrefund/')>=0){
+                $('button[data-name="set_confirm"]').hide()
+                $('button[data-name="set_cancel"]').hide()
+                this.cancel()
+                //确认退款
+                $('.item_set_confirm').click(function (event) {
+                    that.openPopup($('button[data-name="set_confirm"]'), event)
+                })
+
+                //取消退款
+                $('.item_set_cancel').click(function (event) {
+                    that.openPopup($('button[data-name="set_cancel"]'), event)
+                })
+            }
+
+
+        },
+        methods: {
+            //获取票档
+            getLevel(session_id){
+                $.ajax({
+                  method: 'get',
+                  url: `/api/show/level/back_levels/?session_id=${session_id}`
+                }).then(response => {
+                    if(response.length<=0){
+                        this.$message.error('请先设置场次票档');
+                        return
+                    }
+                    response.forEach(value => {
+                        value.stock = 0
+                        value.title = `票档${value.price}库存`
+                    })
+                    this.form.levelStock = response
+                    this.dialogFormVisible = true
+                })
+                .catch(error => {
+                    this.$message.error('获取票档失败');
+                })
+            },
+            confirmCopy(alt){
+                let that = this
+                if(!alt){
+                    this.$message.error('场次id丢失');
+                    return
+                }
+                if(this.form.date.length<=0){
+                    this.$message.error('请选择复制日期');
+                    return 
+                }
+                that.dialogFormVisible = false
+                const loading = this.$loading({
+                    lock: true,
+                    text: '创建中，请耐心等待',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
+
+                let level_dict = {}
+                this.form.levelStock.forEach(value => {
+                    level_dict[value.id] = value.stock
+                })
+                let formData = new FormData()
+                formData.append('id', this.form.alt)
+                formData.append('start_at', this.form.start_at)
+                formData.append('end_at', this.form.end_at)
+                formData.append('level_dict', JSON.stringify(level_dict))
+                formData.append('date_at_list', JSON.stringify(this.form.date))
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/show/sessions/copy_session/',
+                    timeout: 120000, // 设置超时时间为 2分钟
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(){
+                        loading.close();
+                        that.$message({
+                            message: '复制成功',
+                            type: 'success'
+                        });
+                        window.location.reload()
+                    },
+                    error:function(){
+                        loading.close();
+                        that.$message.error('复制失败');
+                    }
+                })
+            },
+            copyApi(text) {
+                const input = document.createElement('textarea'); // 先创建一个元素  
+                input.setAttribute('readonly', 'readonly'); // 防止手机上弹出软键盘
+                input.value = text; // 修改文本框的内容
+                document.body.appendChild(input); //将创建的元素插入body中
+                input.select(); // 选中文本
+                const res = document.execCommand("copy"); // 执行浏览器复制命令
+                document.body.removeChild(input); // 移除元素
+                this.$message({
+                    message: '复制成功',
+                    type: 'success'
+                });
+            },
+            doCopy(event) {
+                let alt = $(event.target).attr('alt')
+                if(!alt){
+                    this.$message.error('标识ID不存在');
+                    return
+                }
+                this.copyApi(alt)
+            },
+            doSearch(){
+                let alt = $(event.target).attr('alt')
+                if(!alt){
+                    this.$message.error('推荐人不存在');
+                    return
+                }
+                $('input[name="q"]').val(alt)
+                $('.doSearchBtn').click()
+            },
+            openPopup(dom, event){
+                this.resetCheck()
+                this.doSelect(event)
+                dom.click()
+            },
+            doSelect(event){
+                $(event.target).parent().parent().find('.action-select').prop("checked",true);
+                //通过selected获取提交的值
+                $(event.target).parent().parent().find('.action-select').parent().parent().addClass('selected')
+            },
+            resetCheck(){
+                $('.action-select').prop("checked",false);
+                $('.action-select').parent().parent().removeClass('selected')
+            },
+            cancel(){
+                let that  = this
+                $('.cancel_btn').click(function () {
+                    that.resetCheck()
+                })
+            },
+        },
+    })
+</script>

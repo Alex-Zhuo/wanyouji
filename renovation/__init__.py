@@ -1,0 +1,1 @@
+default_app_config = 'renovation.apps.RenovationConfig'

@@ -1,0 +1,12 @@
+XHSBizMsgCrypt_OK = 0
+XHSBizMsgCrypt_ValidateSignature_Error = -40001
+XHSBizMsgCrypt_ParseXml_Error = -40002
+XHSBizMsgCrypt_ComputeSignature_Error = -40003
+XHSBizMsgCrypt_IllegalAesKey = -40004
+XHSBizMsgCrypt_ValidateCorpid_Error = -40005
+XHSBizMsgCrypt_EncryptAES_Error = -40006
+XHSBizMsgCrypt_DecryptAES_Error = -40007
+XHSBizMsgCrypt_IllegalBuffer = -40008
+XHSBizMsgCrypt_EncodeBase64_Error = -40009
+XHSBizMsgCrypt_DecodeBase64_Error = -40010
+XHSBizMsgCrypt_GenReturnXml_Error = -40011

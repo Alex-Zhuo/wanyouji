@@ -1,0 +1,178 @@
+<style type="text/css">
+    #address_map{
+        transform: translate(0,-30px);
+    }
+    #address_map .required:after{
+        content: '';
+        display: inline-block;
+        vertical-align: middle;
+        height: 26px;
+    }
+    #address_map .required{
+        display: block;
+        padding: 4px 10px 0 0;
+        float: left;
+        width: 160px;
+        word-wrap: break-word;
+        line-height: 1;
+    }
+    #address_map .help{
+        margin-left: 160px;
+        padding-left: 10px;
+    }
+    #address_map .el-input__inner{
+        line-height: inherit;
+        height: auto;
+    }
+</style>
+<div id="address_map">
+    <div class="form-row field-address">
+        <div>
+            <label class="required">详细地址:</label>
+            <div class="inputWidth">
+                <input type="text" id="suggestId" size="20"/>
+            </div>
+            <div id="searchResultPanel" style="border:1px solid #C0C0C0;width:150px;height:auto; display:none;"></div>
+            <div class="help address_map_help"></div>
+        </div>
+    </div>
+    <div class="el-row is-justify-space-around el-row--flex" style="padding:0 10px">
+        <div class="el-col el-col-20">
+            <div id="allMap" style="width: 100%;height: 500px"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/1.7.2/axios.js"></script>
+<script type="text/javascript" src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=fkIBKhr2rxUU3V5pIlHFBvdubd0xRnf0"></script>
+<script>
+    new Vue({
+        el: '#address_map',
+        data: function() {
+            return {
+                state: '',
+                timeout:  null,
+                mapTool: '',
+                acTool: '',
+                myValue: '',
+                localTool: ''
+            }
+        },
+        mounted(){
+            this.initLayout();//重构布局
+            this.showMap();
+        },
+        methods:{
+            showMap(){
+               let lng = $('#id_lng').val();
+               let lat = $('#id_lat').val();
+               this.state=$('#id_address').val();
+               if(lng&&lat){
+                   this.initMap(lng,lat);
+               }else{
+                   this.initMap();
+               }
+            },
+            initLayout(){
+                //隐藏实际的输入框
+                $('#id_address').parent().parent().css({
+                    display: 'none',
+                })
+                //赋值输入框宽度
+                $('.el-autocomplete').css({
+                    width: $('#id_address').outerWidth()
+                })
+                //赋值提示语句
+                $('#address_map .address_map_help').html($('.field-address .help').html());
+                //设置经纬度只读
+                $("#id_lng,#id_lat").attr('readOnly',true);
+                $("#id_lng,#id_lat").attr('placeholder','请输入详细地址自动获取');
+            },
+            //初始化地图
+            initMap(longitude,latitude){
+                // 百度地图API功能
+                let address_longitude=longitude?longitude:113.280637;
+                let address_latitude=latitude?latitude:23.125178;
+                // let result = this.transformFromGCJToBD(address_longitude, address_latitude)
+                // address_longitude = result[0]
+                // address_latitude = result[1]
+                if(!this.mapTool){
+                    this.mapTool = new BMapGL.Map("allMap");
+                    this.acTool = new BMapGL.Autocomplete(    //建立一个自动完成的对象
+                        {"input" : "suggestId"
+                        ,"location" : this.mapTool
+                    });
+                    this.onSelect()
+                }
+                if(this.acTool){
+                    this.acTool.setInputValue(this.state || '');
+                }
+                this.mapTool.centerAndZoom(new BMapGL.Point(address_longitude,address_latitude),18);
+                this.mapTool.enableScrollWheelZoom(true);
+                if(address_longitude != "" && address_latitude != ""){
+                    this.mapTool.clearOverlays();
+                    let new_point = new BMapGL.Point(address_longitude,address_latitude);
+                    let marker = new BMapGL.Marker(new_point);  // 创建标注
+                    this.mapTool.addOverlay(marker);              // 将标注添加到地图中
+                    this.mapTool.panTo(new_point);
+                }
+            },
+            G(id) {
+                return document.getElementById(id);
+            },
+            onSelect(){
+                let that = this
+                this.acTool.addEventListener("onhighlight", function(e) {  //鼠标放在下拉列表上的事件
+                    console.log('onhighlight', e)
+                    var str = "";
+                    var _value = e.fromitem.value;
+                    var value = "";
+                    if (e.fromitem.index > -1) {
+                        value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+                    }    
+                    str = "FromItem<br />index = " + e.fromitem.index + "<br />value = " + value;
+                    
+                    value = "";
+                    if (e.toitem.index > -1) {
+                        _value = e.toitem.value;
+                        value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+                    }    
+                    str += "<br />ToItem<br />index = " + e.toitem.index + "<br />value = " + value;
+                    that.G("searchResultPanel").innerHTML = str;
+                });
+                this.acTool.addEventListener("onconfirm", function(e) {    //鼠标点击下拉列表后的事件
+                    console.log('onconfirm', e)
+                    var _value = e.item.value;
+                    that.myValue = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+                    that.G("searchResultPanel").innerHTML ="onconfirm<br />index = " + e.item.index + "<br />myValue = " + this.myValue;
+                    that.setPlace();
+                });
+            },
+            myFun(){
+                let getResults = this.localTool.getResults()
+                var pp = getResults.getPoi(0).point;    //获取第一个智能搜索的结果
+                this.setFormData({
+                    location: {
+                        lat: pp.lat,
+                        lng: pp.lng
+                    },
+                    value: getResults.keyword
+                })
+                this.mapTool.centerAndZoom(pp, 18);
+                this.mapTool.addOverlay(new BMapGL.Marker(pp));    //添加标注
+            },
+            setPlace(){
+                this.mapTool.clearOverlays();  
+                this.localTool = new BMapGL.LocalSearch(this.mapTool, { //智能搜索
+                    onSearchComplete: this.myFun
+                });
+                this.localTool.search(this.myValue);
+            },
+            setFormData(item){
+                $('#id_lng').val(item.location.lng);
+                $('#id_lat').val(item.location.lat);
+                $('#id_address').val(item.value);
+            },
+        },
+    })
+</script>

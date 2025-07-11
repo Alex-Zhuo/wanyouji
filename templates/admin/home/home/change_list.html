@@ -1,0 +1,513 @@
+{% load i18n static simpletags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据面板</title>
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/css/dataPanel.css' %}?_=1.0.3">
+<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/elementui/theme-chalk/index.css' %}?_=1.0.3">
+{% endblock %}
+</head>
+<body>
+    <div class="content" id="dataPanel" v-cloak v-loading="loading">
+        <!-- 数据概览 -->
+        <div class="data_content">
+            <div class="base_title">
+                <div></div>
+                <div>数据概览</div>
+            </div>
+            <div class="data_flex_content">
+                <div class="data_flex">
+                    <div class="data_flex_title" style="background-color: #81B337;">
+                        <div class="title_left">
+                            <img src="{% static '/admin/simpleui-x/img/people.png' %}" alt="">
+                            <div>总用户数</div>
+                        </div>
+                        <div class="title_right" v-html="detail.user_num"></div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>超级会员</div>
+                        </div>
+                        <div v-html="detail.super_card_num"></div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>VIP会员</div>
+                        </div>
+                        <div v-html="detail.year_card_num"></div>
+                    </div>
+                </div> 
+                <div class="data_flex data_flex_margin">
+                    <div class="data_flex_title" style="background-color: #EF7B1C;">
+                        <div class="title_left">
+                            <img src="{% static '/admin/simpleui-x/img/movie.png' %}" alt="">
+                            <div>总场次数</div>
+                        </div>
+                        <div class="title_right" v-html="detail.session_num"></div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>本周场次数</div>
+                        </div>
+                        <div style="color: #EF7B1C;" v-if="detail && detail.other_data" v-html="detail.other_data.week_session_num"></div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>本月场次数</div>
+                        </div>
+                        <div style="color: #EF7B1C;" v-if="detail && detail.other_data" v-html="detail.other_data.month_session_num"></div>
+                    </div>
+                </div> 
+                <div class="data_flex">
+                    <div class="data_flex_title" style="background-color: #4095E5;">
+                        <div class="title_left">
+                            <img src="{% static '/admin/simpleui-x/img/coupon.png' %}" alt="">
+                            <div>总票房</div>
+                        </div>
+                        <div class="title_right" v-if="detail && detail.other_data" v-html="detail.other_data.total_amount"></div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>抖音总票房</div>
+                            <img src="{% static '/admin/simpleui-x/img/tiktok.png' %}" alt="">
+                        </div>
+                        <div style="color: #4095E5;" v-html="detail.dy_amount">{{detail.dy_amount}}</div>
+                    </div>
+                    <div class="data_flex_item">
+                        <div>
+                            <div>微信总票房</div>
+                            <img src="{% static '/admin/simpleui-x/img/wechat.png' %}" alt="">
+                        </div>
+                        <div style="color: #4095E5;" v-html="detail.wx_amount"></div>
+                    </div>
+                </div> 
+            </div>
+        </div>
+        <!-- 图标 -->
+        <div class="chart_content">
+            <div class="chart_left">
+                <div class="base_title">
+                    <div></div>
+                    <div>下单渠道占比</div>
+                </div>
+                <div style="width: 100%;height: 260px;" id="orderChart"></div>
+            </div>
+            <div class="chart_right">
+                <div class="base_title">
+                    <div></div>
+                    <div>订单数/金额统计</div>
+                    <div class="right" style="margin-left: 20px;">
+                        <el-radio-group v-model="orderType" size="small" @input="orderInput">
+                            <el-radio-button label="订单"></el-radio-button>
+                            <el-radio-button label="金额"></el-radio-button>
+                          </el-radio-group>
+                    </div>
+                </div>
+                <div class="chart_right_content">
+                    <div style="flex: 1;height: 260px;" id="cityOrderChart"></div>
+                    <div style="flex: 1;height: 260px;" id="dayOrderChart"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 其它面板 -->
+        <div class="other_content">
+            <div class="other_content_left">
+                <div class="other_content_left_item" style="margin-bottom: 18px;">
+                    <div class="item">
+                        <div class="title">
+                            <div></div>
+                            <div>超级会员卡</div>
+                        </div>
+                        <div class="total">
+                            <div>总收款</div>
+                            <div v-html="detail.super_amount"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>订单数</div>
+                            <div v-html="detail.super_order_num"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>卡余额总数</div>
+                            <div v-html="detail.super_rest_amount"></div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="title">
+                            <div></div>
+                            <div>退款订单</div>
+                        </div>
+                        <div class="total">
+                            <div>退款订单数</div>
+                            <div v-html="detail.refund_num"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>退款金额</div>
+                            <div v-html="detail.refund_amount"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div></div>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="other_content_left_item">
+                    <div class="item">
+                        <div class="title">
+                            <div></div>
+                            <div>代理团队</div>
+                        </div>
+                        <div class="total">
+                            <div>代理人数</div>
+                            <div v-html="detail.agent_num"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>已提现佣金</div>
+                            <div v-html="detail.withdraw_amount"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>未提现佣金</div>
+                            <div v-if="detail && detail.other_data" v-html="detail.other_data.un_withdraw_amount"></div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="title">
+                            <div></div>
+                            <div>代理佣金</div>
+                        </div>
+                        <div class="total">
+                            <div>总发放数</div>
+                            <div v-html="detail.total_award_amount"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>分销奖</div>
+                            <div v-html="detail.share_award_amount"></div>
+                        </div>
+                        <div class="baseItem">
+                            <div>团队奖</div>
+                            <div v-html="detail.group_award_amount"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="other_content_right">
+                <div class="base_title" style="padding:  20px 0 20px 30px;">
+                    <div></div>
+                    <div>月度票房统计</div>
+                </div>
+                <div style="width: 100%;height: 380px;" id="statisticsChart"></div>
+            </div>
+        </div>
+    </div>
+</body>   
+{% block script %}
+<script src="{% static '/admin/simpleui-x/js/echarts.min.js' %}?_={% get_version %}"></script>
+<script type="text/javascript" src="{% static '/admin/simpleui-x/js/vue.min.js' %}?_={% get_version %}"></script>
+<script src="{% static '/admin/simpleui-x/js/datav.map.vue.js' %}?_={% get_version %}"></script>
+<script src="{% static '/admin/simpleui-x/js/axios.min.js' %}?_={% get_version %}"></script>
+<script type="text/javascript" src="{% static '/admin/simpleui-x/elementui/index.js' %}?_={% get_version %}"></script>
+<script>
+    let dataPanel = new Vue({
+        el: '#dataPanel',
+        data() {
+            return {
+              detail: '' ,
+              loading: false,
+              orderType: '订单',
+              cityChart: '',
+              dayChart: ''
+            }
+        },
+        created () {
+            this.loading = true
+            this.request()
+        },
+        methods: {
+            orderInput(e){
+                //修改
+                if(e == '订单'){
+                   this.buildData('order_num') 
+                   return 
+                }
+                this.buildData('total_amount') 
+            },
+            changeTime(time){
+                let timeData = time.split('-')
+                return `${timeData[1]}-${timeData[2]}`
+            },
+            buildData(buildType){
+                let cityTitle = '城市订单数/金额'
+                let dayTitle = '每日订单/金额'
+
+                let cityxAxis = []
+                let cityData = []
+
+                let dayxAxis = []
+                let dayData = []
+                if(this.detail.city_data.length<=0){
+                    cityTitle = '暂无统计数据'
+                }else{
+                    this.detail.city_data.forEach(value => {
+                        cityxAxis.push(value.city_name)
+                        cityData.push(value[buildType])
+                    })
+                   
+                }
+                if(this.detail.day_data.length<=0){
+                    dayTitle = '暂无统计数据'
+                }else{
+                    this.detail.day_data.forEach(value => {
+                        dayxAxis.push(this.changeTime(value.create_at))
+                        dayData.push(value[buildType])
+                    })
+                    dayData.reverse()
+                    dayxAxis.reverse()
+                    console.log('dayData', dayData)
+                }
+                setTimeout(()=>{
+                    this.initCityOrderChart(cityData, cityTitle, cityxAxis)
+                    this.initDayOrderChart(dayData, dayTitle, dayxAxis)
+                },100)
+            },
+            request() {
+                axios.get('/api/stl/data/')
+                .then(response => {
+                    this.detail = response.data
+                    let orderFrom = [
+                        { value: response.data.wx_order_num, name: '微信小程序' },
+                        { value: response.data.dy_order_num, name: '抖音小程序' },
+                        { value: response.data.dy_live_order_num, name: '直播间' },
+                        { value: response.data.dy_video_order_num, name: '短视频' },
+                    ]
+                    let monthTitle = '每月票房/元'
+                    let monthxAxis = []
+                    let monthData = []
+                    if(response.data.month_data.length<=0){
+                        monthTitle = '暂无统计数据'
+                    }else{
+                        response.data.month_data.forEach(value => {
+                            monthxAxis.push(`${value.month}月`)
+                            monthData.push(value.order_num)
+                        })
+                        monthxAxis.reverse()
+                        monthData.reverse()
+                    }
+                    this.buildData('order_num')
+                    setTimeout(()=>{
+                        this.initOrderChart(orderFrom)
+                        this.initStatisticsChart(monthData, monthTitle, monthxAxis)
+                    },100)
+                    this.loading = false
+                })
+                .catch(error => {
+                    this.loading = false
+                })
+            },
+            initOrderChart(data){
+                var chartDom = document.getElementById('orderChart');
+                var myChart = echarts.init(chartDom);
+                var option;
+                option = {
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    legend: {
+                        top: '3%',
+                        left: 'center'
+                    },
+                    series: [
+                        {
+                        name: '来源',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        label: {
+                            show: false,
+                            position: 'center'
+                        },
+                        emphasis: {
+                            label: {
+                            show: true,
+                            fontSize: 20,
+                            fontWeight: 'bold'
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data
+                        }
+                    ]
+                };
+                option && myChart.setOption(option);
+            },
+            initCityOrderChart(data, title, xAxis){
+                if(!this.cityChart){
+                    var chartDom = document.getElementById('cityOrderChart');
+                    this.cityChart = echarts.init(chartDom);
+                }
+                var option;
+                option = {
+                    title: {
+                        text: title,
+                        left: 'center', // 标题水平位置
+                        textStyle: { // 主标题样式
+                            color: '#333',
+                            fontSize: 14,
+                            fontWeight: 'normal'
+                        }
+                    },
+                    legend: {
+                        top: '3%',
+                        left: 'center'
+                    },
+                    grid: {
+                        bottom: '20px',
+                        left: '2%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: xAxis
+                    },
+                    yAxis: {
+                        type: 'value',
+                        
+                    },
+                    series: [
+                        {
+                            data: data,
+                            type: 'bar',
+                            label: {
+                                    normal: {
+                                        show: true,
+                                        position: 'top',
+                                        textStyle: {
+                                            color: '#333'
+                                        }
+                                    }
+                            }
+                        }
+                    ]
+                };
+                option && this.cityChart.setOption(option);
+            },
+            initDayOrderChart(data, title, xAxis){
+                if(!this.dayChart){
+                    var chartDom = document.getElementById('dayOrderChart');
+                    this.dayChart = echarts.init(chartDom);
+                }
+                var option;
+                option = {
+                    title: {
+                        text: title,
+                        left: 'center', // 标题水平位置
+                        textStyle: { // 主标题样式
+                            color: '#333',
+                            fontSize: 14,
+                            fontWeight: 'normal'
+                        }
+                    },
+                    legend: {
+                        top: '3%',
+                        left: 'center'
+                    },
+                    grid: {
+                        bottom: '20px',
+                        left: '2%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: xAxis
+                    },
+                    yAxis: {
+                        type: 'value',
+                    },
+                    series: [
+                        {
+                        data: data,
+                        type: 'line',
+                        label: {
+                            show: true // 显示数值
+                        },
+                        lineStyle: {
+                            color: 'rgba(129,179,55,1)' // 这里可以设置你想要的颜色和透明度
+
+                        },
+                        itemStyle: {
+                            color: 'rgba(129,179,55,1)' // 这里可以设置你想要的颜色和透明度
+                        },
+                        // 设置区域样式
+                        areaStyle: {
+                            normal: {
+                                // 修改折线图的覆盖背景色
+                                color: 'rgba(129,179,55,1)' // 这里可以设置你想要的颜色和透明度
+                            }
+                        }
+                        }
+                    ]
+                };
+
+                option && this.dayChart.setOption(option);
+            },
+            initStatisticsChart(data, title, xAxis){
+                var chartDom = document.getElementById('statisticsChart');
+                var myChart = echarts.init(chartDom);
+                var option;
+
+                option = {
+                    title: {
+                        text: title,
+                        left: 'center', // 标题水平位置
+                        textStyle: { // 主标题样式
+                            color: '#333',
+                            fontSize: 14,
+                            fontWeight: 'normal'
+                        }
+                    },
+                    legend: {
+                        top: '3%',
+                        left: 'center'
+                    },
+                    grid: {
+                        bottom: '20px',
+                        left: '2%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: xAxis
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [
+                        {
+                            data: data,
+                            type: 'bar',
+                            itemStyle: { color: '#81B337' },
+                            label: {
+                                normal: {
+                                    show: true,
+                                    position: 'top',
+                                    textStyle: {
+                                        color: '#333'
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                };
+
+                option && myChart.setOption(option);
+            },
+        }
+    })
+        
+</script>
+{% endblock %}
+</html>

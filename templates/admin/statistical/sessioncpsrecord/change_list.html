@@ -1,0 +1,219 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list simpletags %}
+{% block extrastyle %}
+    <link rel="stylesheet" href="{% static '/admin/simpleui-x/css/statistical.css' %}?_=1.2">
+    <!-- <link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/elementui/theme-chalk/index.css' %}"> -->
+{% endblock %}
+{% block content %}
+<div id="app" v-cloak>
+    <div class="content">
+        <el-form :inline="true" :model="formSearch" class="demo-form-inline">
+            <el-form-item>
+              <el-input v-model="formSearch.kw" placeholder="搜索平台账号ID/账号昵称"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-date-picker :picker-options="pickerOptions" type="daterange" value-format="yyyy-MM-dd" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" v-model="formSearch.create_at"></el-date-picker>
+            </el-form-item>
+            <el-form-item>
+                <el-select v-model="formSearch.platform" clearable placeholder="平台类型">
+                    <el-option :label="item.name" :value="item.value" v-for="(item, index) in platformStatus" :key="index"></el-option>
+                  </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-autocomplete
+                v-model="session"
+                :fetch-suggestions="querySearchAsync"
+                class="custom-width-cps"
+                placeholder="请输入关键字搜索场次"
+                @select="handleSelectStore"
+                @clear="clearEvent"
+                clearable
+              >
+                <template slot-scope="{item}">
+                    <a :title="item.name"  v-html="item.name"></a>
+                </template>
+            </el-autocomplete>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="doSearch">查询</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="success" icon="el-icon-download" :loading="is_download" @click="download()">全部导出</el-button>
+            </el-form-item>
+        </el-form>
+        <el-table
+            v-loading="loading"
+            :data="tableData"
+            ref="table"
+            style="width: 100%">
+            <el-table-column label="演出名称" prop="title" width="350"></el-table-column>
+            <el-table-column label="场次开演时间" prop="start_at" width="220"></el-table-column>
+            <el-table-column label="带货达人" prop="agent" width="180"></el-table-column>
+            <el-table-column label="平台" prop="platform" width="180"></el-table-column>
+            <el-table-column label="日期范围" prop="date_at" width="220"></el-table-column>
+            <el-table-column label="销售渠道" prop="source_type" width="120"></el-table-column>
+            <el-table-column label="实付金额" prop="total_amount" width="120"></el-table-column>
+            <el-table-column label="佣金" prop="commission_amount" width="120"></el-table-column>
+          </el-table>
+    </div>
+</div>
+<!-- <script type="text/javascript" src="{% static '/admin/simpleui-x/js/vue.min.js' %}?_=1.0"></script> -->
+<!-- <script type="text/javascript" src="{% static '/admin/simpleui-x/elementui/index.js' %}?_={% get_version %}"></script> -->
+<script type="text/javascript" src="{% static '/admin/simpleui-x/js/axios.min.js' %}?_=1.0"></script>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: function() {
+          return {
+            formSearch: {
+                kw: '',
+                create_at: '',
+                platform: ''
+            },
+            tableData: [],
+            loading: false,
+            is_download: false,
+            session_id: '',
+            session: '',
+            // 设置最大时间为当前时间
+            pickerOptions: {
+                disabledDate(time) {
+                    return time.getTime() > Date.now()+ 1*24*60*60*1000 || time.getTime() < Date.now() - 90*24*60*60*1000
+                }
+            },
+            platformStatus: []
+          }
+        },
+        mounted(){
+            this.getPlatform()
+        },
+        methods: {
+            getPlatform(){
+                this.platformStatus = []
+                this.formSearch.platform = ''
+                axios.get(`/api/stl/data/get_platform_list/`)
+                .then(response =>{
+                    let keys = Object.keys(response.data)
+                    keys.forEach((value, index) => {
+                        this.platformStatus.push({
+                            value: value,
+                            name: response.data[value]
+                        })
+                        if(index == 0){
+                            this.formSearch.platform = value
+                        }
+                    })
+                })
+            },
+            buildTime(time){
+                let date = time.split('T')
+                let timeDate = date[1].split(':')
+                return `${date[0]} ${timeDate[0]}:${timeDate[1]}`
+            },
+            //场次搜索
+            querySearchAsync(queryString, cb){
+                let that = this;
+                if(queryString.length>0){
+                    axios.get(`/api/stl/data/get_session_list/?kw=${queryString}`)
+                        .then(response => {
+                            let addressList=[];
+                            response.data.forEach(item=>{
+                                addressList.push({
+                                    name:`${that.buildTime(item.start_at)} ${item.title}`,
+                                    id:item.id,
+                                    value: `${that.buildTime(item.start_at)} ${item.title}`,
+                                })
+                            })
+                            cb(addressList);
+                        })
+                        .catch(error=>{
+                            that.$alert(error.error.message || '服务错误', '提示', {
+                                confirmButtonText: '确定',
+                                callback: action => {}
+                            });
+                        })
+                }
+            },
+            clearEvent(){
+                this.session_id = ''
+                this.session = ''
+            },
+            handleSelectStore(item) {
+                this.session_id = item.id
+                this.session = item.name
+            },
+            getRecord(){
+                this.loading = true
+                axios.post(`/api/stl/data/session_cps_record/`, this.buildParams())
+                .then(response => {
+                    this.loading = false
+                    this.tableData = response.data || []
+                })
+                .catch(error => {
+                    this.$message.error(error.msg || '服务错误');
+                    this.loading = false
+                })
+            },
+            checkParams(){
+                if(!this.formSearch.kw){
+                    this.$message.error('请输入搜索关键字');
+                    return true
+                }
+                if(!this.formSearch.create_at || this.formSearch.create_at.length<=0){
+                    this.$message.error('请选择日期范围');
+                    return true
+                }
+                if(!this.session_id){
+                    this.$message.error('请选择查询演出场次');
+                    return true
+                }
+                return false
+            },
+            doSearch(){
+                if(this.checkParams()) return
+                this.getRecord()
+            },
+            buildParams(is_down){
+                let params = {
+                    session_id: this.session_id,
+                    start_at: this.formSearch.create_at[0],
+                    end_at: this.formSearch.create_at[1],
+                    kw: this.formSearch.kw,
+                    platform: this.formSearch.platform,
+                }
+                if(is_down){
+                    params.is_down = 1  
+                }
+                return params
+            },
+            download(){
+                if(this.checkParams()) return
+                this.is_download  = true
+                axios.post(`/api/stl/data/session_cps_record/`, this.buildParams(1), {responseType: 'blob'})
+                .then(response => {
+                    this.is_download  = false
+                    this.outputExcel(response.data)
+                })
+                .catch(error => {
+                    this.$message.error(error.msg || '服务错误');
+                    this.is_download  = false
+                })
+            },
+            outputExcel(result){
+                const link = document.createElement('a')
+                let blob = new Blob([result],{type: 'application/vnd.ms-excel'});
+                link.style.display = 'none'
+                link.href = URL.createObjectURL(blob);
+                let num = ''
+                for(let i=0;i < 10;i++){
+                    num += Math.ceil(Math.random() * 10)
+                }
+                link.setAttribute('download', '达人销售统计_' + num + '.xls')
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+            },
+        }
+    })
+</script>
+{% endblock %}

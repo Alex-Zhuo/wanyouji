@@ -1,0 +1,390 @@
+{% load i18n static %}
+{% load simpletags %}
+{% block content %}
+<style type="text/css">
+    .el-select__input{
+        height: auto!important;
+        border: none!important;
+    }
+    .baseSelect{
+        width: 200px;
+    }
+    .baseSelect .el-tag--mini{
+        padding: 5px;
+        line-height: 19px;
+        max-width: 180px;
+        height: auto;
+        white-space: normal;
+    }
+</style>
+{% endblock %}
+{% if cl.search_fields or cl.has_filters %}
+    <script type="text/javascript">
+        function preSubmit() {
+            $('#changelist-search').find("input[name!='']").each(function () {
+                if ($(this).val() == '') {
+                    $(this).removeAttr('name');
+                }
+            });
+        }
+    </script>
+    {% autoescape off %}
+        {% load_dates %}
+    {% endautoescape %}
+    <!-- search_form.html -->
+    <div id="toolbar">
+        <form id="changelist-search" method="get" onsubmit="preSubmit(this)">
+            <input type="hidden" name="p" value=""/>
+            <div class="simpleui-form"><!-- DIV needed for valid HTML -->
+
+                {% if cl.search_fields %}
+
+                    <el-input size="small" class="simpleui-form-item"
+                              clearable
+                              name="{{ search_var }}"
+                              :placeholder="placeholder"
+                              prefix-icon="el-icon-search"
+                              v-model="searchInput" @keyup.enter.native="formSubmit()">
+                    </el-input>
+                {% endif %}
+
+                {% if cl.has_filters %}
+
+                    {% for spec in cl.filter_specs %}
+                        {% if spec|get_date_type == 'date' or spec|get_date_type == 'datetime' %}
+
+                            <el-date-picker class="simpleui-form-item"
+                                    size="small"
+                                    v-model="{{ spec.field_path }}"
+                                    @change="change{{ spec|get_date_type|capfirst }}"
+                                    type="{{ spec|get_date_type }}range"
+                                    start-placeholder="{{ spec.title }}"
+                                    end-placeholder="{{ spec.title }}">
+                            </el-date-picker>
+
+                            <input type="hidden" v-model="{{ spec.field_generic }}gte"
+                                   name="{{ spec.field_generic }}gte"/>
+                            <input type="hidden" v-model="{{ spec.field_generic }}lte"
+                                   name="{{ spec.field_generic }}lte"/>
+
+                        {% elif spec|has_filter %}
+                            {% if spec.parameter_name  == 'session_filter__exact' %}
+                            <div class="select_box" style="display: inline-block;">
+                                <input type="hidden" v-model="{{ spec.parameter_name }}" name="{{ spec.parameter_name }}"/>
+                                <el-select size="small" class="simpleui-form-item baseSelect" :multiple-limit="my_filter['{{ spec.parameter_name }}']"  multiple filterable v-model="{{ spec.parameter_name }}" clearable placeholder="演出场次搜索" remote  :remote-method="remoteMethod" :loading="searchLoading">
+                                    <!-- {% for option in spec.lookup_choices %}
+                                        <el-option label="{{ option.1 }}" value="{{ option.0 }}"></el-option>
+                                    {% endfor %} -->
+                                    <el-option v-for="(item, index) in remoteList" :key="index" :label="item.name" :value="`${item.id}`"></el-option>
+                                </el-select>
+                            </div>
+                            {% else %}
+                            <div class="select_box_not_remote" style="display: inline-block;">
+                                <input type="hidden" v-model="{{ spec.parameter_name }}" name="{{ spec.parameter_name }}"/>
+                                <el-select size="small" class="simpleui-form-item baseSelect" :multiple-limit="my_filter['{{ spec.parameter_name }}']"  multiple filterable v-model="{{ spec.parameter_name }}" clearable placeholder="{{ spec.title }}">
+                                    {% for option in spec.lookup_choices %}
+                                        <el-option label="{{ option.1 }}" value="{{ option.0 }}"></el-option>
+                                    {% endfor %}
+                                </el-select>
+                            </div>
+                            {% endif %}
+                        {% else %}
+
+                            <input type="hidden" v-model="{{ spec.lookup_kwarg }}" name="{{ spec.lookup_kwarg }}"/>
+                            <el-select size="small" class="simpleui-form-item baseSelect" multiple :multiple-limit="my_filter['{{ spec.lookup_kwarg }}']" filterable v-model="{{ spec.lookup_kwarg }}" clearable
+                                       placeholder="{{ spec.title }}">
+                                {% if spec|get_date_type == 'time' %}
+                                    {% for option in spec.lookup_choices %}
+                                        <el-option label="{{ option }}" value="{{ option|to_str }}"></el-option>
+                                    {% endfor %}
+                                {% elif spec.lookup_choices %}
+                                    {% if spec.lookup_choices.query %}
+                                        {% for option in spec.lookup_choices %}
+                                            <el-option label="{{ option }}" value="{{ option }}"></el-option>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for option in spec.lookup_choices %}
+                                            <el-option label="{{ option.1 }}" value="{{ option.0 }}"></el-option>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% elif spec.field.choices %}
+                                    {% for option in spec.field.choices %}
+                                        <el-option label="{{ option.1 }}" value="{{ option.0 }}"></el-option>
+                                    {% endfor %}
+                                {% else %}
+                                    {% get_boolean_choices as choices %}
+                                    {% for c in choices %}
+                                        <el-option label="{{ c.1 }}" value="{{ c.0 }}"></el-option>
+                                    {% endfor %}
+                                {% endif %}
+                            </el-select>
+
+                        {% endif %}
+
+                    {% endfor %}
+                {% endif %}
+                <el-button size="small" type="primary" class="doSearchBtn" icon="el-icon-search" @click="formSubmit()">{% trans 'Search' %}</el-button>
+
+
+            {% if show_result_count %}
+                <span class="small quiet">{% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %} (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% if cl.show_full_result_count %}{% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}{% else %}{% trans "Show all" %}{% endif %}</a>)</span>
+            {% endif %}
+
+                {% for pair in cl.params.items %}
+                    {% if pair.0 != search_var %}
+                        {% if pair.0.0 == '_' or pair.0 == 'o'%}
+                            <input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}"/>
+                        {% else %}
+                            <input type="hidden" class="form-params" data-name="{{ pair.0 }}" value="{{ pair.1 }}"/>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        console.log('---searchApp---')
+        window.getLanuage = function (key) {
+            if (!window.Lanuages) {
+                return "";
+            }
+            var val = Lanuages[key];
+            if (!val || val == "") {
+                val = key;
+            }
+            return val
+        }
+        Date.prototype.format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1,                 //月份
+                "d+": this.getDate(),                    //日
+                "h+": this.getHours(),                   //小时
+                "m+": this.getMinutes(),                 //分
+                "s+": this.getSeconds(),                 //秒
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+                "S": this.getMilliseconds()             //毫秒
+            };
+            if (/(y+)/.test(fmt))
+                fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt))
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+        var searchApp = new Vue({
+            el: '#toolbar',
+            data: {
+                placeholder: '{% trans 'Search' %}{% autoescape off %}{% search_placeholder %}'{% endautoescape %},
+                searchInput: '{{ cl.query }}',
+                my_filter: [],
+                remoteList: [],
+                searchLoading: false,
+                is_order_session: false,
+                {% if cl.has_filters %}
+                    {% for spec in cl.filter_specs %}
+                        {% if spec.links %}
+                            '{{ spec.field_path }}': '',
+                            '{{ spec.field_generic }}gte': '',
+                            '{{ spec.field_generic }}lte': '',
+                        {% elif spec|has_filter %}
+                            '{{ spec.parameter_name }}': [],
+                        {% else %}
+                            '{{ spec.lookup_kwarg }}': [],
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            },
+            created: function () {
+                //检测有没有重定向的链接(解决保存之后列表筛选数据被清空的问题)
+                let remoteList = localStorage.getItem('remoteList')
+                if(remoteList){
+                    this.remoteList = JSON.parse(remoteList)
+                }
+                this.setParams()
+                var self = this;
+                var date_field = [];
+                {% if cl.has_filters %}
+                    {% for spec in cl.filter_specs %}
+                        {% if spec.links %}
+                            date_field.push('{{ spec.field_path }}')
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                //设置单选多选
+                this.checkLimit()
+                $('.form-params').each(function () {
+                    let  key = $(this).attr('data-name')
+                    let  value = $(this).val()
+                    if(key.indexOf('__in')<0 && key.indexOf('__exact')<0){
+                        self[key] = value;
+                    }else{
+                        self.buildParams(value, key)
+                    }
+                });
+                try {
+                    date_field.forEach(key => {
+                        var start = self[key + "__gte"];
+                        var end = self[key + "__lte"];
+                        self[key] = [start, end];
+                    });
+                } catch (e) {
+                    console.warn('日期值回显失败，也许是django版本问题，请至github报告此问题：https://github.com/newpanjing/simpleui/issues');
+                }
+            },
+            watch: {
+                {% if cl.has_filters %}
+                    {% for spec in cl.filter_specs %}
+                        {% if spec.links %}
+                            '{{ spec.field_path }}': function (newValue, oldValue) {
+                                var type = '{{ spec | get_date_type }}'
+                                try {
+                                    if (newValue) {
+                                        if (newValue[0] != "" && newValue[1] != "") {
+
+                                            if (type == 'date') {
+                                                this['{{ spec.field_generic }}gte'] = newValue[0].format('yyyy-MM-dd');
+                                                this['{{ spec.field_generic }}lte'] = newValue[1].format('yyyy-MM-dd');
+                                            } else if (type == 'datetime') {
+                                                this['{{ spec.field_generic }}gte'] = newValue[0].format('yyyy-MM-dd hh:mm:ss{% get_tz_suffix %}');
+                                                this['{{ spec.field_generic }}lte'] = newValue[1].format('yyyy-MM-dd hh:mm:ss{% get_tz_suffix %}');
+                                            }
+                                        }
+                                    } else {
+                                        if (type == 'date') {
+                                            this['{{ spec.field_generic }}gte'] = '';
+                                            this['{{ spec.field_generic }}lte'] = '';
+                                        } else if (type == 'datetime') {
+                                            this['{{ spec.field_generic }}gte'] = '';
+                                            this['{{ spec.field_generic }}lte'] = '';
+                                        }
+                                    }
+                                } catch (e) {
+                                    //
+                                }
+                                {#console.log(newValue)#}
+                                {#console.log(oldValue)#}
+                            },
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            },
+            methods: {
+                remoteMethod(query, name){
+                    if(!query) return
+                    let that = this
+                    this.searchLoading = true
+                    jQuery.ajax({
+                        url: `/api/show/sessions/get_session_list/?kw=${query}`,
+                        type: 'get',
+                        success: function (response) {
+                            //合并数组
+                            let new_data = that.mergeArraysById(that.remoteList, response)
+                            localStorage.setItem('remoteList', JSON.stringify(new_data))
+                            that.remoteList = response
+                            that.searchLoading = false
+                        },
+                        error: function (error) {
+                            that.searchLoading = false
+                        }
+                    })
+                },
+                //数组合并并且去重
+                mergeArraysById(arr1, arr2) {
+                    // 创建临时 Map 对象存储唯一值（id 为键）
+                    const map = new Map();
+
+                    // 合并数组（后续数组覆盖前面的）
+                    [...arr1, ...arr2].forEach(item => {
+                        map.set(item.id, item);
+                    });
+
+                    // 将 Map 值转换为数组
+                    return Array.from(map.values());
+                },
+                buildParams(value, key){
+                    let newValue = value.split(',')
+                    key = key.replace('__in', '').replace('__exact', '')
+                    let key_in = `${key}__in`
+                    let key_exact = `${key}__exact`
+                    console.log('---key_in/key_exact---', key_in, key_exact)
+                    newValue.forEach(item => {
+                        if(key.indexOf('session_filter')>=0){
+                            item = parseInt(item)
+                        }
+                        console.log('---item---', item)
+                        if(this[key_in]){
+                            this[key_in].push(`${item}`)
+                            console.log('key_in', this[key_in])
+                        }
+                        if(this[key_exact]){
+                            this[key_exact].push(`${item}`)
+                            console.log('key_exact', this[key_exact])
+                        }
+                    })
+                },
+                setParams(){
+                    let keyName = this.getkeyName()
+                    let result = localStorage.getItem(keyName)
+                    if(result){
+                        //清除缓存
+                        localStorage.removeItem(keyName)
+                        window.location.href = result
+                    }
+                },
+                getBaseName(){
+                    let baseName = window.location.href.split('/')[3]
+                    return baseName
+                },
+                getkeyName(){
+                    let href = window.location.href
+                    let keyName = href.split(`${this.getBaseName()}/`)[1].split('?')[0]
+                    return keyName
+                },
+                changeDate: function (d1, d2) {
+                    console.log(arguments)
+                },
+                changeDatetime: function (d1, d2) {
+                    console.log(arguments)
+                },
+                formSubmit: function () {
+                    preSubmit();
+                    document.getElementById('changelist-search').submit();
+                },
+                checkLimit(){
+                    this.my_filter = {}
+                    let my_filter = '{{ cl.my_filter }}'
+                    console.log('my_filter', my_filter)
+                    if(my_filter && my_filter!='None'){
+                        my_filter = my_filter.replace(/&quot;/ig,'"')
+                        this.my_filter = JSON.parse(my_filter)
+                    }
+                    console.log('my_filter', my_filter)
+                    {% if cl.has_filters %}
+                        {% for spec in cl.filter_specs %}
+                            {% if spec|has_filter %}
+                                this.findLimit('{{ spec.parameter_name }}')
+                            {% else %}
+                                this.findLimit('{{ spec.lookup_kwarg }}')
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                },
+                findLimit(name){
+                    let status = name
+                    status = status.replace('__in', '').replace('__exact', '')
+                    if(this.my_filter[status] != undefined){
+                        this.my_filter[name] = this.my_filter[status]
+                    }else{
+                        this.my_filter[name] = 1
+                    }
+                }
+            }
+        })
+
+    </script>
+{% else %}
+    <form id="changelist-search" method="get">
+        <input type="hidden" name="p" value=""/>
+    </form>
+{% endif %}

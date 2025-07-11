@@ -1,0 +1,17 @@
+.idea/
+*.py[aco]
+db.sqlite*
+static/mall/qrcodes/*
+uploads/*
+#*/migrations/*
+*.data
+*.rej
+patch
+settings.ini
+*.log
+.env
+env.yml
+media/*
+static/config.json
+*.patch
+*sqlite*

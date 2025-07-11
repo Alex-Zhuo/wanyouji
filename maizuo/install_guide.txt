@@ -1,0 +1,19 @@
+# -*- coding: utf-8 -*-
+centos 安装无界面版本用火狐浏览器
+yum install firefox
+firefox --version 查看版本
+https://github.com/mozilla/geckodriver/releases
+查看要下载的geckodriver驱动版本，找到对应的火狐浏览器版本
+wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz
+tar zxvf geckodriver-v0.34.0-linux64.tar.gz 解压
+chmod +x geckodriver
+cp geckodriver /usr/local/bin/
+
+ubuntu 安装
+apt-get update
+apt install firefox
+查看要下载的geckodriver驱动版本，找到对应的火狐浏览器版本
+wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz
+tar zxvf geckodriver-v0.34.0-linux64.tar.gz 解压
+chmod +x geckodriver
+cp geckodriver /usr/local/bin/

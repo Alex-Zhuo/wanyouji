@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="referrer" content="never">
+    <title>(仿)微信自定义菜单后台</title>
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/index.css" />
+    <link rel="stylesheet" href="./css/lib.css" />
+    <link rel="stylesheet" href="./css/media_dialog&emotion_editor&msg_tab&emoji&msg_sender&tooltip.css" />
+    <link rel="stylesheet" href="./css/material.css" />
+    <script src="js/vue.js"></script>
+    <!-- import stylesheet -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/iview/2.9.0/styles/iview.css">
+    <!-- import iView -->
+    <script src="https://cdn.bootcss.com/iview/2.9.0/iview.min.js"></script>
+    <style>
+        body{
+            background: #fff!important;
+        }
+        audio{
+            width: 100%;
+        }
+        .menu-tools-box{
+            padding: 0 0 10px 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="menu_setting_box js_menuBox dn" style="display: block;">
+    <textarea id="result" style="border: none;position: absolute;width: 317px;height: 462px;left: 31px;top: 79px;z-index: 2;word-break: break-all;"></textarea>
+
+    <div class="menu_setting_area js_editBox">
+        <div class="menu_preview_area">
+            <div class="mobile_menu_preview">
+                <div class="mobile_hd tc">
+                    {{ gzh_name }}
+                </div>
+                <div class="mobile_bd">
+                    <ul class="pre_menu_list grid_line ui-sortable ui-sortable-disabled no_menu" style="z-index:3;" id="menuList">
+                        <li v-for="(btn,index) in menu.button" :key="btn.id" class="jsMenu pre_menu_item grid_item jslevel1 size1of3 ui-sortable ui-sortable-disabled">
+                                <a href="javascript:void(0);" @click="menu_selected(btn.name,index)" :class="[{pre_menu_link: index===activeMenuIndex && activeMenuType()==1}]" draggable="false">
+                                <i class="icon_menu_dot js_icon_menu_dot dn"></i>
+                                <i class="icon20_common sort_gray"></i>
+                                <span class='js_l1Title'>{{ btn.name }}</span>
+                            </a>
+                            <div class="sub_pre_menu_box js_l2TitleBox" v-if="index===activeMenuIndex">
+                                <ul class="sub_pre_menu_list">
+                                    <li v-for="(sub,index) in btn.sub_button" :key="sub.id" class='jslevel2'><a href="javascript:void(0);"  @click="menu_item_selected(sub.name,index)" :class="[{pre_menu_link: index===activeMenuItemIndex && activeMenuType()==2}]" class="jsSubView" draggable="false"><span class="sub_pre_menu_inner js_sub_pre_menu_inner"><i class="icon20_common sort_gray"></i><span class='js_l2Title'>{{ sub.name }}</span></span></a></li>
+                                    <li class='js_addMenuBox' v-if="isSet(menu.button[activeMenuIndex].sub_button)&&btn.sub_button.length>=0&&btn.sub_button.length<5"><a href="javascript:void(0);" class="jsSubView js_addL2Btn" title="最多添加5个子菜单" @click="menu_item_add()" draggable="false"><span class="sub_pre_menu_inner js_sub_pre_menu_inner"><i class="icon14_menu_add"></i></span></a></li>
+                                </ul>
+                                <i class="arrow arrow_out"></i>
+                                <i class="arrow arrow_in"></i>
+                            </div>
+                        </li>
+                        <li class="js_addMenuBox pre_menu_item grid_item no_extra size1of1"> <a href="javascript:void(0);" v-if="isSet(menu.button)?(menu.button.length>=0&&menu.button.length<3):false"  @click="menu_add()" :class="[{pre_menu_link: activeMenuIndex===''}]" class="js_addL1Btn" title="最多添加3个一级菜单" draggable="false"> <i class="icon14_menu_add"></i> <span class="js_addMenuTips">添加菜单</span></a> </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu_form_area">
+            <div class="menu-tools-box">
+                <i-button type="primary" size="default" class="i-button" @click="init_mall_menu_data()">初始化为标准商城菜单</i-button>
+            </div>
+            <div id="js_none" class="menu_initial_tips tips_global" style="display: none;"></div>
+            <div id="js_rightBox" class="portable_editor to_left"  style="display: none;" v-show="activeMenuIndex > 0 || activeMenuIndex === 0 || activeMenuItemIndex > 0 || activeMenuIndex === 0 ">
+                <div class="editor_inner">
+                    <div class="global_mod float_layout menu_form_hd js_second_title_bar">
+
+                        <div class="global_extra">
+                            <a href="javascript:void(0);" id="jsDelBt" @click="menu_del()" v-if="showDelBtnType===1">删除菜单</a>
+                            <a href="javascript:void(0);" id="jsDelBt" @click="menu_item_del()" v-if="showDelBtnType===2">删除子菜单</a>
+                        </div>
+                    </div>
+                    <div class="menu_form_bd" id="view">
+                        <div id="js_innerNone" style="display:none;" class="msg_sender_tips tips_global"></div>
+                        <div class="frm_control_group js_setNameBox">
+                            <label for="" class="frm_label"> <strong class="title js_menuTitle">菜单名称</strong> </label>
+                            <div class="frm_controls">
+                                <span class="frm_input_box with_counter counter_in append" v-if="activeMenuType() == 1 && isSet(menu.button[activeMenuIndex])"> <input type="text" class="frm_input js_menu_name" v-model="menu.button[activeMenuIndex].name" /> </span>
+                                <span class="frm_input_box with_counter counter_in append" v-if="activeMenuType() == 2 && isSet(menu.button[activeMenuIndex].sub_button[activeMenuItemIndex])"> <input type="text" class="frm_input js_menu_name" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].name" /> </span>
+                                <p class="frm_msg fail js_titleEorTips dn">字数超过上限</p>
+                                <p class="frm_msg fail js_titlenoTips dn" style="display: none;">请输入菜单名称</p>
+                                <p class="frm_tips js_titleNolTips">字数不超过4个汉字或8个字母</p>
+                            </div>
+                        </div>
+                        <div class="frm_control_group" v-show="((activeMenuIndex > 0 || activeMenuIndex === 0) && (menu.button[activeMenuIndex].sub_button.length == 0)) || (activeMenuItemIndex > 0 || activeMenuItemIndex === 0) " style="display: none;">
+                            <label for="" class="frm_label"> <strong class="title js_menuContent">菜单内容</strong> </label>
+                            <div class="frm_controls frm_vertical_pt">
+                                <label class="frm_radio_label js_radio_sendMsg" @click="radio_label_selected(1)" :class="[{selected:showMenuContentType===1}]" data-editing="0"> <i class="icon_radio"></i> <span class="lbl_content">发送消息</span> <input type="radio" name="hello" class="frm_radio" /> </label>
+                                <label class="frm_radio_label js_radio_url" @click="radio_label_selected(2)" :class="[{selected:showMenuContentType===2}]" data-editing="0"> <i class="icon_radio"></i> <span class="lbl_content">跳转网页</span> <input type="radio" name="hello" class="frm_radio" /> </label>
+                                <label class="frm_radio_label " @click="radio_label_selected(3)" :class="[{selected:showMenuContentType===3}]" data-editing="0"> <i class="icon_radio"></i> <span class="lbl_content">小程序</span> <input type="radio" name="hello" class="frm_radio" /> </label>
+                            </div>
+                        </div>
+                        <div class="menu_content_container">
+                            <div class="menu_content send jsMain" id="edit" v-show="showMenuContentType===1" style="display: none;">
+                                <div class="msg_sender" id="editDiv">
+                                    <div class="msg_tab">
+                                        <div class="tab_navs_panel">
+                                            <span class="tab_navs_switch_wrp switch_prev js_switch_prev"> <span class="tab_navs_switch"></span> </span>
+                                            <span class="tab_navs_switch_wrp switch_next js_switch_next" style="display: none;"> <span class="tab_navs_switch"></span> </span>
+                                            <div class="tab_navs_wrp" style="width: 650px">
+                                                <ul class="tab_navs js_tab_navs" style="margin-left:0;">
+                                                    <li class="tab_nav tab_appmsg width4" :class="[{selected:showMenuContentMsgType===1}]" data-type="10" data-tab=".js_appmsgArea" data-tooltip="图文消息"> <a href="javascript:void(0);" @click="content_msg_tab_nav(1)">&nbsp;<i class="icon_msg_sender"></i><span class="msg_tab_title">图文消息</span></a> </li>
+                                                    <li class="tab_nav tab_img width4" :class="[{selected:showMenuContentMsgType===2}]" data-type="2" data-tab=".js_imgArea" data-tooltip="图片"> <a href="javascript:void(0);" @click="content_msg_tab_nav(2)">&nbsp;<i class="icon_msg_sender"></i><span class="msg_tab_title">图片</span></a> </li>
+                                                    <li class="tab_nav tab_audio width4" :class="[{selected:showMenuContentMsgType===3}]" data-type="3" data-tab=".js_audioArea" data-tooltip="语音"> <a href="javascript:void(0);" @click="content_msg_tab_nav(3)">&nbsp;<i class="icon_msg_sender"></i><span class="msg_tab_title">语音</span></a> </li>
+                                                    <li class="tab_nav tab_video width4 no_extra" :class="[{selected:showMenuContentMsgType===4}]" data-type="15" data-tab=".js_videoArea" data-tooltip="视频"> <a href="javascript:void(0);" @click="content_msg_tab_nav(4)">&nbsp;<i class="icon_msg_sender"></i><span class="msg_tab_title">视频</span></a> </li>
+<!--                                                    <li class="tab_nav">
+                                                        <label>KEY:</label>
+                                                        <input style="width: 190px" type="text" v-if="activeMenuType() == 1 && isSet(menu.button[activeMenuIndex])" v-model="menu.button[activeMenuIndex].key" value="">
+                                                        <input style="width: 190px" type="text" v-if="activeMenuType() == 2 && isSet(menu.button[activeMenuIndex].sub_button[activeMenuItemIndex])" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].key" value="">
+                                                    </li> -->
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="tab_panel">
+                                            <div class="tab_content" v-show="showMenuContentMsgType===1" style="display: none;">
+                                                <div class="js_appmsgArea inner ">
+                                                    <!--type 10图文 2图片  3语音 15视频 11商品消息-->
+                                                    <div class="tab_cont_cover jsMsgSendTab" data-index="0">
+                                                        <div class="media_cover">
+                                                            <span class="create_access"> <a class="add_gray_wrp jsMsgSenderPopBt" @click="show_material('news')" data-type="10" data-index="0"> <i class="icon36_common add_gray"></i> <strong>从素材库中选择</strong> </a> </span>
+                                                        </div>
+                                                        <div class="media_cover">
+                                                            <div v-if="selected_material && selected_material.content && selected_material.content.news_item && showMenuContentMsgType===1" class="material-item-news">
+                                                                <div v-for="(news, index) in selected_material.content.news_item" class="news-item"
+                                                                     v-bind:class="{'small-news': index!=0}">
+                                                                    <img :src="news.thumb_url" alt="">
+                                                                    <h3>{{ news.title }}</h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab_content" v-show="showMenuContentMsgType===2" style="display: none;">
+                                                <div class="js_imgArea inner ">
+                                                    <!--type 10图文 2图片  3语音 15视频 11商品消息-->
+                                                    <div class="tab_cont_cover jsMsgSendTab" data-index="1" data-type="2">
+                                                        <div class="media_cover">
+                                                            <span class="create_access"> <a class="add_gray_wrp jsMsgSenderPopBt" @click="show_material('image')" href="javascript:void(0);" data-type="2" data-index="1"> <i class="icon36_common add_gray"></i> <strong>从素材库中选择</strong> </a> </span>
+                                                        </div>
+                                                        <div class="media_cover">
+                                                            <div v-if="selected_material && showMenuContentMsgType===2" class="material-item-image">
+                                                                <div><img :src="selected_material.url" alt=""></div>
+                                                                <h3>{{ selected_material.name }}</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab_content" v-show="showMenuContentMsgType===3" style="display: none;">
+                                                <div class="js_audioArea inner ">
+                                                    <!--type 10图文 2图片  3语音 15视频 11商品消息-->
+                                                    <div class="tab_cont_cover jsMsgSendTab" data-index="2" data-type="3">
+                                                        <div class="media_cover">
+                                                            <span class="create_access"> <a class="add_gray_wrp jsMsgSenderPopBt" @click="show_material('voice')" href="javascript:void(0);" data-type="3" data-index="2"> <i class="icon36_common add_gray"></i> <strong>从素材库中选择</strong> </a> </span>
+                                                        </div>
+                                                        <div class="media_cover">
+                                                            <div v-if="selected_material && showMenuContentMsgType===3" class="material-item-voice">
+                                                                <div><span class="icon_audio_msg"></span></div>
+                                                                <div  class="material-item-voice-content">
+                                                                    <h3>{{ selected_material.name }}</h3>
+                                                                    <h3>{{ selected_material.update_time | time }}</h3></div>
+                                                                <audio :src="selected_material.url" controls="controls"></audio>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab_content" v-show="showMenuContentMsgType===4" style="display: none;">
+                                                <div class="js_videoArea inner ">
+                                                    <!--type 10图文 2图片  3语音 15视频 11商品消息-->
+                                                    <div class="tab_cont_cover jsMsgSendTab" data-index="3">
+                                                        <div class="media_cover">
+                                                            <span class="create_access"> <a class="add_gray_wrp jsMsgSenderPopBt" @click="show_material('video')" href="javascript:void(0);" data-type="15" data-index="3"> <i class="icon36_common add_gray"></i> <strong>从素材库中选择</strong> </a> </span>
+                                                        </div>
+                                                        <div class="media_cover">
+                                                            <div v-if="selected_material && showMenuContentMsgType===4" class="material-item-video">
+                                                                <div><span class="icon_video_msg"></span></div>
+                                                                <div  class="material-item-video-content">
+                                                                    <h3>{{ selected_material.name }}</h3>
+                                                                    <h3><a v-if="selected_material.down_url"
+                                                                           target="_blank"
+                                                                           v-bind:href="selected_material.down_url">查看视频</a></h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="profile_link_msg_global menu_send mini_tips warn dn js_warn"> 请勿添加其他公众号的主页链接 </p>
+                            </div>
+                            <div class="menu_content url jsMain" id="url" v-show="showMenuContentType===2" style="display: none;">
+                                <form action="" id="urlForm" onsubmit="return false;">
+                                    <p class="menu_content_tips tips_global">订阅者点击该子菜单会跳到以下链接</p>
+                                    <div class="frm_control_group">
+                                        <label for="" class="frm_label">页面地址</label>
+                                        <div class="frm_controls">
+                                            <span class="frm_input_box" v-if="activeMenuType() == 1"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].url" /> </span>
+                                            <span class="frm_input_box" v-if="activeMenuType() == 2"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].url" /> </span>
+                                            <input type="hidden" v-if="temp_data"/>
+                                            <p class="profile_link_msg_global menu_url mini_tips warn dn js_warn"> 请勿添加其他公众号的主页链接 </p>
+                                            <p class="frm_tips" id="js_urlTitle" style="display: none;"> 来自<span class="js_name"></span><span style="display:none;"> -《<span class="js_title"></span>》</span> </p>
+                                        </div>
+                                    </div>
+                                    <!--<div class="frm_control_group">
+                                        <div class="frm_controls">
+                                            <label for="" class="frm_label"></label>
+                                            <a href="javascript:void(0);" id="js_appmsgPop">从公众号图文消息中选择</a>
+                                        </div>
+                                    </div> -->
+                                    <div class="frm_control_group">
+                                        <div class="frm_controls">
+                                            <label for="" class="frm_label"></label>
+                                            <a @click="set_specific_url('mall_url')" href="javascript:void(0);">设置为商城首页</a>
+                                        </div>
+                                    </div>
+                                    <div class="frm_control_group">
+                                        <div class="frm_controls">
+                                            <label for="" class="frm_label"></label>
+                                            <a @click="set_specific_url('official_website_url')" href="javascript:void(0);">设置为官方网站</a>
+                                        </div>
+                                    </div>
+                                    <div class="frm_control_group">
+                                        <div class="frm_controls">
+                                            <label for="" class="frm_label"></label>
+                                            <a @click="set_specific_url('mall_center_url')" href="javascript:void(0);">设置为商城个人中心</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="menu_content url jsMain" id="url" v-show="showMenuContentType===3" style="display: none;">
+                                <form action="" id="urlForm" onsubmit="return false;">
+                                    <div class="frm_control_group">
+                                        <label for="" class="frm_label">小程序appid</label>
+                                        <div class="frm_controls">
+                                            <span class="frm_input_box" v-if="activeMenuType() == 1"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].appid" /> </span>
+                                            <span class="frm_input_box" v-if="activeMenuType() == 2"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].appid" /> </span>
+                                        </div>
+                                        <br/>
+                                        <label for="" class="frm_label">小程序页面地址</label>
+                                        <div class="frm_controls">
+                                            <span class="frm_input_box" v-if="activeMenuType() == 1"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].pagepath" /> </span>
+                                            <span class="frm_input_box" v-if="activeMenuType() == 2"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].pagepath" /> </span>
+                                        </div>
+                                        <br/>
+                                        <label for="" class="frm_label">备用页面地址</label>
+                                        <div class="frm_controls">
+                                            <span class="frm_input_box" v-if="activeMenuType() == 1"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].url" /> </span>
+                                            <span class="frm_input_box" v-if="activeMenuType() == 2"> <input type="text" class="frm_input" id="urlText" name="urlText" v-model="menu.button[activeMenuIndex].sub_button[activeMenuItemIndex].url" /> </span>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="menu_content sended" style="display:none;">
+                                <p class="menu_content_tips tips_global">订阅者点击该子菜单会跳到以下链接</p>
+                                <div class="msg_wrp" id="viewDiv"></div>
+                                <p class="frm_tips">来自<span class="js_name">素材库</span><span style="display:none;"> -《<span class="js_title"></span>》</span></p>
+                            </div>
+                            <div id="js_errTips" style="display:none;" class="msg_sender_msg mini_tips warn"></div>
+                        </div>
+                    </div>
+                </div>
+                <span class="editor_arrow_wrp"> <i class="editor_arrow editor_arrow_out"></i> <i class="editor_arrow editor_arrow_in"></i> </span>
+            </div>
+        </div>
+    </div>
+    <div class="tool_bar tc js_editBox">
+        <span id="pubBt" class="btn btn_input btn_primary" style="display: block;" @click="saveData()"><button>保存并发布(请确认菜单内容填写完整，否则无法保存)</button></span>
+        <!--<a href="javascript:void(0);" class="btn btn_default" id="viewBt" style="display: block;">预览</a>-->
+    </div>
+    <Modal
+        v-model="material_modal"
+        title="选择素材"
+        width="800px"
+        height="600px"
+        @on-ok="set_selected_material()">
+        <div class="material-container">
+            <div v-if="showMenuContentMsgType===1 && material_data" class="material-item-wrapper-news">
+                <div v-for="item in material_data.item" class="material-item-news"
+                v-bind:class="{'selected-material': selected_material_temp.media_id == item.media_id}"
+                @click="select_material(item)">
+                    <div v-for="(news, index) in item.content.news_item" class="news-item"
+                         v-bind:class="{'small-news': index!=0}">
+                        <img :src="news.thumb_url" alt="">
+                        <h3>{{ news.title }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div v-else-if="showMenuContentMsgType===2 && material_data" class="material-item-wrapper-image">
+                <div v-for="item in material_data.item" v-if="item.name !== 'CropImage'" class="material-item-image"
+                v-bind:class="{'selected-material': selected_material_temp.media_id == item.media_id}"
+                @click="select_material(item)">
+                    <div><img :src="item.url" alt=""></div>
+                    <h3>{{ item.name }}</h3>
+                </div>
+            </div>
+            <div v-else-if="showMenuContentMsgType===3 && material_data" class="material-item-wrapper-voice">
+                <div v-for="item in material_data.item" class="material-item-voice"
+                v-bind:class="{'selected-material': selected_material_temp.media_id == item.media_id}"
+                @click="select_material(item)">
+                    <div><span class="icon_audio_msg"></span></div>
+                    <div class="material-item-voice-content">
+                        <h3>{{ item.name }}</h3>
+                        <h3>{{ item.update_time | time }}</h3></div>
+                </div>
+            </div>
+            <div v-else-if="showMenuContentMsgType===4 && material_data" class="material-item-wrapper-video">
+                <div v-for="item in material_data.item" class="material-item-video"
+                v-bind:class="{'selected-material': selected_material_temp.media_id == item.media_id}"
+                @click="select_material(item)">
+                    <div><span class="icon_video_msg"></span></div>
+                    <div class="material-item-video-content">
+                        <h3>{{ item.name }}</h3>
+                        <h3>{{ item.update_time | time }}</h3></div>
+                </div>
+            </div>
+            <template>
+                <Page :total="material_total" :page-size="page_size" @on-change="material_change_page"></Page>
+            </template>
+        </div>
+    </Modal>
+</div>
+<script src="js/jquery.min.js"></script>
+<script>
+    Vue.filter('time',
+    <!-- value 格式为13位unix时间戳 -->
+    <!-- 10位unix时间戳可通过value*1000转换为13位格式 -->
+    function(value) {
+        if (!value){
+            return '';
+        }
+        var date = new Date(value * 1000);
+        Y = date.getFullYear(),
+        m = date.getMonth() + 1,
+        d = date.getDate(),
+        H = date.getHours(),
+        i = date.getMinutes(),
+        s = date.getSeconds();
+        if (m < 10) {
+            m = '0' + m;
+        }
+        if (d < 10) {
+            d = '0' + d;
+        }
+        if (H < 10) {
+            H = '0' + H;
+        }
+        if (i < 10) {
+            i = '0' + i;
+        }
+        if (s < 10) {
+            s = '0' + s;
+        }
+        <!-- 获取时间格式 2017-01-03 10:13:48 -->
+        // var t = Y+'-'+m+'-'+d+' '+H+':'+i+':'+s;
+        <!-- 获取时间格式 2017-01-03 -->
+        var t = Y + '-' + m + '-' + d;
+        return t;
+    })
+    var inst_token = parent.window.document.getElementById("inst_token").value;
+    var app = new Vue({
+        el: '.menu_setting_box.js_menuBox',
+        data:function () {
+                return {
+                    "gzh_name":'实时预览',
+                    "menu":{
+                        "button":[
+                            {"type":"click","name":"添加菜单","key":"V1001_TODAY_SINGER","url":"","sub_button":[]},
+                        ]
+                    },
+//                    "menu":{'button':[]},
+                    "new_menu":{'button':[]},
+                    "activeMenuName":'',
+                    "activeMenuIndex":'',
+                    "activeMenuItemName":'',
+                    "activeMenuItemIndex":'',
+                    "showDelBtnType":'', //1:delMenu 2:delMenuItem
+                    "showMenuContentType":'', //1:发送消息 2:跳转链接
+                    "showMenuContentMsgType":'', //1:图文信息 2:图片 3:语音 4:视频
+                    'result': '',
+                    "material_modal": false,
+                    "material_data": '',
+                    "selected_material": '',
+                    "selected_material_temp": '',
+                    "temp_data": '',
+                    "page_size": 2,
+                    "current_page": 1,
+                    "material_offset": 0,
+                    "current_material_type": 1,
+                    "material_total": 100
+                }
+            },
+        methods:{
+            menu_data_completing:function () {
+                for(var i=0;i<this.menu.button.length;i++){
+                    if(!('type' in this.menu.button[i])){
+                        this.menu.button[i].type = 'view';
+                    }
+                    if(!('name' in this.menu.button[i])){
+                        this.menu.button[i].name = '';
+                    }
+                    if(!('key' in this.menu.button[i])){
+                        this.menu.button[i].key = '';
+                    }
+                    if(!('url' in this.menu.button[i])){
+                        this.menu.button[i].url = '';
+                    }
+                    if(!('sub_button' in this.menu.button[i])){
+                        this.menu.button[i].sub_button = [];
+                    }
+                    if(this.menu.button[i].sub_button.length>0){
+                        for(var j=0;j<this.menu.button[i].sub_button.length;j++) {
+                            if (!('type' in this.menu.button[i].sub_button[j])) {
+                                this.menu.button[i].sub_button[j].type = 'view';
+                            }
+                            if (!('name' in this.menu.button[i].sub_button[j])) {
+                                this.menu.button[i].sub_button[j].name = '';
+                            }
+                            if (!('key' in this.menu.button[i].sub_button[j])) {
+                                this.menu.button[i].sub_button[j].key = '';
+                            }
+                            if (!('url' in this.menu.button[i].sub_button[j])) {
+                                this.menu.button[i].sub_button[j].url = '';
+                            }
+                            if (!('sub_button' in this.menu.button[i].sub_button[j])) {
+                                this.menu.button[i].sub_button[j].sub_button = [];
+                            }
+                        }
+                    }
+                }
+            },
+            saveData:function () {
+                //补全数据,无数据也要为空
+                this.menu_data_completing();
+                console.log(this.menu);
+                for(var i=0;i<this.menu.button.length;i++){
+                    if(this.menu.button[i].sub_button.length>0){
+                        var _sub_button = [];
+                        for(var j=0;j<this.menu.button[i].sub_button.length;j++){
+                            if(this.menu.button[i].sub_button[j].type == 'media_id'){
+                                _sub_button[j]={
+                                    "type":this.menu.button[i].sub_button[j].type,
+                                    "name":this.menu.button[i].sub_button[j].name,
+                                    "media_id":this.menu.button[i].sub_button[j].media_id
+                                };
+                            }else if(this.menu.button[i].sub_button[j].type == 'view'){
+                                _sub_button[j]={
+                                    "type":this.menu.button[i].sub_button[j].type,
+                                    "name":this.menu.button[i].sub_button[j].name,
+                                    "url":this.menu.button[i].sub_button[j].url
+                                };
+                            }else if(this.menu.button[i].sub_button[j].type == 'miniprogram'){
+                                _sub_button[j]={
+                                    "type":this.menu.button[i].sub_button[j].type,
+                                    "name":this.menu.button[i].sub_button[j].name,
+                                    "url":this.menu.button[i].sub_button[j].url,
+                                    "appid":this.menu.button[i].sub_button[j].appid,
+                                    "pagepath":this.menu.button[i].sub_button[j].pagepath
+                                };
+                            }
+                        }
+                        if(this.menu.button[i].type == 'media_id'){
+                            this.new_menu.button[i]={
+                                "name":this.menu.button[i].name,
+                                "sub_button":_sub_button
+                            };
+                        }else if(this.menu.button[i].type == 'view'){
+                            this.new_menu.button[i]={
+                                "name":this.menu.button[i].name,
+                                "sub_button":_sub_button
+                            };
+                        }else if(this.menu.button[i].type == 'miniprogram'){
+                            this.new_menu.button[i]={
+                                "name":this.menu.button[i].name,
+                                "sub_button":_sub_button
+                            };
+                        }
+                    }else{
+                        if(this.menu.button[i].type == 'media_id'){
+                            this.new_menu.button[i]={
+                                "type":this.menu.button[i].type,
+                                "name":this.menu.button[i].name,
+                                "media_id":this.menu.button[i].media_id
+                            };
+                        }else if(this.menu.button[i].type == 'view'){
+                            this.new_menu.button[i]= {
+                                "type": this.menu.button[i].type,
+                                "name": this.menu.button[i].name,
+                                "url": this.menu.button[i].url
+                            };
+                        }else if(this.menu.button[i].type == 'miniprogram'){
+                            this.new_menu.button[i]= {
+                                "type": this.menu.button[i].type,
+                                "name": this.menu.button[i].name,
+                                "url": this.menu.button[i].url,
+                                "appid": this.menu.button[i].appid,
+                                "pagepath": this.menu.button[i].pagepath
+                            };
+                        }
+                    }
+                }
+                console.log(this.new_menu);
+//                $('#result').html(this.new_menu);
+                console.log(JSON.parse(JSON.stringify(this.new_menu)));
+                console.log(JSON.stringify(this.new_menu));
+                //$('#result').html(JSON.stringify(this.new_menu));
+                this.result = JSON.stringify(this.new_menu)
+                this.setToServer()
+            },
+            menu_selected:function (name,index) {
+                //console.log(name);
+                //console.log(index);
+                //console.log(this.$el);
+                //console.log($(e.srcElement));
+                //console.log($(e.target));
+                this.showDelBtnType = 1;
+                this.activeMenuName = name;
+                this.activeMenuIndex = index;
+                this.activeMenuItemName = '';
+                this.activeMenuItemIndex = '';
+
+                //补全数据,无数据也要为空
+                this.menu_data_completing();
+
+                if(this.menu.button[this.activeMenuIndex].sub_button.length > 0){
+                    this.showMenuContentType = '';
+                }else{
+                    this.showMenuContentType = this.activeMenuBtnType();
+                }
+            },
+            menu_item_selected:function (name,index) {
+                this.showDelBtnType = 2;
+                this.activeMenuItemName = name;
+                this.activeMenuItemIndex = index;
+
+                //补全数据,无数据也要为空
+                this.menu_data_completing();
+
+                if(this.activeMenuIndex > 0 || this.activeMenuIndex === 0){
+                    if(this.menu.button[this.activeMenuIndex].sub_button.length > 0){
+                        this.showMenuContentType = this.activeMenuBtnType();
+                    }
+                }
+            },
+            menu_add:function () {
+                if(this.menu.button.length < 3){
+                    this.activeMenuItemIndex = '';
+                    this.activeMenuItemName = '';
+                    this.showMenuContentType = 2;
+                    this.showMenuContentMsgType = '';
+                    this.menu.button.push({"type":"view","name":"菜单名称","key":"","url":"","sub_button":[],"media_id":"", "appid":"", "pagepath":""});
+                    this.activeMenuIndex = this.menu.button.length-1;
+                    this.activeMenuName = '菜单名称';
+                    this.showDelBtnType = 1;
+                    //补全数据,无数据也要为空
+                    this.menu_data_completing();
+                }else{
+                    alert('最多3个一级菜单');
+                }
+            },
+            menu_item_add:function () {
+                if(this.menu.button[this.activeMenuIndex].sub_button.length < 5){
+                    this.showMenuContentType = 2;
+                    this.showMenuContentMsgType = '';
+                    this.menu.button[this.activeMenuIndex].sub_button.push({"type":"view","name":"子菜单名称",
+                        "key":"","url":"","sub_button":[], "media_id":"", "appid":"", "pagepath":""});
+                    this.activeMenuItemIndex = this.menu.button[this.activeMenuIndex].sub_button.length-1;
+                    this.activeMenuItemName = '子菜单名称';
+                    this.showDelBtnType = 2;
+                    //补全数据,无数据也要为空
+                    this.menu_data_completing();
+                }else{
+                    alert('最多5个二级菜单');
+                }
+            },
+            menu_del:function () {
+                if(this.menu.button.length <= 3 && this.menu.button.length >0){
+
+                    if((this.activeMenuIndex !== 0) && (this.activeMenuIndex == this.menu.button.length-1)){
+                        this.menu.button.splice(this.activeMenuIndex,1);
+                        this.activeMenuIndex -= 1;
+                    }else if(this.activeMenuIndex == 0){
+                        this.menu.button.splice(this.activeMenuIndex,1);
+                        this.activeMenuIndex = 0;
+                    }else{
+                        this.menu.button.splice(this.activeMenuIndex,1);
+                    }
+
+                    if(this.menu.button.length == 0){
+                        this.activeMenuIndex = '';
+                        this.activeMenuName = '';
+                        this.activeMenuItemIndex = '';
+                        this.activeMenuItemName = '';
+                    }
+                }
+            },
+            menu_item_del:function () {
+                if(this.menu.button[this.activeMenuIndex].sub_button.length <=5 && this.menu.button[this.activeMenuIndex].sub_button.length>0 ){
+                    if(this.activeMenuItemIndex == this.menu.button[this.activeMenuIndex].sub_button.length-1){
+                        this.menu.button[this.activeMenuIndex].sub_button.splice(this.activeMenuItemIndex,1);
+                        this.activeMenuItemIndex -= 1;
+                    }else if(this.activeMenuItemIndex == 0){
+                        this.menu.button[this.activeMenuIndex].sub_button.splice(this.activeMenuItemIndex,1);
+                        this.activeMenuItemIndex = 0;
+                    }else{
+                        this.menu.button[this.activeMenuIndex].sub_button.splice(this.activeMenuItemIndex,1);
+                    }
+
+                    if(this.menu.button[this.activeMenuIndex].sub_button.length == 0){
+                        this.activeMenuIndex = '';
+                        this.activeMenuName = '';
+                        this.activeMenuItemIndex = '';
+                        this.activeMenuItemName = '';
+                    }
+                    this.showMenuContentType = this.activeMenuBtnType();
+                }
+            },
+            radio_label_selected:function (val) {
+                this.showMenuContentType = val;
+                if(val == 1){
+                    this.setType('media_id');
+                }else if(val == 2){
+                    this.setType('view');
+                }else if(val == 3){
+                    this.setType('miniprogram');
+                }
+            },
+            content_msg_tab_nav:function (val) {
+                console.log('change content_msg_tab_nav' + val);
+                this.showMenuContentMsgType = val;
+                this.material_data = '';
+                this.selected_material = '';
+                var current_menu = '';
+                if(this.menu.button[this.activeMenuIndex].sub_button.length>0){
+                    current_menu = this.menu.button[this.activeMenuIndex].sub_button[this.activeMenuItemIndex];
+                } else{
+                    current_menu = this.menu.button[this.activeMenuIndex]
+                }
+                console.log('get menu ')
+                console.log(current_menu)
+                if (current_menu.media_id !==undefined && current_menu.media_id && !this.selected_material){
+                    console.log('change tab to get media ' + val);
+                   this.get_media(current_menu.media_id)
+                }
+            },
+            activeMenuType:function () {
+                if(this.activeMenuIndex !== '' && this.activeMenuItemIndex !== ''){
+                    //子菜单、二级菜单
+                    return 2;
+                }else if(this.activeMenuIndex !== '' && this.activeMenuItemIndex === ''){
+                    //一级菜单
+                    return 1;
+                }else{
+                    return 0;
+                }
+            },
+            activeMenuBtnType:function () {
+                if(this.activeMenuType() === 1){
+                    //一级菜单
+                    switch(this.menu.button[this.activeMenuIndex].type){
+                        case 'media_id':
+                            return 1;
+                        case 'view':
+                            return 2;
+                        case 'miniprogram':
+                            return 3;
+                        default:
+                            return 0;
+                    }
+                }else if(this.activeMenuType() === 2){
+                    //子菜单、二级菜单
+                    switch(this.menu.button[this.activeMenuIndex].sub_button[this.activeMenuItemIndex].type){
+                        case 'media_id':
+                            return 1;
+                        case 'view':
+                            return 2;
+                        case 'miniprogram':
+                            return 3;
+                        default:
+                            return 0;
+                    }
+                }else{
+                    return '';
+                }
+            },
+            isSet:function (variable) {
+                if(typeof(variable)!='undefined'){
+                    return true;
+                }else{
+                    return false;
+                }
+            },
+            setType:function (type) {
+                console.log(this.activeMenuIndex);
+                if(this.activeMenuType() == 1){
+                    this.menu.button[this.activeMenuIndex].type = type;
+                }else if(this.activeMenuType() == 2){
+                    this.menu.button[this.activeMenuIndex].sub_button[this.activeMenuItemIndex].type = type;
+                }
+            },
+            setNemMenuObj:function () {
+                for(var i=0;i<this.menu.button.length;i++){
+                    if(this.menu.button[i].sub_button.length>0){
+                        this.new_menu.push({"name":this.menu.button[i].name,"sub_button":this.menu.button[i].sub_button});
+                    }else{
+                        if(this.menu.button[i].type == 'media_id'){
+                            this.new_menu.push({"name":this.menu.button[i].name,"type":this.menu.button[i].type,"key":this.menu.button[i].key,"sub_button":[]});
+                        }else if(this.menu.button[i].type == 'view'){
+                            this.new_menu.push({"name":this.menu.button[i].name,"type":this.menu.button[i].type,"url":this.menu.button[i].url,"sub_button":[]});
+                        }else if(this.menu.button[i].type == 'miniprogram'){
+                            this.new_menu.push({"name":this.menu.button[i].name,"type":this.menu.button[i].type,
+                                "url":this.menu.button[i].url,
+                                "appid":this.menu.button[i].appid,
+                                "pagepath":this.menu.button[i].pagepath,
+                                "sub_button":[]});
+                        }
+
+                    }
+                }
+            },
+            setToServer: function () {
+                var inst_token = parent.window.document.getElementById("inst_token").value;
+                $.ajax({
+                  method: 'post',
+                  url: '/api/mpclient/set_menu/',
+                  data: {menu: JSON.stringify(this.new_menu), inst_token:inst_token}
+                }).then(function (data) {
+                  alert('设置成功')
+                }.bind(this))
+              },
+            set_menu_data: function () {
+                $.ajax({
+                  method: 'get',
+                  url: '/api/mpclient/get_menu/'
+                }).then(function (data) {
+                    if(data){
+                       this.menu = data;
+                    }else{
+                        alert('在此设置将会覆盖原有菜单')
+                    }
+                  console.log('menu' + this.menu);
+                }.bind(this)).catch(function (resp) {
+                    console.log(resp);
+                    if(resp.status == 404){
+                        alert('你还没有授权公众号信息！')
+                        window.parent.hide_menu()
+                    }
+                })
+                },
+            show_material: function (material_type) {
+                this.material_modal = true;
+                this.current_material_type = material_type;
+                $.ajax({
+                  method: 'get',
+                  url: '/api/mpclient/material/?media_type=' + material_type + '&offset=' + this.material_offset + '&count=' + this.page_size
+                }).then(function (data) {
+                    console.log(data);
+                    this.material_data=data;
+                    this.material_total=data['total_count'];
+                }.bind(this))
+            },
+            select_material: function (media_item) {
+                this.selected_material_temp = media_item;
+                console.log(this.selected_material_temp);
+            },
+            set_selected_material: function () {
+                this.selected_material = this.selected_material_temp;
+                this.selected_material_temp = '';
+                if(this.menu.button[this.activeMenuIndex].sub_button.length>0){
+                    this.menu.button[this.activeMenuIndex].sub_button[this.activeMenuItemIndex].media_id = this.selected_material.media_id
+                }else{
+                   this.menu.button[this.activeMenuIndex].media_id = this.selected_material.media_id
+                }
+                //this.selected_material = ''
+            },
+            get_current_menu: function () {
+                var current_menu = '';
+              if(this.activeMenuType() == 1){
+                  current_menu = this.menu.button[this.activeMenuIndex]
+              }else if(this.activeMenuType() == 2){
+                  current_menu = this.menu.button[this.activeMenuIndex].sub_button[this.activeMenuItemIndex]
+              }
+              return current_menu
+            },
+            get_media: function (media_id, media_type) {
+                console.log('tab type is' + this.showMenuContentMsgType)
+                if (this.showMenuContentMsgType){
+                    var _media_type = this.showMenuContentMsgType;
+                    if (media_type){
+                        _media_type = media_type;
+                    }
+                    $.ajax({
+                      method: 'get',
+                      url: '/api/mpclient/get_media/?media_id=' + media_id + '&media_type=' + _media_type
+                    }).then(function (data) {
+                        if(data){
+                            this.selected_material=data;
+                        }else {
+                            this.selected_material='';
+                        }
+                    }.bind(this)).catch(function (resp) {
+                        this.selected_material='';
+                    }.bind(this))
+                }else{
+                    this.selected_material = ''
+                }
+            },
+            set_specific_url: function (id_name) {
+                var url = parent.window.document.getElementById(id_name).value;
+                var current_menu = this.get_current_menu()
+                if (current_menu){
+                    console.log('set specical url' + url);
+                    this.$set(current_menu, 'url', url)
+                    this.temp_data = Math.random();
+                }
+            },
+            init_mall_menu_data: function () {
+                this.selected_material = null;
+                this.activeMenuIndex = '';
+                this.activeMenuItemIndex = '';
+                var mall_url = parent.window.document.getElementById('mall_url').value;
+                var official_website_url = parent.window.document.getElementById('official_website_url').value;
+                var mall_center_url = parent.window.document.getElementById('mall_center_url').value;
+                this.menu = {
+                        "button":[{"type":"view","name":"官方网站","sub_button":[],"media_id":"", "appid":"",
+                                     "pagepath":"","url":official_website_url},
+                                 {"type":"view","name":"商城首页","sub_button":[],"url":mall_url,"media_id":"",
+                                     "appid":"", "pagepath":""},
+                                 {"type":"view","name":"个人中心","sub_button":[],"url":mall_center_url,"media_id":"",
+                                     "appid":"", "pagepath":""}]
+                    };
+            },
+            material_change_page: function (page_no) {
+                this.current_page = page_no;
+                var offset_page = page_no - 1 >= 0 ? page_no - 1 : 0;
+                this.material_offset = offset_page * this.page_size;
+                this.show_material(this.current_material_type)
+            }
+        },
+        watch:{
+            activeMenuItemIndex: function (new_value) {
+                this.showMenuContentMsgType = '';
+                var current_menu = this.get_current_menu();
+                console.log(new_value);
+                if(current_menu){
+                    console.log(current_menu.media_id);
+                }
+                if(current_menu && current_menu.media_id){
+                    this.get_media(current_menu.media_id)
+                }else{
+                    this.selected_material = ''
+                }
+            },
+            activeMenuIndex: function (new_value) {
+                this.showMenuContentMsgType = ''
+                var current_menu = this.get_current_menu();
+                console.log(new_value)
+                console.log(current_menu)
+                if(current_menu.sub_button && current_menu.sub_button.length==0 && 'media_id' in current_menu && current_menu.media_id ){
+                    this.get_media(current_menu.media_id)
+                }else{
+                    this.selected_material = ''
+                }
+            }
+        },
+        created: function () {
+            this.set_menu_data()
+        }
+    })
+</script>
+</body>
+</html>

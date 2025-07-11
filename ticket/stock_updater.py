@@ -1,0 +1,26 @@
+import logging
+from typing import List, Type, Union
+
+from concu.stock_cache import StockCache, StockModel
+from ticket.models import TicketFile, SessionInfo
+
+"""
+实现库存的缓存
+"""
+
+
+class TicketFileCache(StockCache):
+    def load_list(self) -> List[StockModel]:
+        l = []
+        for _id, stock in TicketFile.objects.filter(session__has_seat=SessionInfo.SEAT_NO).values_list('pk', 'stock'):
+            l.append(StockModel(_id, stock))
+        return l
+
+    def key_prefix(self):
+        return 'goods-spec'
+
+    def save_stock_model(self, id: Union[int, str], qty: int) -> bool:
+        return TicketFile.objects.filter(pk=id).update(stock=qty) == 1
+
+
+tfc = TicketFileCache()
