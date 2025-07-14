@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'statistical',
     'xiaohongshu',
     'coupon',
+    'home'
     # 'group_activity'
 ]
 
