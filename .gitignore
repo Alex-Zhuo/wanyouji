@@ -15,3 +15,5 @@ media/*
 static/config.json
 *.patch
 *sqlite*
+.vscode/*
+venv/*
