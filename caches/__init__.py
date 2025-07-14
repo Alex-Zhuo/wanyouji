@@ -18,7 +18,7 @@ def get_redis_name(name):
 
 def redis_client():
     redis_conf = get_config().get('redis')
-    return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', '127.0.0.1'),
+    return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', 0),
                        decode_responses=True)
 
 
