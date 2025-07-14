@@ -64,7 +64,8 @@ class ResourceAdmin(ChangeAndViewAdmin):
 
 
 class OpenScreenMediaAdmin(admin.ModelAdmin):
-    list_display = ['id', 'image']
+    list_display = ['id', 'image', 'video', 'seconds', 'is_use']
+    list_filter = ['is_use']
 
 
 admin.site.register(Resource, ResourceAdmin)

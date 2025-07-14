@@ -8,4 +8,4 @@ from renovation.models import OpenScreenMedia
 class OpenScreenMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenScreenMedia
-        fields =['image']
+        fields = ['image', 'video', 'seconds']

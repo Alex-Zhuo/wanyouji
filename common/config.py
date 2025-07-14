@@ -31,3 +31,4 @@ ConfigInst = ConfigInst()
 
 FILE_FIELD_PREFIX = 'files'
 IMAGE_FIELD_PREFIX = 'images'
+VIDEO_EXT_LIST = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'mpeg', 'mpg']

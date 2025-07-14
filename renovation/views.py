@@ -7,7 +7,7 @@ from renovation.serializers import OpenScreenMediaSerializer
 from rest_framework.response import Response
 
 
-class OpenScreenMediaSet(ReturnNoDetailViewSet):
+class OpenScreenMediaViewSet(ReturnNoDetailViewSet):
     queryset = OpenScreenMedia.objects.filter(is_use=True)
     serializer_class = OpenScreenMediaSerializer
     permission_classes = []

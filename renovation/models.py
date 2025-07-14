@@ -2,10 +2,10 @@
 from __future__ import unicode_literals
 
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_image_file_extension
+from django.core.validators import validate_image_file_extension, FileExtensionValidator
 from django.db import models
 
-from common.config import IMAGE_FIELD_PREFIX
+from common.config import IMAGE_FIELD_PREFIX, FILE_FIELD_PREFIX, VIDEO_EXT_LIST
 
 
 class SubPages(models.Model):
@@ -75,8 +75,12 @@ def validate_file_size(value):
 
 
 class OpenScreenMedia(models.Model):
-    image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/mall/screen',
-                              validators=[validate_image_file_extension])
+    image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/media/video',
+                              validators=[validate_image_file_extension], null=True, blank=True)
+    video = models.FileField('视频', upload_to=f'{FILE_FIELD_PREFIX}/media/video',
+                             validators=[FileExtensionValidator(allowed_extensions=VIDEO_EXT_LIST)], null=True,
+                             blank=True)
+    seconds = models.PositiveSmallIntegerField('视频时间长度(秒)', default=0, help_text='单位：秒，传视频时必填')
     is_use = models.BooleanField('是否使用', default=True)
 
     class Meta:

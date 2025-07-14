@@ -1,7 +1,7 @@
 from rest_framework import routers
 
-from renovation.views import OpenScreenMediaSet
+from renovation.views import OpenScreenMediaViewSet
 
 router = routers.DefaultRouter()
 
-router.register('screen', OpenScreenMediaSet)
+router.register('screen', OpenScreenMediaViewSet)
