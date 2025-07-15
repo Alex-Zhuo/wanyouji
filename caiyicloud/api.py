@@ -164,8 +164,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         公共请求参数
         """
         from common.utils import get_timestamp
-        timestamp = int(get_timestamp(timezone.now()) / 1000)
-        return dict(app_id=self.app_id, timestamp=timestamp)
+        timestamp = int(get_timestamp(timezone.now()))
+        return dict(app_id=self.app_id, timestamp=str(timestamp))
 
     def get_sign(self, params: Dict) -> str:
         from caiyicloud.sign_utils import sign_top_request

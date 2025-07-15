@@ -21,6 +21,7 @@ class CaiyiErrorCode:
     API_SIGNATURE_VERIFICATION_FAILED = "100007"
     REAL_NAME_INFO_QUANTITY_MISMATCH = "100008"
     DISTRIBUTOR_ORDER_MAPPING_EXISTS = "100009"
+    IP_NO_ACCESS_PERMISSION = "100164"
 
     # 渠道相关错误 (400xxx)
     RISK_CONTROL_QUERY_EXCEPTION = "400001"
@@ -73,6 +74,8 @@ ERROR_CODE_MESSAGES: Dict[str, str] = {
     CaiyiErrorCode.BUNDLE_TICKET_INFO_NOT_FOUND: "未找到套票信息",
     CaiyiErrorCode.BUNDLE_TICKET_BASIC_TICKET_NOT_FOUND: "未找到套票对应基础票信息",
     CaiyiErrorCode.SESSION_ID_ERROR: "场次ID错误",
+    CaiyiErrorCode.IP_NO_ACCESS_PERMISSION: "ip暂无访问权限",
+
 }
 
 

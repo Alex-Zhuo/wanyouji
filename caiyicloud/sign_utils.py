@@ -8,7 +8,7 @@ from typing import Dict, Optional
 import base64
 
 
-def sign_top_request(params: Dict[str, str], private_key: str) -> str:
+def sign_top_request(params: Dict, private_key: str) -> str:
     """
     签名请求参数
     
@@ -27,7 +27,7 @@ def sign_top_request(params: Dict[str, str], private_key: str) -> str:
     for key in keys:
         value = params.get(key, '')
         if key and value:  # 检查key和value都不为空
-            query_parts.append(value)
+            query_parts.append(str(value))
     
     # 用&连接所有值
     sign_content = '&'.join(query_parts)
