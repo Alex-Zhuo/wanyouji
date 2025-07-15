@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'statistical',
     'xiaohongshu',
     'coupon',
-    'home'
+    'home',
+    'caiyicloud',
     # 'group_activity'
 ]
 
@@ -306,10 +307,15 @@ LOGGING = {
             'handlers': ['console', 'fatal'],
             'level': 'DEBUG',
         },
+        'caiyicloud': {
+            'handlers': ['console', 'fatal'],
+            'level': 'DEBUG',
+        },
     }
 }
 TIME_INPUT_FORMATS = ['%H:%M:%S']
 from mall.mall_conf import admin_url_site_name
+
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 SIMPLEUI_CONFIG = {
     # 开启系统默认菜单
