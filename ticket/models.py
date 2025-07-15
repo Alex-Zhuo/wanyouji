@@ -584,13 +584,13 @@ class ShowProject(UseNoAbstract):
         for show in data['shows']:
             logo_mobile = open_image_by_url(show['cover_image'])
             sale_time = datetime.fromtimestamp(show['timestamps'][0])
-            logo_mobile_path = f'{IMAGE_FIELD_PREFIX}\\ticket\\shows'
+            logo_mobile_path = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
             file_path = os.path.join(settings.MEDIA_ROOT, logo_mobile_path)
             if not os.path.isdir(file_path):
                 os.makedirs(file_path)
             file_name = f'{sha256_str(show["cover_image"])}.png'
-            img = f'{file_path}\\{file_name}'
-            logo_mobile_path = f'{logo_mobile_path}\\{file_name}'
+            img = f'{file_path}/{file_name}'
+            logo_mobile_path = f'{logo_mobile_path}/{file_name}'
             logo_mobile.save(img)
             end_at = sale_time + timedelta(hours=2)
             project, _ = cls.objects.get_or_create(title=show['title'], venues=venue, show_type=show_type,
