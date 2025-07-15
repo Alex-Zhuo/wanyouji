@@ -218,8 +218,14 @@ class TicketFileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class TicketColorBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketColor
+        fields = ['name', 'code']
+
+
 class TicketFileCacheSerializer(serializers.ModelSerializer):
-    color = TicketColorSerializer()
+    color = TicketColorBaseSerializer()
 
     class Meta:
         model = TicketFile
