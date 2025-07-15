@@ -101,7 +101,7 @@ class VenuesAdmin(RemoveDeleteModelAdmin):
 
     def op(self, obj):
         html = '<a target="_blank" href="/static/talkShow/seatManager/#/hallSeat?templeteId={}" class="el-button el-button--danger el-button--small" ' \
-               'style="margin-top:8px;color: #ffffff!important;">编辑座位</a><br>'.format(obj.id)
+               'style="margin-top:8px;color: #ffffff!important;">编辑座位</a><br>'.format(obj.no)
         return mark_safe(html)
 
     op.short_description = '操作'
