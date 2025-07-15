@@ -2132,7 +2132,7 @@ class SessionChangeRecord(models.Model):
 class TicketColor(models.Model):
     name = models.CharField('名称', max_length=10)
     code = models.CharField('色号', max_length=10, help_text='16进制色号')
-    is_use = models.BooleanField('是否使用', default=False)
+    is_use = models.BooleanField('是否使用', default=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '票档颜色'
