@@ -18,7 +18,7 @@ from datetime import timedelta
 from django.db.transaction import atomic
 import os
 import json
-from common.utils import get_config, random_new_digits, hash_ids, group_by_str, random_str, get_timestamp
+from common.utils import get_config, random_new_digits, hash_ids, group_by_str, random_str, get_timestamp, sha256_str
 from push import MpTemplateClient
 from random import sample
 from django.core.exceptions import ValidationError
@@ -519,7 +519,8 @@ class ShowProject(UseNoAbstract):
     logo_mobile = models.ImageField(u'宣传海报', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/shows',
                                     validators=[file_size, validate_image_file_extension])
     sale_time = models.DateTimeField('开售时间')
-    dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True)
+    dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True,
+                                    blank=True)
     origin_amount = models.DecimalField('抖音原价', max_digits=13, decimal_places=2, default=0)
     price = models.DecimalField('最低价格', max_digits=13, decimal_places=2, default=0, help_text='实际支付价格,用于展示和排序')
     # cert_type = models.ManyToManyField(CertificateType, verbose_name='支持的证件类型')
@@ -533,7 +534,7 @@ class ShowProject(UseNoAbstract):
     # 2：票务代理：主办方资质和票务代理资质必填
     # 主办方资质对应资质查询接口中的“营业性演出准予许可决定”
     # 票务代理资质对应资质查询接口中的“演出主办方授权书”
-    ID_CHOICES = [(ID_DEFAULT, ''), (ID_ORGANIZER, '主办方'), (ID_TICKETAAGENT, '票务代理')]
+    ID_CHOICES = [(ID_DEFAULT, '无'), (ID_ORGANIZER, '主办方'), (ID_TICKETAAGENT, '票务代理')]
     qualification_identity = models.SmallIntegerField('商家资质身份', choices=ID_CHOICES, default=ID_DEFAULT)
     host_approval_qual = models.ManyToManyField(TikTokQualRecord, verbose_name='营业性演出准予许可决定',
                                                 limit_choices_to=models.Q(qualification_type=5006),
@@ -571,6 +572,41 @@ class ShowProject(UseNoAbstract):
     class Meta:
         verbose_name_plural = verbose_name = '演出项目'
         ordering = ['-pk']
+
+    @classmethod
+    def import_record(cls, file_path):
+        from django.conf import settings
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        venue = Venues.objects.get(name=data['source'])
+        show_type = ShowType.objects.first()
+        from common.qrutils import open_image_by_url
+        for show in data['shows']:
+            logo_mobile = open_image_by_url(show['cover_image'])
+            sale_time = datetime.fromtimestamp(show['timestamps'][0])
+            logo_mobile_path = f'{IMAGE_FIELD_PREFIX}\\ticket\\shows'
+            file_path = os.path.join(settings.MEDIA_ROOT, logo_mobile_path)
+            if not os.path.isdir(file_path):
+                os.makedirs(file_path)
+            file_name = f'{sha256_str(show["cover_image"])}.png'
+            img = f'{file_path}\\{file_name}'
+            logo_mobile_path = f'{logo_mobile_path}\\{file_name}'
+            logo_mobile.save(img)
+            project, _ = cls.objects.get_or_create(title=show['title'], venues=venue, show_type=show_type,
+                                                   sale_time=sale_time, content=show['introduction'], notice=show['notice'],
+                                                   lat=venue.lat, lng=venue.lng, city_id=venue.city.id,
+                                                   price=Decimal(show['prices'][-1]), status=1,
+                                                   logo_mobile=logo_mobile_path)
+            session, _ = SessionInfo.objects.get_or_create(show=project, start_at=sale_time,
+                                                           end_at=sale_time + timedelta(hours=2), has_seat=2, status=1)
+            colors = [['蓝色', '#5B9BD5'], ['浅绿', '#e2efda'], ['绿色', '#54BF31'], ['黄色', '#D5DB28'], ['紫色', '#9000FF'],
+                      ['粉色', '#E863C2'], ['红色', '#F80B0B'], ['黄色', '#FFFF00'], ['粉色', '#F96AAD'], ['橙色', '#EE6E06']]
+            i = 0
+            for price in show['prices']:
+                color, _ = TicketColor.objects.get_or_create(name=colors[i][0], code=colors[i][1])
+                TicketFile.objects.get_or_create(session=session, title=project.title, color=color,
+                                                 origin_price=Decimal(price), price=Decimal(price), stock=100)
+                i += 1
 
     def set_shows_no_pk(self):
         from caches import get_pika_redis, redis_shows_no_key
@@ -971,7 +1007,7 @@ class SessionInfo(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     is_delete = models.BooleanField('是否作废', default=False)
-    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=True)
+    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False)
     is_sale_off = models.BooleanField('标记售罄', default=False)
     is_paper = models.BooleanField('是否纸质票', default=False, help_text='勾选的场次对应的订单需要邮寄纸质票给客户')
     name_buy_num = models.PositiveIntegerField('实名购票限购数量', default=0)
@@ -982,8 +1018,8 @@ class SessionInfo(UseNoAbstract):
     express_days = models.IntegerField('开演前多少天下单可邮寄', default=0, help_text='单位/天，设置后开演前n天下单的可以邮寄，'
                                                                            '不足n天的需要现场取票入场')
     close_comment = models.BooleanField('是否关闭评论', default=False)
-    is_dy_code = models.BooleanField('是否动态码', default=False, help_text='勾选后需要填写动态有效时间才能有效')
-    dc_expires_in = models.PositiveIntegerField('动态码有效时间', default=0, help_text='单位：分钟')
+    is_dy_code = models.BooleanField('是否动态码', default=True, help_text='勾选后需要填写动态有效时间才能有效')
+    dc_expires_in = models.PositiveIntegerField('动态码有效时间', default=20, help_text='单位：分钟')
     dy_status = models.IntegerField(u'抖音状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     is_price = models.BooleanField('是否已设价格', default=False)
