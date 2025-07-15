@@ -503,7 +503,7 @@ class TikTokQualRecord(models.Model):
 
 
 class ShowProject(UseNoAbstract):
-    title = models.CharField('演出名称', max_length=60, help_text='60个字内')
+    title = models.CharField('演出名称', max_length=100, help_text='100个字内')
     show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.CASCADE)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
                              blank=True)
@@ -592,13 +592,15 @@ class ShowProject(UseNoAbstract):
             img = f'{file_path}\\{file_name}'
             logo_mobile_path = f'{logo_mobile_path}\\{file_name}'
             logo_mobile.save(img)
+            end_at = sale_time + timedelta(hours=2)
             project, _ = cls.objects.get_or_create(title=show['title'], venues=venue, show_type=show_type,
-                                                   sale_time=sale_time, content=show['introduction'], notice=show['notice'],
+                                                   sale_time=sale_time, content=show['introduction'],
+                                                   notice=show['notice'],
                                                    lat=venue.lat, lng=venue.lng, city_id=venue.city.id,
                                                    price=Decimal(show['prices'][-1]), status=1,
-                                                   logo_mobile=logo_mobile_path)
+                                                   logo_mobile=logo_mobile_path, session_end_at=end_at)
             session, _ = SessionInfo.objects.get_or_create(show=project, start_at=sale_time,
-                                                           end_at=sale_time + timedelta(hours=2), has_seat=2, status=1)
+                                                           end_at=end_at, has_seat=2, status=1)
             colors = [['蓝色', '#5B9BD5'], ['浅绿', '#e2efda'], ['绿色', '#54BF31'], ['黄色', '#D5DB28'], ['紫色', '#9000FF'],
                       ['粉色', '#E863C2'], ['红色', '#F80B0B'], ['黄色', '#FFFF00'], ['粉色', '#F96AAD'], ['橙色', '#EE6E06']]
             i = 0
@@ -2141,7 +2143,7 @@ class TicketColor(models.Model):
 
 class TicketFile(models.Model):
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE, related_name='session_level')
-    title = models.CharField('演出名称', max_length=60, help_text='60个字内', null=True, blank=True)
+    title = models.CharField('演出名称', max_length=100, null=True, blank=True)
     color = models.ForeignKey(TicketColor, verbose_name='票档颜色', on_delete=models.CASCADE)
     origin_price = models.DecimalField('票档', max_digits=13, decimal_places=2, default=0)
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
