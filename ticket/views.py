@@ -606,7 +606,7 @@ class SessionInfoViewSet(SerializerSelector, DetailPKtoNoViewSet):
     @action(methods=['get'], detail=True, permission_classes=[IsTicketUser])
     def edit_no_seat(self, request, pk):
         # 后台用id
-        inst = SessionInfo.objects.get(pk=pk)
+        inst = SessionInfo.objects.get(no=pk)
         data = SessionInfoEditDetailSerializer(inst, context=dict(request=request)).data
         return Response(data)
 

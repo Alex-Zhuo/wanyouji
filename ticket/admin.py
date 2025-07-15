@@ -860,7 +860,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
         html = ''
         if request.user.is_superuser or (request.user.role in [request.user.ROLE_TICKET, request.user.ROLE_MANAGE]):
             html += '<a target="_blank" href="/static/talkShow/seatManager/#/seatList?session_id={}&templeteId={}" class="el-button el-button--danger el-button--small" ' \
-                    'style="margin-top:8px;color: #ffffff!important;">票档管理</a><br>'.format(obj.id, obj.show.venues.id)
+                    'style="margin-top:8px;color: #ffffff!important;">票档管理</a><br>'.format(obj.no, obj.show.venues.id)
         if obj.status == obj.STATUS_OFF:
             html += '<button type="button" class="el-button el-button--success el-button--small item_set_on_session" ' \
                     'style="margin-top:8px" alt={}>上架</button><br>'.format(obj.id)
