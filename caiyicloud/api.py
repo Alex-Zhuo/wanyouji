@@ -171,7 +171,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         from caiyicloud.sign_utils import sign_top_request
         return sign_top_request(params, self.private_key)
 
-    def get_product(self, page: int = 1, page_size: int = 50):
+    def get_events(self, page: int = 1, page_size: int = 50):
         """
         该接口用于获取已授权的节目列表
         https://platform.caiyicloud.com/#/doc/v1/distribution/event/events
