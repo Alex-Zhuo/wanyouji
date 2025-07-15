@@ -822,6 +822,7 @@ class ShowProject(UseNoAbstract):
             inst.redis_show_date_copy()
 
     def get_wxa_code(self):
+        return None
         from mp.models import SystemWxMP
         from django.db.models import signals
         sy = SystemWxMP.get()
