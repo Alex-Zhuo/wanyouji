@@ -630,7 +630,7 @@ class SessionInfoEditDetailSerializer(PKtoNoSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = [f.name for f in SessionInfo._meta.fields]
+        fields = [f.name for f in SessionInfo._meta.fields] + ['ticket_level']
 
 
 class SessionInfoDetailSerializer(SessionInfoEditDetailSerializer):
