@@ -606,9 +606,10 @@ class ShowProject(UseNoAbstract):
             i = 0
             for price in show['prices']:
                 color, _ = TicketColor.objects.get_or_create(name=colors[i][0], code=colors[i][1])
-                TicketFile.objects.get_or_create(session=session, title=project.title, color=color,
-                                                 origin_price=Decimal(price), price=Decimal(price), stock=100)
+                level = TicketFile.objects.get_or_create(session=session, title=project.title, color=color,
+                                                         origin_price=Decimal(price), price=Decimal(price), stock=100)
                 i += 1
+                level.redis_stock()
             session.redis_show_date_copy()
 
     def set_shows_no_pk(self):
