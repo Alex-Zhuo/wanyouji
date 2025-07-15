@@ -609,6 +609,7 @@ class ShowProject(UseNoAbstract):
                 TicketFile.objects.get_or_create(session=session, title=project.title, color=color,
                                                  origin_price=Decimal(price), price=Decimal(price), stock=100)
                 i += 1
+            session.redis_show_date_copy()
 
     def set_shows_no_pk(self):
         from caches import get_pika_redis, redis_shows_no_key

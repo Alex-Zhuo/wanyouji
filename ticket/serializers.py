@@ -652,7 +652,8 @@ class ShowsDetailImageSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShowSessionCacheSerializer(PKtoNoSerializer):
+# 缓存用的不用改id
+class ShowSessionCacheSerializer(serializers.ModelSerializer):
     express_end_at = serializers.SerializerMethodField()
 
     def get_express_end_at(self, obj):
@@ -660,11 +661,11 @@ class ShowSessionCacheSerializer(PKtoNoSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = PKtoNoSerializer.Meta.fields + ['start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
-                                                 'status', 'create_at', 'is_price', 'push_status', 'has_seat',
-                                                 'is_sale_off',
-                                                 'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
-                                                 'name_buy_num']
+        fields = ['id', 'no', 'start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
+                  'status', 'create_at', 'is_price', 'push_status', 'has_seat',
+                  'is_sale_off',
+                  'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
+                  'name_buy_num']
 
 
 class ShowSessionInfoSerializer(PKtoNoSerializer):
