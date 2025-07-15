@@ -484,7 +484,7 @@ class ShowTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowType
-        fields = '__all__'
+        fields = ['name', 'source_type', 'source_type_display', 'slug']
 
 
 class ShowContentCategorySerializer(serializers.ModelSerializer):
@@ -658,8 +658,7 @@ class ShowsDetailImageSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# 缓存用的不用改id
-class ShowSessionCacheSerializer(serializers.ModelSerializer):
+class ShowSessionCacheSerializer(PKtoNoSerializer):
     express_end_at = serializers.SerializerMethodField()
 
     def get_express_end_at(self, obj):
@@ -667,11 +666,11 @@ class ShowSessionCacheSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = ['id', 'no', 'start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
-                  'status', 'create_at', 'is_price', 'push_status', 'has_seat',
-                  'is_sale_off',
-                  'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
-                  'name_buy_num']
+        fields = PKtoNoSerializer.Meta.fields + ['start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
+                                                 'status', 'create_at', 'is_price', 'push_status', 'has_seat',
+                                                 'is_sale_off',
+                                                 'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
+                                                 'name_buy_num']
 
 
 class ShowSessionInfoSerializer(PKtoNoSerializer):

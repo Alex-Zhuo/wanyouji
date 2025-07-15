@@ -653,13 +653,13 @@ class ShowProject(UseNoAbstract):
                 for session in data['sessions']:
                     session['ticket_level'] = []
                     if is_tiktok:
-                        name = redis_ticket_level_tiktok_cache.format(session['id'])
+                        name = redis_ticket_level_tiktok_cache.format(session['no'])
                     elif is_ks:
-                        name = redis_ticket_level_ks_cache.format(session['id'])
+                        name = redis_ticket_level_ks_cache.format(session['no'])
                     elif is_xhs:
-                        name = redis_ticket_level_xhs_cache.format(session['id'])
+                        name = redis_ticket_level_xhs_cache.format(session['no'])
                     else:
-                        name = redis_ticket_level_cache.format(session['id'])
+                        name = redis_ticket_level_cache.format(session['no'])
                     ticket_level_keys_list = pika.hkeys(name)
                     # log.debug(ticket_level_keys_list)
                     for key in ticket_level_keys_list:
@@ -2194,10 +2194,10 @@ class TicketFile(models.Model):
         # log.debug('redis_ticket_level_cache')
         from caches import get_pika_redis, redis_ticket_level_cache, redis_ticket_level_tiktok_cache, \
             redis_ticket_level_ks_cache, redis_ticket_level_xhs_cache
-        name = redis_ticket_level_cache.format(self.session.id)
-        tiktok_name = redis_ticket_level_tiktok_cache.format(self.session.id)
-        ks_name = redis_ticket_level_ks_cache.format(self.session.id)
-        xhs_name = redis_ticket_level_xhs_cache.format(self.session.id)
+        name = redis_ticket_level_cache.format(self.session.no)
+        tiktok_name = redis_ticket_level_tiktok_cache.format(self.session.no)
+        ks_name = redis_ticket_level_ks_cache.format(self.session.no)
+        xhs_name = redis_ticket_level_xhs_cache.format(self.session.no)
         key = str(self.id)
         with get_pika_redis() as pika:
             if is_create and self.status:
