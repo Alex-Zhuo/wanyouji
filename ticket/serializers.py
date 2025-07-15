@@ -274,8 +274,6 @@ class TicketFileChangeSerializer(serializers.ModelSerializer):
         record = validated_data.get('record')
         qs_list = []
         qs_list_create = []
-        from douyin import get_dou_yin
-        dy = get_dou_yin()
         session = None
         for r in record:
             t_id = r.get('id')
@@ -302,6 +300,8 @@ class TicketFileChangeSerializer(serializers.ModelSerializer):
                     raise CustomAPIException('修改后库存不能小于0')
                 if inst.product_id and inst.is_tiktok and change_stock and inst.push_status == inst.PUSH_SUCCESS:
                     try:
+                        from douyin import get_dou_yin
+                        dy = get_dou_yin()
                         ret = dy.product_free_audit(inst.product_id, stock_qty=inst.stock, change_stock=True)
                     except Exception as e:
                         raise CustomAPIException(e)
