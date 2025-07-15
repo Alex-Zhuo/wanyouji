@@ -594,7 +594,7 @@ class ShowProject(UseNoAbstract):
             logo_mobile.save(img)
             end_at = sale_time + timedelta(hours=2)
             project, _ = cls.objects.get_or_create(title=show['title'], venues=venue, show_type=show_type,
-                                                   sale_time=sale_time, content=show['introduction'],
+                                                   sale_time=timezone.now(), content=show['introduction'],
                                                    notice=show['notice'],
                                                    lat=venue.lat, lng=venue.lng, city_id=venue.city.id,
                                                    price=Decimal(show['prices'][-1]), status=1,
