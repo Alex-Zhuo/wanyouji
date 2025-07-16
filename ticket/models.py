@@ -1064,6 +1064,27 @@ class SessionInfo(UseNoAbstract):
         verbose_name_plural = verbose_name = '演出场次'
         ordering = ['-start_at']
 
+    @classmethod
+    def push_to_ai_mysql(cls):
+        def image_to_hex(image_path):
+            """读取图片文件并转换为16进制字符串"""
+            with open(image_path, 'rb') as f:
+                binary_data = f.read()
+            hex_data = binary_data.hex()
+            return hex_data
+        from django.db import connections
+        import random
+        with connections['sz_ai'].cursor() as cursor:
+            qs = cls.objects.all()
+            for session in qs:
+                show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
+                show = session.show
+                venue = show.venues
+                logo = image_to_hex(show.logo_mobile.path.replace('\\', '/'))
+                rate = f"{random.uniform(2.0, 5.0):.1f}"
+                sql = "INSERT INTO shows (slug,name,show_at,place,price,logo,rate) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+                cursor.execute(sql, [show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
+
     def clean(self):
         if self.is_name_buy and self.is_paper:
             raise ValidationError('演出场次的实名购票项与是否纸质票不能同时勾选')
