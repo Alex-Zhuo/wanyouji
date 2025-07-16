@@ -1075,15 +1075,19 @@ class SessionInfo(UseNoAbstract):
         from django.db import connections
         import random
         qs = cls.objects.all()
+        connections['sz_ai'].settings_dict['OPTIONS'] = {
+            'read_timeout': 300,
+            'connect_timeout': 300,
+        }
+        cursor = connections['sz_ai'].cursor()
         for session in qs:
-            with connections['sz_ai'].cursor() as cursor:
-                show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
-                show = session.show
-                venue = show.venues
-                logo = image_to_hex(show.logo_mobile.path.replace('\\', '/'))
-                rate = f"{random.uniform(2.0, 5.0):.1f}"
-                sql = "INSERT INTO shows (slug,name,show_at,place,price,logo,rate) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-                cursor.execute(sql, [show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
+            show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
+            show = session.show
+            venue = show.venues
+            logo = image_to_hex(show.logo_mobile.path.replace('\\', '/'))
+            rate = f"{random.uniform(2.0, 5.0):.1f}"
+            sql = "INSERT INTO shows (slug,name,show_at,place,price,logo,rate) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+            cursor.execute(sql, [show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
 
     def clean(self):
         if self.is_name_buy and self.is_paper:
