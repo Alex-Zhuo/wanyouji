@@ -68,8 +68,9 @@ class MediaTypeAdmin(admin.ModelAdmin):
 
 
 class OpenScreenMediaAdmin(admin.ModelAdmin):
-    list_display = ['id', 'image', 'video', 'seconds', 'is_use']
+    list_display = ['id', 'media_type', 'image', 'video', 'seconds', 'is_use']
     list_filter = ['is_use']
+    autocomplete_fields = ['media_type']
 
 
 admin.site.register(MediaType, MediaTypeAdmin)
