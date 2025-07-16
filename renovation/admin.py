@@ -5,7 +5,7 @@ from dj_ext.middlewares import get_request
 from django.utils.html import format_html
 
 from dj_ext.permissions import RemoveDeleteModelAdmin, ChangeAndViewAdmin
-from renovation.models import SubPages, Resource, ResourceImageItem, OpenScreenMedia
+from renovation.models import SubPages, Resource, ResourceImageItem, OpenScreenMedia, MediaType
 
 
 # @admin.register(SubPages)
@@ -63,12 +63,16 @@ class ResourceAdmin(ChangeAndViewAdmin):
         return []
 
 
+class MediaTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code']
+
+
 class OpenScreenMediaAdmin(admin.ModelAdmin):
     list_display = ['id', 'image', 'video', 'seconds', 'is_use']
     list_filter = ['is_use']
 
 
-#admin.site.register(Resource, ResourceAdmin)
+admin.site.register(MediaType, MediaTypeAdmin)
 admin.site.register(OpenScreenMedia, OpenScreenMediaAdmin)
-# technology_admin.register(Resource, ResourceAdmin)
+technology_admin.register(MediaType, MediaTypeAdmin)
 technology_admin.register(OpenScreenMedia, OpenScreenMediaAdmin)
