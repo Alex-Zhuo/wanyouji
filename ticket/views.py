@@ -29,7 +29,7 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     SessionInfoStaffDetailSerializer, TicketOrderMarginCreateSerializer, SessionSearchListSerializer, \
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
     TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, TicketUserCodeSerializer, \
-    TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer
+    TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer
 from restframework_ext.exceptions import CustomAPIException
 from django.utils import timezone
 from django.db.models import Max, Min
@@ -526,6 +526,13 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         template_ids = [TikTokWxa.SHOW_START_TEMPLATE_ID]
         return Response(template_ids)
 
+    @action(methods=['post'], detail=False)
+    def get_ai_list(self, request):
+        no_list = request.data.get('no_list')
+        qs = ShowProject.objects.filter(no__in=no_list)
+        data = ShowAiSerializer(qs, context={'request': request}, many=True).data
+        return Response(data)
+
 
 class SessionSeatViewSet(ReturnNoDetailViewSet):
     queryset = SessionSeat.objects.none()
@@ -633,7 +640,8 @@ class SessionInfoViewSet(SerializerSelector, DetailPKtoNoViewSet):
         ret = s.create(s.validated_data)
         return Response(ret)
 
-#后台用的接口
+
+# 后台用的接口
 class TicketFileViewSet(SerializerSelector, ReturnNoDetailViewSet):
     queryset = TicketFile.objects.none()
     serializer_class = TicketFileSerializer
@@ -977,7 +985,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=True)
     def set_cancel(self, request, pk):
         try:
-            inst  = self.get_object()
+            inst = self.get_object()
         except TicketOrder.DoesNotExist:
             raise CustomAPIException('找不到订单')
         if inst.status != TicketOrder.STATUS_UNPAID:

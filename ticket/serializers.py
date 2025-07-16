@@ -2144,3 +2144,10 @@ class TicketOrderLockSeatSerializer(serializers.ModelSerializer):
     class Meta:
         model = SessionInfo
         fields = ['session_id', 'order_id', 'seat_ids']
+
+
+class ShowAiSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShowProject
+        fields = ['logo_mobile']
