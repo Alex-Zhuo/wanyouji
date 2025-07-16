@@ -68,7 +68,7 @@ class OpenScreenMediaAdmin(admin.ModelAdmin):
     list_filter = ['is_use']
 
 
-admin.site.register(Resource, ResourceAdmin)
+#admin.site.register(Resource, ResourceAdmin)
 admin.site.register(OpenScreenMedia, OpenScreenMediaAdmin)
-technology_admin.register(Resource, ResourceAdmin)
+# technology_admin.register(Resource, ResourceAdmin)
 technology_admin.register(OpenScreenMedia, OpenScreenMediaAdmin)

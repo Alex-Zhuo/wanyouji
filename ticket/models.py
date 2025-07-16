@@ -1384,11 +1384,11 @@ class SessionInfo(UseNoAbstract):
 
     def get_product_id(self):
         product_id = self.product_id
-        if not product_id:
-            tf = TicketFile.objects.filter(session_id=self.id, push_status=TicketFile.PUSH_SUCCESS, is_tiktok=True,
-                                           product_id__isnull=False).order_by('origin_price').first()
-            if tf:
-                product_id = tf.product_id
+        # if not product_id:
+        #     tf = TicketFile.objects.filter(session_id=self.id, push_status=TicketFile.PUSH_SUCCESS, is_tiktok=True,
+        #                                    product_id__isnull=False).order_by('origin_price').first()
+        #     if tf:
+        #         product_id = tf.product_id
         return product_id
 
     def update_start_at_and_end_at(self, start_at, end_at):
@@ -5510,7 +5510,7 @@ class LiveRoomCps(CpsDirectional):
 class LiveRoomCpsItem(models.Model):
     plan = models.ForeignKey(LiveRoomCps, verbose_name='直播间定向佣金计划', on_delete=models.CASCADE)
     good = models.ForeignKey(SessionInfo, verbose_name='商品', on_delete=models.CASCADE, help_text='仅支持上架且审核通过的正式品',
-                             limit_choices_to=models.Q(push_status=TicketFile.PUSH_SUCCESS,
+                             limit_choices_to=models.Q(push_status=SessionInfo.PUSH_SUCCESS,
                                                        status=SessionInfo.STATUS_ON))
     commission_rate = models.IntegerField(u'定向抽佣率(万分数)', help_text='可设置为0-2900', default=0,
                                           validators=[validate_commission_rate])

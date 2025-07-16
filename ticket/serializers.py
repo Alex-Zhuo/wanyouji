@@ -215,7 +215,8 @@ class TicketFileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketFile
-        fields = '__all__'
+        fields = ['id', 'title', 'color', 'origin_price', 'price', 'stock', 'sales', 'desc', 'is_tiktok', 'is_ks',
+                  'is_xhs', 'push_xhs', 'status']
 
 
 class TicketColorBaseSerializer(serializers.ModelSerializer):

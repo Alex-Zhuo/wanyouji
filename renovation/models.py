@@ -74,14 +74,24 @@ def validate_file_size(value):
         return value
 
 
+class MediaType(models.Model):
+    name = models.CharField('名称', max_length=30)
+    code = models.IntegerField('资源编号', unique=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '视频资源类型'
+
+
 class OpenScreenMedia(models.Model):
     image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/media/video',
                               validators=[validate_image_file_extension], null=True, blank=True)
     video = models.FileField('视频', upload_to=f'{FILE_FIELD_PREFIX}/media/video',
                              validators=[FileExtensionValidator(allowed_extensions=VIDEO_EXT_LIST)], null=True,
                              blank=True)
+    media_type = models.ForeignKey(MediaType, verbose_name='视频资源类型', null=True, on_delete=models.PROTECT)
     seconds = models.PositiveSmallIntegerField('视频时间长度(秒)', default=0, help_text='单位：秒，传视频时必填')
+
     is_use = models.BooleanField('是否使用', default=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '首页开屏'
+        verbose_name_plural = verbose_name = '视频资源'
