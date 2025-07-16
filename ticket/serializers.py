@@ -114,6 +114,12 @@ class VenuesNewSerializer(PKtoNoSerializer):
         fields = PKtoNoSerializer.Meta.fields + ['name', 'city']
 
 
+class VenuesAiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venues
+        fields = ['name', 'lat', 'lng', 'address']
+
+
 class VenuesSerializer(VenuesNewSerializer):
     logo = serializers.SerializerMethodField()
     map = serializers.SerializerMethodField()
@@ -2147,7 +2153,8 @@ class TicketOrderLockSeatSerializer(serializers.ModelSerializer):
 
 
 class ShowAiSerializer(serializers.ModelSerializer):
+    venues = VenuesAiSerializer()
 
     class Meta:
         model = ShowProject
-        fields = ['logo_mobile']
+        fields = ['logo_mobile', 'title', 'price', 'venues']
