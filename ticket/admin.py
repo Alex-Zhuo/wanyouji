@@ -209,7 +209,7 @@ class ShowNotificationInline(admin.TabularInline):
 
 
 class ShowProjectAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'title', 'show_type', 'venues', 'sale_time', 'status', 'time_info', 'display_order',
+    list_display = ['id', 'no', 'title', 'show_type', 'venues', 'sale_time', 'status', 'time_info', 'display_order',
                     'tiktok_code_display',
                     'wxa_code_display', 'op']
     list_filter = ['status', 'show_type', 'venues', CityFilter]
