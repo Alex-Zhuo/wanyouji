@@ -1074,9 +1074,9 @@ class SessionInfo(UseNoAbstract):
             return hex_data
         from django.db import connections
         import random
-        with connections['sz_ai'].cursor() as cursor:
-            qs = cls.objects.all()
-            for session in qs:
+        qs = cls.objects.all()
+        for session in qs:
+            with connections['sz_ai'].cursor() as cursor:
                 show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
                 show = session.show
                 venue = show.venues
