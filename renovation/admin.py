@@ -65,6 +65,7 @@ class ResourceAdmin(ChangeAndViewAdmin):
 
 class MediaTypeAdmin(admin.ModelAdmin):
     list_display = ['name', 'code']
+    search_fields = ['name']
 
 
 class OpenScreenMediaAdmin(admin.ModelAdmin):

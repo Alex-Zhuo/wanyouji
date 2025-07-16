@@ -76,7 +76,7 @@ def validate_file_size(value):
 
 class MediaType(models.Model):
     name = models.CharField('名称', max_length=30)
-    code = models.IntegerField('资源编号', unique=True)
+    code = models.CharField('资源编号', unique=True, max_length=10)
 
     class Meta:
         verbose_name_plural = verbose_name = '视频资源类型'
