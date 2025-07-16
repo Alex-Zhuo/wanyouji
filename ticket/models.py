@@ -1077,16 +1077,16 @@ class SessionInfo(UseNoAbstract):
         import random
         qs = cls.objects.all().order_by('id')
         data = []
-        for session in qs:
-            show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
-            show = session.show
-            venue = show.venues
-            logo = image_to_hex(show.logo_mobile.path.replace('\\', '/'))
-            rate = f"{random.uniform(2.0, 5.0):.1f}"
-            data.append([show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
+        sql = "INSERT INTO shows (slug,name,show_at,place,price,logo,rate) VALUES (%s,%s,%s,%s,%s,%s,%s)"
         with connections['sz_ai'].cursor() as cursor:
-            sql = "INSERT INTO shows (slug,name,show_at,place,price,logo,rate) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-            cursor.executemany(sql, data)
+            for session in qs:
+                show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
+                show = session.show
+                venue = show.venues
+                logo = image_to_hex(show.logo_mobile.path.replace('\\', '/'))
+                rate = f"{random.uniform(2.0, 5.0):.1f}"
+                data.append([show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
+                cursor.execute(sql, data)
 
     def clean(self):
         if self.is_name_buy and self.is_paper:
