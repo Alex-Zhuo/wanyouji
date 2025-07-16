@@ -14,5 +14,6 @@ class OpenScreenMediaViewSet(ReturnNoDetailViewSet):
     http_method_names = ['get']
 
     def list(self, request, *args, **kwargs):
-        obj = self.queryset.first()
+        code = request.GET.get('code')
+        obj = self.queryset.filter(code=code).first()
         return Response(self.serializer_class(obj, context={'request': request}).data)
