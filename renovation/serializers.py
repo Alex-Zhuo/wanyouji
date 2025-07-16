@@ -6,8 +6,6 @@ from renovation.models import OpenScreenMedia, MediaType
 
 
 class MediaTypeSerializer(serializers.ModelSerializer):
-    media_type = serializers.SerializerMethodField()
-
     class Meta:
         model = MediaType
         fields = ['code', 'name']
