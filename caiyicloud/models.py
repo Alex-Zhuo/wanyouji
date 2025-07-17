@@ -14,6 +14,8 @@ import json
 from typing import List, Dict
 from django.db.transaction import atomic
 
+from ticket.models import ShowProject
+
 log = logging.getLogger(__name__)
 
 
@@ -32,3 +34,12 @@ class CaiYiCloudApp(models.Model):
     @classmethod
     def get(cls):
         return cls.objects.first()
+
+class CyShowEvent(models.Model):
+    show = models.OneToOneField(ShowProject, verbose_name='项目', on_delete=models.CASCADE, related_name='cy_event')
+
+    class Meta:
+        verbose_name_plural = verbose_name = '彩艺云节目'
+
+    def __str__(self):
+        return self.name

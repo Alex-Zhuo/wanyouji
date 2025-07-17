@@ -153,10 +153,11 @@ class CaiyiProgramException(CaiyiErrorException):
     pass
 
 
-def create_exception_from_error_code(error_code: str, request_data: Optional[dict] = None,
+def create_exception_from_error_code(error_code: str, error_message=None, request_data: Optional[dict] = None,
                                      response_data: Optional[dict] = None) -> CaiyiErrorException:
     """根据错误码创建对应的异常实例"""
-    error_message = get_error_message(error_code)
+    if not error_message:
+        error_message = get_error_message(error_code)
 
     if is_system_error(error_code):
         return CaiyiSystemException(error_code, error_message, request_data, response_data)

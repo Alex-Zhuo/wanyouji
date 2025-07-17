@@ -66,13 +66,15 @@ class CaiYiCloudAbstract(object):
         #         response=res)
         return ret_data
 
-    def parse_resp(self, ret_data: dict):
-        error_code = ret_data["code"]
+    def parse_resp(self, response_data: dict, request_data: dict = None):
+        error_code = response_data["code"]
         if not is_success(error_code):
+            error_message = '{}:{}'.format(response_data['trace_id'], response_data['message'])
             exception = create_exception_from_error_code(
                 error_code,
-                request_data={"test": "data"},
-                response_data=ret_data
+                error_message=error_message,
+                request_data=request_data,
+                response_data=response_data
             )
             raise exception
 
