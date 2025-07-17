@@ -286,7 +286,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return ret['data']
 
     def orders_create(self, external_order_no: str, original_total_amount: float, actual_total_amount: float,
-                      buyer_cellphone: str, ticket_list: list, id_info: dict = None, promotion_list: list = None,
+                      buyer_cellphone: str, ticket_list: List[dict], id_info: dict = None,
+                      promotion_list: List[dict] = None,
                       address_info: dict = None, express_amount: float = 0):
         """
         文档 https://platform.caiyicloud.com/#/doc/v1/distribution/order/create
@@ -376,7 +377,104 @@ class CaiYiCloud(CaiYiCloudAbstract):
         sign_params = self.common_sign_params(headers)
         headers['sign'] = self.get_sign(sign_params)
         params = dict(supplier_id=self.supplier_id, external_order_no=external_order_no, order_no=order_no)
-        ret = self._get('api/order/v1/orders', params=params)
+        ret = self._get('api/order/v1/orders', params=params, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def cancel_order(self, order_no: str):
+        """
+        取消订单
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        data = dict(order_no=order_no)
+        sign_params.update(data)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        ret = self._post('api/order/v1/orders/cancel', params=params, data=data, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def confirm_order(self, order_no: str):
+        """
+        该接口用于支付成功后确认订单出票使用。
+        warning 注意
+        确认订单有可能会返回失败，如返回失败需要请求方在订单超时取消之前进行重试
+        确认订单后出票过程为异步
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        data = dict(order_no=order_no)
+        sign_params.update(data)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        ret = self._post('api/order/v1/orders/confirm', params=params, data=data, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def submit_id_info(self, cyy_order_no: str, id_list: List[dict]):
+        """
+        实名信息补录，不允许跨场次进行补录
+        "id_list":[{
+            "ticket_id":"1231sdfasdfaf",
+            "id_info":{
+              "number":"421006198902022323",
+              "type":1, # 1：身份证
+              "name":"张三"
+            }
+        }]
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        data = dict(cyy_order_no=cyy_order_no)
+        sign_params.update(data)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        data['id_list'] = id_list
+        ret = self._post('api/order/v1/orders/submit_id_info', params=params, data=data, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def dynamic_codes(self, event_id: str, static_codes: List[dict]):
+        """
+        查询动态码
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        data = dict(event_id=event_id, static_codes=static_codes)
+        ret = self._post('api/order/v1/tickets/dynamic_codes', params=params, data=data, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def refund_apply(self, cy_order_no: str, apply_remark: str, apply_platform: str, refund_rate: float = 0,
+                     refund_tickets: list = None):
+        """
+        该接口用于对已出票的订单进行售后申请。
+        该接口默认限制QPS为50，如有特殊需要请联系彩艺云技术
+        单笔订单统一时间只允许发起一次售后，需要等待前一次售后完成后，才可以发起下一次售后
+        套票需要一整套同时发起售后，不允许拆分售后
+        cy_order_no	string	是	1223asdfzx	彩艺云订单号，最大32个字符	是
+        apply_remark	string	是	退票	售后申请原因，最大200个字符	否
+        apply_platform	string	是	李白	申请平台名称,不允许超过24位	否
+        refund_rate	string	否	20	手续费，取值范围为0-100，最多允许保留2位小数	否
+        refund_tickets	array	否	退票信息	退票详细信息，不填时为整单退票	否
+            ∟ id	string	是		票id	否
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        data = dict(cyy_order_no=cy_order_no)
+        sign_params.update(data)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        data['apply_remark'] = apply_remark
+        data['apply_platform'] = apply_platform
+        data['apply_remark'] = apply_remark
+        data['refund_rate'] = refund_rate
+        if refund_tickets:
+            data['refund_tickets'] = refund_tickets
+        ret = self._post('api/order/v1/refund/apply', params=params, data=data, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
