@@ -2157,4 +2157,4 @@ class ShowAiSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowProject
-        fields = ['logo_mobile', 'title', 'price', 'venues']
+        fields = ['no', 'logo_mobile', 'title', 'price', 'venues']
