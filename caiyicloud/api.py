@@ -482,7 +482,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
 _caiyicloud = None
 
 
-def get_caiyi_cloud():
+def caiyi_cloud():
     global _caiyicloud
     if not _caiyicloud:
         _caiyicloud = CaiYiCloud()
