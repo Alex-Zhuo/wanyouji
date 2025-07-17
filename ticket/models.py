@@ -290,9 +290,13 @@ class ShowType(models.Model):
     SOURCE_CHOICES = [(SOURCE_MUSIC, '音乐'), (SOURCE_DRAMA, '戏剧'), (SOURCE_QY, '曲艺'), (SOURCE_DANCE, '舞蹈'),
                       (SOURCE_ACROBATICS, '杂技'), (SOURCE_EXHIBIT, '展览'),
                       (SOURCE_MATCH, '赛事'), (SOURCE_OTHER, '其他')]
-    source_type = models.SmallIntegerField('演出行业标准分类', choices=SOURCE_CHOICES, default=SOURCE_MUSIC)
+    source_type = models.SmallIntegerField('演出行业标准分类', choices=SOURCE_CHOICES, default=SOURCE_MUSIC, null=True,
+                                           blank=True, editable=False)
     category = models.ForeignKey(ShowTopCategory, verbose_name='抖音类目', related_name='cate', null=True, blank=True,
                                  on_delete=models.SET_NULL)
+    cy_cate = models.ForeignKey('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL)
     is_use = models.BooleanField('是否启用', default=True)
     slug = models.CharField('标识', null=True, blank=True, max_length=15)
 
@@ -513,11 +517,8 @@ class ShowProject(UseNoAbstract):
     city_id = models.IntegerField('城市ID', editable=False, default=0)
     flag = models.ManyToManyField(ShowFlag, verbose_name='标签', blank=True)
     performer = models.ManyToManyField(ShowPerformer, verbose_name='演员', blank=True)
-    SEAT_HAS = 1
-    SEAT_CHOICES = [(SEAT_HAS, '有座')]
-    seat_type = models.SmallIntegerField('座位类型', choices=SEAT_CHOICES, default=SEAT_HAS, editable=False)
     logo_mobile = models.ImageField(u'宣传海报', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/shows',
-                                    validators=[file_size, validate_image_file_extension])
+                                    validators=[file_size, validate_image_file_extension], null=True, blank=True)
     sale_time = models.DateTimeField('开售时间')
     dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True,
                                     blank=True)
@@ -535,16 +536,18 @@ class ShowProject(UseNoAbstract):
     # 主办方资质对应资质查询接口中的“营业性演出准予许可决定”
     # 票务代理资质对应资质查询接口中的“演出主办方授权书”
     ID_CHOICES = [(ID_DEFAULT, '无'), (ID_ORGANIZER, '主办方'), (ID_TICKETAAGENT, '票务代理')]
-    qualification_identity = models.SmallIntegerField('商家资质身份', choices=ID_CHOICES, default=ID_DEFAULT)
+    qualification_identity = models.SmallIntegerField('商家资质身份', choices=ID_CHOICES, default=ID_DEFAULT, editable=False)
     host_approval_qual = models.ManyToManyField(TikTokQualRecord, verbose_name='营业性演出准予许可决定',
                                                 limit_choices_to=models.Q(qualification_type=5006),
-                                                help_text='主办方和票务代理,要传“营业性演出准予许可决定”5006', blank=True, related_name='+')
+                                                help_text='主办方和票务代理,要传“营业性演出准予许可决定”5006', blank=True, related_name='+',
+                                                editable=False)
     ticket_agent_qual = models.ManyToManyField(TikTokQualRecord, verbose_name='演出主办方授权书',
                                                limit_choices_to=models.Q(qualification_type=5005),
-                                               help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+')
+                                               help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
+                                               editable=False)
     content = models.TextField('演出介绍', null=True)
     notice = models.TextField('购票须知')
-    other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True)
+    other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
     special_desc = models.TextField('购票特殊说明', null=True, blank=True, editable=False)
     buy_tips = models.BooleanField('购买时弹窗提醒', default=False, editable=False)
     STATUS_ON = 1

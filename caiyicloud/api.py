@@ -202,7 +202,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         sign_params = self.common_sign_params(headers)
         headers['sign'] = self.get_sign(sign_params)
         params = dict(supplier_id=self.supplier_id, auth_type=auth_type)
-        ret = self._get(f'api/event/v1/events/:{event_id}', params=params, headers=headers)
+        ret = self._get(f'api/event/v1/events/{event_id}', params=params, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
@@ -213,7 +213,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         headers = self.headers()
         sign_params = self.common_sign_params(headers)
         headers['sign'] = self.get_sign(sign_params)
-        ret = self._get(f'api/venue/v1/venues/:{venue_id}', headers=headers)
+        ret = self._get(f'api/venue/v1/venues/{venue_id}', headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
@@ -225,7 +225,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         sign_params = self.common_sign_params(headers)
         headers['sign'] = self.get_sign(sign_params)
         params = dict(supplier_id=self.supplier_id, session_id=session_id, page=page, page_size=page_size)
-        ret = self._get(f'api/event/v1/events/:{event_id}/sessions', params=params, headers=headers)
+        ret = self._get(f'api/event/v1/events/{event_id}/sessions', params=params, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
