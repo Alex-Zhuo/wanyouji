@@ -155,20 +155,20 @@ class UserViewSet(viewsets.ModelViewSet):
         resp.status_code = 204
         return resp
 
-    @action(methods=['post'], permission_classes=[], detail=False)
-    def register(self, request):
-        """
-        手机注册
-        :param request:
-        :return:
-        """
-        serializer = UserRegisterSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        user = serializer.instance
-        resp = Response(status=200, data=UserInfoSerializer(user, context={'request': request}).data)
-        user.login_user(request, resp)
-        return resp
+    # @action(methods=['post'], permission_classes=[], detail=False)
+    # def register(self, request):
+    #     """
+    #     手机注册
+    #     :param request:
+    #     :return:
+    #     """
+    #     serializer = UserRegisterSerializer(data=request.data, context={'request': request})
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     user = serializer.instance
+    #     resp = Response(status=200, data=UserInfoSerializer(user, context={'request': request}).data)
+    #     user.login_user(request, resp)
+    #     return resp
 
     @action(methods=['get'], permission_classes=[], detail=False)
     def query_reg_status(self, request):
@@ -395,10 +395,10 @@ class UserViewSet(viewsets.ModelViewSet):
         User.refresh_path_level()
         return Response()
 
-    @action(methods=['patch', 'put'], permission_classes=[IsAuthenticated], detail=False)
-    def sync_wechat(self, request):
-        request.user.update_wechat_info(interval_limit=False)
-        return Response(data=UserInfoSerializer(request.user, context={'request': request}).data)
+    # @action(methods=['patch', 'put'], permission_classes=[IsAuthenticated], detail=False)
+    # def sync_wechat(self, request):
+    #     request.user.update_wechat_info(interval_limit=False)
+    #     return Response(data=UserInfoSerializer(request.user, context={'request': request}).data)
 
     @action(methods=['patch', 'post'], detail=False)
     def identify(self, request):
