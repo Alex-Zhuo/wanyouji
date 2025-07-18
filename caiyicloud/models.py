@@ -98,6 +98,25 @@ class CyVenue(models.Model):
     def create_record(cls, venue, province_name, city_name, cy_no):
         return cls.objects.create(venue=venue, province_name=province_name, city_name=city_name, cy_no=cy_no)
 
+    @classmethod
+    def init_venue(cls, cy_venue_id: str):
+        cy_venue = CyVenue.objects.filter(cy_no=cy_venue_id).first()
+        if not cy_venue:
+            cy = caiyi_cloud()
+            venue_detail = cy.venue_detail(cy_venue_id)
+            from express.models import Division
+            city = Division.objects.filter(province=venue_detail['province_name'], city=venue_detail['city_name'],
+                                           type=Division.TYPE_CITY).first()
+            venue = Venues.objects.create(name=venue_detail['name'], city=city,
+                                          lat=venue_detail['latitude'], lng=venue_detail['longitude'],
+                                          address=venue_detail['address'], desc=venue_detail['description'],
+                                          custom_mobile=venue_detail['venue_phone'])
+            CyVenue.create_record(venue, venue_detail['province_name'], venue_detail['city_name'], cy_venue_id)
+            venue.venues_detail_copy_to_pika()
+        else:
+            venue = cy_venue.venue
+        return venue
+
 
 class CyShowEvent(models.Model):
     """事件/项目模型"""
@@ -173,7 +192,7 @@ class CyShowEvent(models.Model):
         return self.state not in [5, 7]
 
     @classmethod
-    def init_cy_event(cls):
+    def init_cy_show(cls):
         cy = caiyi_cloud()
         # try:
         page = 1
@@ -189,21 +208,7 @@ class CyShowEvent(models.Model):
         for event in event_list:
             event_detail = cy.event_detail(event['id'])
             show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
-            cy_venue = CyVenue.objects.filter(cy_no=event_detail['venue_id']).first()
-            if not cy_venue:
-                venue_detail = cy.venue_detail(event_detail['venue_id'])
-                from express.models import Division
-                city = Division.objects.filter(province=venue_detail['province_name'], city=venue_detail['city_name'],
-                                               type=Division.TYPE_CITY).first()
-                venue = Venues.objects.create(name=venue_detail['name'], city=city,
-                                              lat=venue_detail['latitude'], lng=venue_detail['longitude'],
-                                              address=venue_detail['address'], desc=venue_detail['description'],
-                                              custom_mobile=venue_detail['venue_phone'])
-                CyVenue.create_record(venue, venue_detail['province_name'], venue_detail['city_name'],
-                                      event_detail['venue_id'])
-                venue.venues_detail_copy_to_pika()
-            else:
-                venue = cy_venue.venue
+            venue = CyVenue.init_venue(event_detail['venue_id'])
             notice = ''
             if event_detail.get('watching_notices'):
                 notice += '观演须知:\n'
