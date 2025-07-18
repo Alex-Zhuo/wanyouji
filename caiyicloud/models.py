@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from django.db import models
-from datetime import timedelta
 from django.conf import settings
 import logging
 from random import sample
@@ -14,9 +13,11 @@ import json
 from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
-from ticket.models import ShowProject, ShowType, Venues
+from ticket.models import ShowProject, ShowType, Venues, SessionInfo
 from common.config import IMAGE_FIELD_PREFIX
 import os
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 log = logging.getLogger(__name__)
 # -*- coding: utf-8 -*-
@@ -28,6 +29,24 @@ EVENT_CATEGORIES = {
     23: "音乐会", 24: "亲子剧", 25: "戏曲", 26: "舞蹈", 27: "脱口秀", 28: "相声", 29: "杂技马戏", 30: "展览", 31: "乐园市集",
     32: "剧本密室", 33: "演讲讲座", 34: "其他玩乐", 35: "赛事", 36: "电竞", 37: "健身运动", 38: "儿童剧", 39: "沉浸式", 40: "旅游"
 }
+
+
+class ChoicesCommon(models.Model):
+    code = models.PositiveSmallIntegerField('编码', unique=True)
+    name = models.CharField(max_length=64, verbose_name='名称')
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+    INIT_DATA = []
+
+    @classmethod
+    def init_record(cls):
+        for v in cls.INIT_DATA:
+            cls.objects.get_or_create(code=v[0], name=v[1])
 
 
 class CaiYiCloudApp(models.Model):
@@ -47,19 +66,11 @@ class CaiYiCloudApp(models.Model):
         return cls.objects.first()
 
 
-class CyCategory(models.Model):
-    """项目组合信息模型"""
-    code = models.PositiveSmallIntegerField(verbose_name='节目分类编码', unique=True)
-    name = models.CharField(max_length=20, verbose_name='名称', null=True)
-
+class CyCategory(ChoicesCommon):
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
 
-    @classmethod
-    def init(cls):
-        for code, name in EVENT_CATEGORIES.items():
-            cate, _ = cls.objects.get_or_create(code=code, name=name)
-            ShowType.objects.get_or_create(name=name, cy_cate=cate)
+    INIT_DATA = list(EVENT_CATEGORIES.items())
 
     @classmethod
     def get_show_type(cls, code: str, name: str):
@@ -119,7 +130,6 @@ class CyVenue(models.Model):
 
 
 class CyShowEvent(models.Model):
-    """事件/项目模型"""
     # 基本信息
     show = models.OneToOneField(ShowProject, verbose_name='演出项目', on_delete=models.CASCADE, related_name='cy_show')
     event_id = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='项目ID')
@@ -143,7 +153,7 @@ class CyShowEvent(models.Model):
     # 媒体信息
     poster_url = models.URLField(verbose_name='项目海报地址', blank=True, null=True)
     content_url = models.URLField(verbose_name='项目简介链接', blank=True, null=True)
-    category = models.IntegerField(
+    category = models.PositiveSmallIntegerField(
         choices=[
             (1, '演出'),
             (2, '赛事'),
@@ -154,7 +164,7 @@ class CyShowEvent(models.Model):
         verbose_name='节目大类'
     )
     # 状态信息
-    state = models.IntegerField(
+    state = models.PositiveSmallIntegerField(
         choices=[
             (1, '待开售'),
             (2, '预售中'),
@@ -206,41 +216,342 @@ class CyShowEvent(models.Model):
             if event_data.get('list'):
                 event_list += event_data['list']
         for event in event_list:
-            event_detail = cy.event_detail(event['id'])
-            show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
-            venue = CyVenue.init_venue(event_detail['venue_id'])
-            notice = ''
-            if event_detail.get('watching_notices'):
-                notice += '观演须知:\n'
-                for nt in event_detail['watching_notices']:
-                    notice += f"{nt['title']}:\n{nt['content']}\n"
-            if event_detail.get('purchase_notices'):
-                notice += '购买须知:\n'
-                for nt in event_detail['purchase_notices']:
-                    notice += f"{nt['title']}:\n{nt['content']}\n"
-            logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
-            # 保存网络图片
-            logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
-            show_data = dict(title=event_detail['name'], show_type=show_type, venues=venue, lat=venue.lat,
-                             lng=venue.lng,
-                             city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
-                             notice=notice, status=cls.get_show_status(event_detail['state']),
-                             logo_mobile=logo_mobile_path)
-            cy_show_qs = cls.objects.filter(event_id=event['id'])
-            snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
-            cls_data = dict(event_id=event['id'], std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
-                            ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
-                            poster_url=event_detail['poster_url'],
-                            content_url=event_detail['content_url'], category=event_detail['category'],
-                            expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
-            if not cy_show_qs:
-                show = ShowProject.objects.create(**show_data)
-                cls_data['show'] = show
+            cls.update_or_create_record(event['id'])
+            CySession.update_or_create_record(event['id'])
+
+    @classmethod
+    def update_or_create_record(cls, event_id: str):
+        cy = caiyi_cloud()
+        event_detail = cy.event_detail(event_id)
+        show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
+        venue = CyVenue.init_venue(event_detail['venue_id'])
+        notice = ''
+        if event_detail.get('watching_notices'):
+            notice += '观演须知:\n'
+            for nt in event_detail['watching_notices']:
+                notice += f"{nt['title']}:\n{nt['content']}\n"
+        if event_detail.get('purchase_notices'):
+            notice += '购买须知:\n'
+            for nt in event_detail['purchase_notices']:
+                notice += f"{nt['title']}:\n{nt['content']}\n"
+        logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
+        # 保存网络图片
+        logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
+        show_data = dict(title=event_detail['name'], show_type=show_type, venues=venue, lat=venue.lat,
+                         lng=venue.lng,
+                         city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
+                         notice=notice, status=cls.get_show_status(event_detail['state']),
+                         logo_mobile=logo_mobile_path)
+        cy_show_qs = cls.objects.filter(event_id=event_id)
+        snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
+        cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
+                        ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
+                        poster_url=event_detail['poster_url'],
+                        content_url=event_detail['content_url'], category=event_detail['category'],
+                        expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
+        if not cy_show_qs:
+            show = ShowProject.objects.create(**show_data)
+            cls_data['show'] = show
+            cy_show = cls.objects.create(**cls_data)
+        else:
+            cy_show = cy_show_qs.first()
+            show = cy_show.show
+            ShowProject.objects.filter(id=show.id).update(**show_data)
+            cy_show_qs.update(**cls_data)
+        show.shows_detail_copy_to_pika()
+        return cy_show
+    # except Exception as e:
+    #     log.error(e)
+
+
+class CyIdTypes(ChoicesCommon):
+    class Meta:
+        verbose_name_plural = verbose_name = '证件类型'
+        ordering = ['-pk']
+
+    INIT_DATA = [
+        (1, '身份证'),
+        (2, '护照'),
+        (4, '军人证'),
+        (8, '台湾居民来往内地通行证'),
+        (16, '港澳居民来往内地大陆通行证'),
+        (32, '港澳居民居住证'),
+        (64, '台湾居民居住证'),
+        (128, '外国人永久居留身份证'),
+    ]
+
+
+class CyCheckInMethods(ChoicesCommon):
+    class Meta:
+        verbose_name_plural = verbose_name = '入场方式'
+        ordering = ['-pk']
+
+    # 入场方式选择
+    INIT_DATA = [
+        (1, '纸质票'),
+        (2, '电子票'),
+        (4, '身份证'),
+    ]
+
+
+class CyDeliveryMethods(ChoicesCommon):
+    class Meta:
+        verbose_name_plural = verbose_name = '配送方式'
+        ordering = ['-pk']
+
+    # 配送方式选择
+    INIT_DATA = [
+        (2, '电子票（直刷入场）'),
+        (4, '快递票'),
+        (8, '电子票（现场取票）'),
+        (32, '电子票（身份证直刷入场）'),
+        (64, '身份证换票'),
+    ]
+
+
+class CySession(models.Model):
+    SESSION_STATE_CHOICES = [
+        (1, '未开售'),
+        (2, '待开售'),
+        (3, '预售中'),
+        (4, '售票中'),
+        (5, '结束'),
+        (6, '延期'),
+        (7, '取消'),
+    ]
+    # 场次类型选择
+    SESSION_TYPE_CHOICES = [
+        (0, '普通场次'),
+        (1, '联票场次'),
+    ]
+    # 入场码类型选择
+    ADMISSION_CODE_TYPE_CHOICES = [
+        (0, '联票码'),
+        (1, '基础场次票码'),
+    ]
+    # 电子票类型选择
+    E_TICKET_CHOICES = [
+        (0, '不支持电子票'),
+        (1, '静态码'),
+        (2, '动态码'),
+    ]
+    # 结束售卖类型选择
+    CLOSE_SALE_TYPE_CHOICES = [
+        (1, '场次开始前'),
+        (2, '场次结束前'),
+        (3, '场次开始后'),
+    ]
+    # 基本信息
+    c_session = models.OneToOneField(SessionInfo, verbose_name='演出场次', on_delete=models.CASCADE,
+                                     related_name='cy_session')
+    # 关联信息
+    event = models.ForeignKey(CyShowEvent, on_delete=models.CASCADE, related_name='cy_show', verbose_name='关联节目')
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场次ID')
+    std_id = models.CharField(max_length=64, verbose_name='中心场次ID')
+    start_time = models.DateTimeField('开始时间', db_index=True)
+    end_time = models.DateTimeField('结束时间', db_index=True)
+    sale_time = models.DateTimeField('开售时间', null=True, blank=True)
+    name = models.CharField(max_length=200, verbose_name='场次名称')
+    state = models.PositiveSmallIntegerField(choices=SESSION_STATE_CHOICES, default=1, verbose_name='场次状态')
+    # 场次类型
+    session_type = models.PositiveSmallIntegerField(choices=SESSION_TYPE_CHOICES, default=0, verbose_name='场次类型')
+    admission_code_type = models.PositiveSmallIntegerField(
+        choices=ADMISSION_CODE_TYPE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name='入场码类型'
+    )
+    upload_photo = models.PositiveSmallIntegerField(
+        choices=[(0, '无需上传照片'), (1, '需上传照片')],
+        null=True,
+        blank=True,
+        verbose_name='是否需要上传照片'
+    )
+    # 选座相关
+    support_no_seat = models.PositiveSmallIntegerField(
+        choices=[(0, '不支持非选座购票'), (1, '支持非选座购票')],
+        null=True,
+        blank=True,
+        verbose_name='是否支持非选座购票'
+    )
+    # 证件相关
+    require_id_on_ticket = models.PositiveSmallIntegerField(
+        choices=[(0, '否'), (1, '是')],
+        default=1,
+        verbose_name='是否需要一票一证购买'
+    )
+    id_types = models.ManyToManyField(CyIdTypes, verbose_name='证件类型列表', blank=True)
+    # 票务相关
+    e_ticket = models.PositiveSmallIntegerField(choices=E_TICKET_CHOICES, default=1, verbose_name='电子票类型')
+    paper_ticket = models.PositiveSmallIntegerField(
+        choices=[(0, '否'), (1, '是')],
+        default=1,
+        verbose_name='是否支持纸质票出票'
+    )
+    check_in_methods = models.ManyToManyField(CyCheckInMethods, verbose_name='入场方式列表', blank=True)
+    delivery_methods = models.ManyToManyField(CyDeliveryMethods, verbose_name='配送方式列表', blank=True)
+    # 结束售卖时间相关
+    enable_close_sale_time = models.PositiveSmallIntegerField(
+        choices=[(0, '禁用'), (1, '启用')],
+        default=0,
+        verbose_name='是否开启结束售卖时间设置'
+    )
+    close_sale_time_rule_type = models.PositiveSmallIntegerField(
+        choices=[(1, '相对时间'), (2, '绝对时间')],
+        null=True,
+        blank=True,
+        verbose_name='结束售卖时间规则类型'
+    )
+    close_sale_time = models.DateTimeField(null=True, blank=True, verbose_name='结束售卖时间')
+    close_sale_time_interval = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='场次关闭时间间隔(小时)'
+    )
+    close_sale_type = models.PositiveSmallIntegerField(
+        choices=CLOSE_SALE_TYPE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name='结束售卖类型'
+    )
+    # 限购信息
+    limit_on_session = models.PositiveSmallIntegerField(default=6, verbose_name='单场次限购张数')
+    limit_on_event = models.PositiveSmallIntegerField(default=20, verbose_name='单节目限购张数')
+
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name_plural = verbose_name = '场次'
+        ordering = ['-start_time']
+
+    def __str__(self):
+        return f"{self.name} - {self.get_state_display()}"
+
+    @property
+    def is_on_sale(self):
+        """是否正在售票"""
+        return self.state == 4
+
+    @property
+    def is_ended(self):
+        """是否已结束"""
+        return self.state == 5
+
+    @property
+    def is_cancelled(self):
+        """是否已取消"""
+        return self.state == 7
+
+    @classmethod
+    def get_session_status(cls, state: int):
+        if state == 3:
+            return SessionInfo.STATUS_ON
+        return SessionInfo.STATUS_OFF
+
+    def get_id_types_display(self):
+        """获取证件类型显示文本"""
+        if not self.id_types.all():
+            return "无"
+        qs = list(self.id_types.all().values_list('name', flat=True))
+        return ", ".join(qs)
+
+    def get_check_in_methods_display(self):
+        """获取入场方式显示文本"""
+        if not self.check_in_methods.all():
+            return "无"
+        qs = list(self.check_in_methods.all().values_list('name', flat=True))
+        return ", ".join(qs)
+
+    def get_delivery_methods_display(self):
+        """获取配送方式显示文本"""
+        if not self.delivery_methods.all():
+            return "无"
+        qs = list(self.delivery_methods.all().values_list('name', flat=True))
+        return ", ".join(qs)
+
+    @classmethod
+    def update_or_create_record(cls, event_id: str):
+        """
+        从API数据创建场次
+        Args:
+            api_data: API返回的场次数据
+            event_id: 关联的项目ID
+        Returns:
+            创建的场次实例
+        """
+        cy = caiyi_cloud()
+        cy_show = CyShowEvent.objects.filter(event_id=event_id).first()
+        if not cy_show:
+            cy_show = CyShowEvent.update_or_create_record(event_id)
+        sessions_list = cy.sessions_list(event_id=event_id)
+        for api_data in sessions_list:
+            # 处理时间字段
+            start_time = None
+            end_time = None
+            sale_time = None
+            close_sale_time = None
+            if api_data.get('start_time'):
+                start_time = datetime.strptime(api_data['start_time'], '%Y-%m-%d %H:%M')
+            if api_data.get('end_time'):
+                end_time = datetime.strptime(api_data['end_time'], '%Y-%m-%d %H:%M')
+            if api_data.get('sale_time'):
+                sale_time = datetime.strptime(api_data['sale_time'], '%Y-%m-%d %H:%M')
+            if api_data.get('close_sale_time'):
+                close_sale_time = datetime.strptime(api_data['close_sale_time'], '%Y-%m-%d %H:%M')
+            # 创建场次
+            # 创建限购信息
+            limit_on_session = 0
+            limit_on_event = 0
+            if api_data.get('purchase_limit'):
+                limit_on_session = api_data['purchase_limit'].get('limit_on_session', 0),
+                limit_on_event = api_data['purchase_limit'].get('limit_on_event', 0),
+            require_id_on_ticket = True if api_data.get('require_id_on_ticket') else None
+            cls_data = dict(
+                event=cy_show,
+                cy_no=api_data['id'],
+                std_id=api_data.get('std_id', ''),
+                name=api_data['name'],
+                state=api_data['state'],
+                start_time=start_time,
+                end_time=end_time,
+                sale_time=sale_time,
+                session_type=api_data.get('session_type', 0),
+                admission_code_type=api_data.get('admission_code_type'),
+                upload_photo=api_data.get('upload_photo'),
+                support_no_seat=api_data.get('support_no_seat'),
+                require_id_on_ticket=api_data.get('require_id_on_ticket'),
+                # id_types=api_data.get('id_types', []),
+                e_ticket=api_data.get('e_ticket', 1),
+                paper_ticket=api_data.get('paper_ticket', 1),
+                # check_in_methods=api_data.get('check_in_methods', []),
+                # delivery_methods=api_data.get('delivery_methods', []),
+                enable_close_sale_time=api_data.get('enable_close_sale_time', 1),
+                close_sale_time_rule_type=api_data.get('close_sale_time_rule_type'),
+                close_sale_time=close_sale_time,
+                close_sale_time_interval=api_data.get('close_sale_time_interval'),
+                close_sale_type=api_data.get('close_sale_type'),
+                limit_on_session=limit_on_session,
+                limit_on_event=limit_on_event
+            )
+            show = cy_show.show
+            has_seat = SessionInfo.SEAT_HAS if cy_show.seat_type == 1 else SessionInfo.SEAT_NO
+            session_data = dict(show=show, venue_id=show.venues.id, title=api_data['name'], start_at=start_time,
+                                end_at=end_time, dy_sale_time=sale_time, order_limit_num=limit_on_session,
+                                one_id_one_ticket=require_id_on_ticket, name_buy_num=1 if require_id_on_ticket else 0,
+                                is_name_buy=True, has_seat=has_seat, status=cls.get_session_status(api_data['state']))
+            cy_session_qs = cls.objects.filter(cy_no=api_data['id'])
+            if not cy_session_qs:
+                session = SessionInfo.objects.create(**session_data)
+                cls_data['c_session'] = session
                 cls.objects.create(**cls_data)
             else:
-                show = cy_show_qs.first().show
-                ShowProject.objects.filter(id=show.id).update(**show_data)
-                cy_show_qs.update(**cls_data)
+                session = cy_session_qs.first().c_session
+                SessionInfo.objects.filter(id=session.id).update(**session_data)
+                cy_session_qs.update(**cls_data)
+            show.change_session_end_at(session.end_at)
+            # 修改缓存
             show.shows_detail_copy_to_pika()
-        # except Exception as e:
-        #     log.error(e)
+            session.redis_show_date_copy()
+            return session

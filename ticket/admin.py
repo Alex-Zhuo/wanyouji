@@ -935,9 +935,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
             raise AdminException('纸质票必须配置邮费模板')
         if hasattr(obj, 'xhs_session') and obj.is_paper:
             raise AdminException('小红书场次配置不支持纸质票功能')
-        if not obj.show.session_end_at or obj.show.session_end_at < obj.end_at:
-            obj.show.session_end_at = obj.end_at
-            obj.show.save(update_fields=['session_end_at'])
+        obj.show.change_session_end_at(obj.end_at)
         obj.venue_id = obj.show.venues_id
         if not change:
             obj.save()

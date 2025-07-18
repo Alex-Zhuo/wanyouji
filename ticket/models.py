@@ -521,14 +521,15 @@ class ShowProject(UseNoAbstract):
     logo_mobile = models.ImageField(u'宣传海报', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/shows',
                                     validators=[file_size, validate_image_file_extension], null=True, blank=True)
     sale_time = models.DateTimeField('开售时间')
+    session_end_at = models.DateTimeField('场次最后结束时间', null=True, blank=True, editable=False, db_index=True)
     dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True,
                                     blank=True)
-    origin_amount = models.DecimalField('抖音原价', max_digits=13, decimal_places=2, default=0)
     price = models.DecimalField('最低价格', max_digits=13, decimal_places=2, default=0, help_text='实际支付价格,用于展示和排序')
     # cert_type = models.ManyToManyField(CertificateType, verbose_name='支持的证件类型')
     name_limit_num = models.IntegerField('每个证件限购数量', default=1, help_text='实名制售票', editable=False)
     order_limit_num = models.IntegerField('每个订单限购数量', default=1, help_text='购票限制，0表示不限购', editable=False)
     # account_limit_num = models.IntegerField('每个账号限购数量', default=1, help_text='购票限制')
+    origin_amount = models.DecimalField('抖音原价', max_digits=13, decimal_places=2, default=0, editable=False)
     ID_DEFAULT = 0
     ID_ORGANIZER = 1
     ID_TICKETAAGENT = 2
@@ -549,8 +550,6 @@ class ShowProject(UseNoAbstract):
     content = models.TextField('演出介绍', null=True)
     notice = models.TextField('购票须知')
     other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
-    special_desc = models.TextField('购票特殊说明', null=True, blank=True, editable=False)
-    buy_tips = models.BooleanField('购买时弹窗提醒', default=False, editable=False)
     STATUS_ON = 1
     STATUS_OFF = 0
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
@@ -559,14 +558,14 @@ class ShowProject(UseNoAbstract):
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
-                                      on_delete=models.SET_NULL)
+                                      on_delete=models.SET_NULL, editable=False)
     display_order = models.PositiveIntegerField('排序', default=0, help_text='越大越排前')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
-    session_end_at = models.DateTimeField('场次最后结束时间', null=True, blank=True, editable=False, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     version = models.IntegerField('版本号', default=0)
-    is_test = models.BooleanField('是否测试商品', default=False)
+    is_test = models.BooleanField('是否测试商品', default=False, editable=False)
     tiktok_code = models.ImageField('抖音分享二维码', null=True, blank=True, upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/project',
-                                    validators=[validate_image_file_extension])
+                                    validators=[validate_image_file_extension], editable=False)
     wxa_code = models.ImageField('小程序分享二维码', null=True, blank=True, upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/project',
                                  validators=[validate_image_file_extension])
 
@@ -615,6 +614,11 @@ class ShowProject(UseNoAbstract):
                 i += 1
                 level.redis_stock()
             session.redis_show_date_copy()
+
+    def change_session_end_at(self, end_at: datetime):
+        if not self.session_end_at or self.session_end_at < end_at:
+            self.session_end_at = end_at
+            self.save(update_fields=['session_end_at'])
 
     def set_shows_no_pk(self):
         from caches import get_pika_redis, redis_shows_no_key
@@ -742,7 +746,7 @@ class ShowProject(UseNoAbstract):
             show_cache['images'] = image_data if image_data else None
             from common.utils import get_timestamp
             show_cache['sale_time_timestamp'] = get_timestamp(self.sale_time) if self.sale_time else None
-            if hasattr(self,'cy_show'):
+            if hasattr(self, 'cy_show'):
                 show_cache['cy_no'] = self.cy_show.event_id
             redis.hset(redis_shows_copy_key, str(self.id), json.dumps(show_cache))
 
@@ -994,17 +998,22 @@ class ContractInfo(models.Model):
 
 class SessionInfo(UseNoAbstract):
     show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.CASCADE, related_name='session_info')
-    title = models.CharField('抖音/快手/小红书商品名称', max_length=60, help_text='60个字内,不填则默认项目名称，仅用于推送抖音/快手/小红书显示', null=True,
+    venue_id = models.IntegerField('场馆ID', editable=False, default=0)
+    title = models.CharField('场次名称', max_length=60, help_text='60个字内,不填则默认项目名称，其他平台使用', null=True,
                              blank=True)
     start_at = models.DateTimeField('演出开始时间', db_index=True)
     end_at = models.DateTimeField('演出结束时间', db_index=True)
-    dy_sale_time = models.DateTimeField('抖音/快手开售时间', null=True, blank=True)
+    dy_sale_time = models.DateTimeField('开售时间', null=True, blank=True, help_text='其他平台用')
     tiktok_store = models.ForeignKey(DouYinStore, verbose_name='抖音店铺', null=True, blank=True, help_text='推送商品到抖音必填',
-                                     on_delete=models.SET_NULL)
-    valid_start_time = models.DateTimeField('门票有效期开始时间', null=True, blank=True, help_text='抖音用：不填默认演出开始时间前2个小时')
+                                     on_delete=models.SET_NULL, editable=False)
+    valid_start_time = models.DateTimeField('门票有效期开始时间', null=True, blank=True, help_text='抖音用：不填默认演出开始时间前2个小时',
+                                            editable=False)
     desc = models.CharField('场次备注', max_length=100, null=True, blank=True)
-    open_limit = models.BooleanField('场次限购', default=False, editable=False)
-    name_limit_num = models.IntegerField('每个证件限购数量', default=1, help_text='购票限制', editable=False)
+    # 限购相关
+    order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购')
+    one_id_one_ticket = models.BooleanField(default=False, verbose_name='是否需要一票一证购买')
+    name_buy_num = models.PositiveIntegerField('实名购票限购数量', default=0)
+    is_name_buy = models.BooleanField('是否实名购票', default=False, help_text='开启后用户购买时需要选择已实名的常用联系人信息，0.01购票权限用户不走实名流程')
     SEAT_HAS = 1
     SEAT_NO = 2
     SEAT_CHOICES = [(SEAT_HAS, '有座'), (SEAT_NO, '无座')]
@@ -1012,7 +1021,6 @@ class SessionInfo(UseNoAbstract):
     main_session = models.ForeignKey('self', verbose_name='关联主场次', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='m_session', limit_choices_to=models.Q(has_seat=SEAT_HAS),
                                      help_text='有座场次才能选为主场次')
-    order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购')
     STATUS_ON = 1
     STATUS_OFF = 2
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
@@ -1021,8 +1029,6 @@ class SessionInfo(UseNoAbstract):
     is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False)
     is_sale_off = models.BooleanField('标记售罄', default=False)
     is_paper = models.BooleanField('是否纸质票', default=False, help_text='勾选的场次对应的订单需要邮寄纸质票给客户')
-    name_buy_num = models.PositiveIntegerField('实名购票限购数量', default=0)
-    is_name_buy = models.BooleanField('是否实名购票', default=False, help_text='开启后用户购买时需要选择已实名的常用联系人信息，0.01购票权限用户不走实名流程')
     express_template = models.ForeignKey('express.Template', verbose_name='邮费模板', null=True, blank=True,
                                          help_text='选择物流模板',
                                          on_delete=models.SET_NULL)
@@ -1031,10 +1037,11 @@ class SessionInfo(UseNoAbstract):
     close_comment = models.BooleanField('是否关闭评论', default=False)
     is_dy_code = models.BooleanField('是否动态码', default=True, help_text='勾选后需要填写动态有效时间才能有效')
     dc_expires_in = models.PositiveIntegerField('动态码有效时间', default=20, help_text='单位：分钟')
-    dy_status = models.IntegerField(u'抖音状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
-    is_price = models.BooleanField('是否已设价格', default=False)
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     actual_amount = models.DecimalField('总实收', max_digits=9, decimal_places=2, default=0)
+
+    is_price = models.BooleanField('是否已设价格', default=False, editable=False)
     cache_seat = models.TextField('座位价格数据', editable=False, null=True, blank=True)
     PUSH_DEFAULT = 1
     PUSH_APPROVE = 2
@@ -1045,22 +1052,22 @@ class SessionInfo(UseNoAbstract):
     PUSH_CHOICES = (
         (PUSH_DEFAULT, u'未推送'), (PUSH_NEED, u'已推送'), (PUSH_APPROVE, u'审核中'), (PUSH_SUCCESS, u'审核完成'),
         (PUSH_FAIL, u'推送创建商品失败'), (PUSH_AUTH_FAIL, u'审核失败'))
-    push_status = models.IntegerField(u'推送抖音状态', choices=PUSH_CHOICES, default=PUSH_DEFAULT)
-    venue_id = models.IntegerField('场馆ID', editable=False, default=0)
-    product_id = models.CharField('抖音商品ID', null=True, blank=True, max_length=50)
-    plan_id = models.CharField('通用计划ID', null=True, blank=True, max_length=50)
-    fail_msg = models.TextField('抖音错误信息', max_length=1000, null=True, blank=True)
-    mz_account = models.ForeignKey(MaiZuoAccount, verbose_name='麦座账户', null=True, blank=True, on_delete=models.SET_NULL)
+    dy_status = models.IntegerField(u'抖音状态', choices=STATUS_CHOICES, default=STATUS_OFF, editable=False)
+    push_status = models.IntegerField(u'推送抖音状态', choices=PUSH_CHOICES, default=PUSH_DEFAULT, editable=False)
+    product_id = models.CharField('抖音商品ID', null=True, blank=True, max_length=50, editable=False)
+    plan_id = models.CharField('通用计划ID', null=True, blank=True, max_length=50, editable=False)
+    fail_msg = models.TextField('抖音错误信息', max_length=1000, null=True, blank=True, editable=False)
+    mz_account = models.ForeignKey(MaiZuoAccount, verbose_name='麦座账户', null=True, blank=True, on_delete=models.SET_NULL,
+                                   editable=False)
     PULL_DEFAULT = 1
     PULL_APPROVE = 2
     PULL_SUCCESS = 3
     PULL_FAIL = 4
     PULL_CHOICES = (
         (PULL_DEFAULT, U'未拉取'), (PULL_APPROVE, U'更新中'), (PULL_SUCCESS, U'已完成'), (PULL_FAIL, U'更新失败'))
-    pull_mz_status = models.IntegerField(u'麦座同步状态', choices=PULL_CHOICES, default=PULL_DEFAULT)
-    is_new = models.BooleanField('新任务', default=False, editable=False)
-    maizuo_data = models.TextField('麦座基础数据', null=True, blank=True)
-    display_order = models.IntegerField('抖音商品排序', default=0, help_text='数字越大,商品越靠前')
+    pull_mz_status = models.IntegerField(u'麦座同步状态', choices=PULL_CHOICES, default=PULL_DEFAULT, editable=False)
+    maizuo_data = models.TextField('麦座基础数据', null=True, blank=True, editable=False)
+    display_order = models.IntegerField('抖音商品排序', default=0, help_text='数字越大,商品越靠前', editable=False)
 
     def __str__(self):
         return '{}{}({})({})'.format(self.show.title, self.start_at.strftime('%Y-%m-%d %H:%M'),
@@ -5884,8 +5891,6 @@ class MaiZuoTask(models.Model):
             inst.error_msg = error_msg
             inst.save(update_fields=['status'])
             inst.session.set_mz_status(mz_status)
-            inst.session.is_new = True
-            inst.session.save(update_fields=['is_new'])
 
 
 class DownLoadTask(models.Model):
