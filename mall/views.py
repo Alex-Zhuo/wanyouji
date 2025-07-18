@@ -307,22 +307,22 @@ class UserViewSet(viewsets.ModelViewSet):
         if s.is_valid(True):
             s.save()
         return Response()
-
-    @action(methods=['get'], permission_classes=[IsPermittedUser], detail=False)
-    def info(self, request):
-        user = request.user
-        if user.is_authenticated:
-            # 临时关闭
-            # user.update_wechat_info()
-            share_code = request.GET.get('share_code')
-            # flag = request.GET.get('flag')
-            if share_code:
-                try:
-                    request.user.bind_parent(share_code)
-                except Exception as e:
-                    pass
-            return Response(data=UserInfoSerializer(user, context={'request': request}).data)
-        return Response(status=401)
+    #
+    # @action(methods=['get'], permission_classes=[IsPermittedUser], detail=False)
+    # def info(self, request):
+    #     user = request.user
+    #     if user.is_authenticated:
+    #         # 临时关闭
+    #         # user.update_wechat_info()
+    #         share_code = request.GET.get('share_code')
+    #         # flag = request.GET.get('flag')
+    #         if share_code:
+    #             try:
+    #                 request.user.bind_parent(share_code)
+    #             except Exception as e:
+    #                 pass
+    #         return Response(data=UserInfoSerializer(user, context={'request': request}).data)
+    #     return Response(status=401)
 
     @action(methods=['get'], permission_classes=[IsPermittedUser], detail=False)
     def new_info(self, request):

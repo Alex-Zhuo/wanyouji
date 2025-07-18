@@ -87,8 +87,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('avatar', 'subscribe', 'first_name', 'last_name', 'idcard', 'token', 'nickname', 'id', 'share_code',
-                  'icon', 'mobile', 'level', 'wechat', 'extra', 'has_location', 'card_deadline',
+        fields = ('avatar', 'subscribe', 'first_name', 'last_name', 'token', 'nickname', 'share_code',
+                  'icon', 'mobile', 'level', 'extra', 'has_location', 'card_deadline',
                   'parent', 'province', 'city', 'county', 'iv', 'flag', 'theater_card_amount')
 
     def get_parent(self, obj):

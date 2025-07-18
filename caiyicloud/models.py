@@ -6,15 +6,17 @@ from django.conf import settings
 import logging
 from random import sample
 from mall.models import User
-from common.utils import get_config
+from common.utils import get_config, save_url_img
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
 import json
 from typing import List, Dict
 from django.db.transaction import atomic
-
-from ticket.models import ShowProject, ShowType
+from caiyicloud.api import caiyi_cloud
+from ticket.models import ShowProject, ShowType, Venues
+from common.config import IMAGE_FIELD_PREFIX
+import os
 
 log = logging.getLogger(__name__)
 # -*- coding: utf-8 -*-
@@ -43,7 +45,6 @@ class CaiYiCloudApp(models.Model):
     @classmethod
     def get(cls):
         return cls.objects.first()
-
 
 
 class CySupplierInfo(models.Model):
@@ -75,7 +76,7 @@ class CyGroupInfo(models.Model):
 class CyCategory(models.Model):
     """项目组合信息模型"""
     code = models.PositiveSmallIntegerField(verbose_name='节目分类编码', unique=True)
-    name = models.CharField(max_length=20, verbose_name='名称')
+    name = models.CharField(max_length=20, verbose_name='名称', null=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
@@ -87,8 +88,23 @@ class CyCategory(models.Model):
             ShowType.objects.get_or_create(name=name, cy_cate=cate)
 
     @classmethod
-    def get_cate(cls, code):
-        return cls.objects.get(code=code)
+    def get_show_type(cls, code: str, name: str):
+        need = False
+        inst, create = cls.objects.get_or_create(code=code)
+        if create:
+            inst.name = name
+            inst.save(update_fields=['name'])
+            need = True
+        else:
+            show_type = ShowType.objects.filter(cy_cate=inst).first()
+            if not show_type:
+                need = True
+        if need:
+            show_type, _ = ShowType.objects.get_or_create(name=name)
+            show_type.cy_cate = inst
+            show_type.save(update_fields=['cy_cate'])
+            show_type.show_type_copy_to_pika()
+        return inst, show_type
 
 
 class CyShowEvent(models.Model):
@@ -154,7 +170,7 @@ class CyShowEvent(models.Model):
         blank=True,
         verbose_name='项目组合信息'
     )
-
+    expire_order_minute = models.PositiveSmallIntegerField('订单支付等待时间', help_text='单位：分钟')
     # 时间信息
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -166,24 +182,81 @@ class CyShowEvent(models.Model):
     def __str__(self):
         return self.show.title
 
-    @property
-    def is_selectable_seat(self):
-        """是否为选座项目"""
-        if self.ticket_mode is not None:
-            return self.ticket_mode == 2
-        return self.seat_type == 1
+    @classmethod
+    def get_show_status(cls, state: int):
+        if state == 3:
+            return ShowProject.STATUS_ON
+        return ShowProject.STATUS_OFF
 
     @property
-    def is_selling(self):
-        """是否正在售票"""
-        return self.state in [2, 3]  # 预售中或售票中
+    def check_can_on(self):
+        """是否可以上架"""
+        return self.state not in [5, 7]
 
-    @property
-    def is_ended(self):
-        """是否已结束"""
-        return self.state == 7
-
-    @property
-    def is_cancelled(self):
-        """是否已取消"""
-        return self.state == 5
+    @classmethod
+    def init_cy_event(cls):
+        cy = caiyi_cloud()
+        # try:
+        page = 1
+        page_size = 50
+        event_data = cy.get_events(page=page, page_size=page_size)
+        total = event_data['total']
+        event_list = event_data.get('list') or []
+        while total > page * page_size and page < 50:
+            page += 1
+            event_data = cy.get_events(page=page, page_size=page_size)
+            if event_data.get('list'):
+                event_list += event_data['list']
+        for event in event_list:
+            event_detail = cy.event_detail(event['id'])
+            show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
+            venue = Venues.objects.filter(cy_no=event_detail['venue_id']).first()
+            if not venue:
+                venue_detail = cy.venue_detail(event_detail['venue_id'])
+                from express.models import Division
+                city = Division.objects.filter(city=venue_detail['city_name'], type=Division.TYPE_CITY)
+                venue = Venues.objects.create(cy_no=event_detail['venue_id'], name=venue_detail['name'], city=city,
+                                              lat=venue_detail['latitude'], lng=venue_detail['longitude'],
+                                              address=venue_detail['address'], desc=venue_detail['description'],
+                                              custom_mobile=venue_detail['venue_phone'])
+                venue.venues_detail_copy_to_pika()
+            notice = ''
+            if event_detail.get('watching_notices'):
+                notice += '观演须知:\n'
+                for nt in event_detail['watching_notices']:
+                    notice += f"{nt['title']}:\n{nt['content']}\n"
+            if event_detail.get('purchase_notices'):
+                notice += '购买须知:\n'
+                for nt in event_detail['purchase_notices']:
+                    notice += f"{nt['title']}:\n{nt['content']}\n"
+            logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
+            # 保存网络图片
+            logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
+            show_data = dict(title=event_detail['name'], show_type=show_type, venues=venue, lat=venue.lat,
+                             lng=venue.lng,
+                             city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
+                             notice=notice, status=cls.get_show_status(event_detail['state']),
+                             logo_mobile=logo_mobile_path)
+            show_qs = ShowProject.objects.filter(cy_no=event['id'])
+            if not show_qs:
+                show = ShowProject.objects.create(**show_data)
+            else:
+                show_qs.update(**show_data)
+                show = show_qs.first()
+            show.shows_detail_copy_to_pika()
+            supplier_info = None
+            group_info = None
+            if event_detail.get('supplier_info'):
+                supplier_info = event_detail['supplier_info']
+                supplier_info = CySupplierInfo.get_inst(supplier_info['id'], supplier_info['name'])
+            if event_detail.get('group_info'):
+                group_info = event_detail['group_info']
+                group_info = CyGroupInfo.get_inst(supplier_info['group_id'], supplier_info['group_name'])
+            cls_data = dict(event_id=event['id'], std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
+                            ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
+                            poster_url=event_detail['poster_url'],
+                            content_url=event_detail['content_url'], category=event_detail['category'],
+                            expire_order_minute=event_detail['expire_order_minute'], supplier_info=supplier_info,
+                            group_info=group_info)
+        # except Exception as e:
+        #     log.error(e)

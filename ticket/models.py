@@ -294,9 +294,8 @@ class ShowType(models.Model):
                                            blank=True, editable=False)
     category = models.ForeignKey(ShowTopCategory, verbose_name='抖音类目', related_name='cate', null=True, blank=True,
                                  on_delete=models.SET_NULL)
-    cy_cate = models.ForeignKey('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
-                                blank=True,
-                                on_delete=models.SET_NULL)
+    cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
+                                   blank=True, on_delete=models.SET_NULL)
     is_use = models.BooleanField('是否启用', default=True)
     slug = models.CharField('标识', null=True, blank=True, max_length=15)
 
@@ -370,6 +369,7 @@ class Venues(UseNoAbstract):
     DIR_REVERSE = 2
     DIRECT_CHOICES = [(DIR_FORWARD, '正向'), (DIR_REVERSE, '反向')]
     direction = models.IntegerField('舞台方向', choices=DIRECT_CHOICES, default=DIR_FORWARD)
+    cy_no = models.CharField('彩艺云ID', max_length=64, unique=True, db_index=True, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '演出场馆'
@@ -507,6 +507,7 @@ class TikTokQualRecord(models.Model):
 
 
 class ShowProject(UseNoAbstract):
+    cy_no = models.CharField('彩艺云ID', max_length=64, unique=True, db_index=True, null=True, blank=True)
     title = models.CharField('演出名称', max_length=100, help_text='100个字内')
     show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.CASCADE)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,

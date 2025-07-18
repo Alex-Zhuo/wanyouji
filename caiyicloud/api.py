@@ -211,8 +211,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         该接口用于查询场馆信息
         """
         headers = self.headers()
-        sign_params = self.common_sign_params(headers)
-        headers['sign'] = self.get_sign(sign_params)
+        headers['sign'] = self.get_sign(headers)
         ret = self._get(f'api/venue/v1/venues/{venue_id}', headers=headers)
         self.parse_resp(ret)
         return ret['data']

@@ -9,7 +9,7 @@ import redis
 import json
 import six
 from django.db import connections
-from common.config import get_config
+from common.config import get_config, IMAGE_FIELD_PREFIX
 import os
 from django.conf import settings
 import qrcode
@@ -561,3 +561,16 @@ def secure_update(obj, ignore_none=True, **kwargs):
 def get_no():
     import uuid
     return uuid.uuid4().hex
+
+
+def save_url_img(img_url: str, logo_mobile_dir: str):
+    from common.qrutils import open_image_by_url
+    logo_mobile = open_image_by_url(img_url)
+    file_path = os.path.join(settings.MEDIA_ROOT, logo_mobile_dir)
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
+    file_name = f'{sha256_str(img_url)}.png'
+    img = f'{file_path}/{file_name}'
+    logo_mobile_path = f'{logo_mobile_dir}/{file_name}'
+    logo_mobile.save(img)
+    return logo_mobile_path
