@@ -1,9 +1,8 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from django.db import models
 from django.conf import settings
 import logging
-from random import sample
 from mall.models import User
 from common.utils import get_config, save_url_img
 from django.core.exceptions import ValidationError
@@ -15,12 +14,12 @@ from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
 from ticket.models import ShowProject, ShowType, Venues, SessionInfo
 from common.config import IMAGE_FIELD_PREFIX
-import os
 from datetime import datetime, timedelta
-from django.utils import timezone
+from django.db import models
+from django.core.validators import MinValueValidator
+import re
 
 log = logging.getLogger(__name__)
-# -*- coding: utf-8 -*-
 """
 节目分类字典
 """
@@ -75,6 +74,7 @@ class CyCategory(ChoicesCommon):
     @classmethod
     def get_show_type(cls, code: str, name: str):
         need = False
+        show_type = None
         inst, create = cls.objects.get_or_create(code=code)
         if create:
             inst.name = name
@@ -345,7 +345,7 @@ class CySession(models.Model):
     c_session = models.OneToOneField(SessionInfo, verbose_name='演出场次', on_delete=models.CASCADE,
                                      related_name='cy_session')
     # 关联信息
-    event = models.ForeignKey(CyShowEvent, on_delete=models.CASCADE, related_name='cy_show', verbose_name='关联节目')
+    event = models.ForeignKey(CyShowEvent, on_delete=models.CASCADE, verbose_name='关联节目')
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场次ID')
     std_id = models.CharField(max_length=64, verbose_name='中心场次ID')
     start_time = models.DateTimeField('开始时间', db_index=True)
@@ -476,7 +476,6 @@ class CySession(models.Model):
         """
         从API数据创建场次
         Args:
-            api_data: API返回的场次数据
             event_id: 关联的项目ID
         Returns:
             创建的场次实例
@@ -545,13 +544,169 @@ class CySession(models.Model):
             if not cy_session_qs:
                 session = SessionInfo.objects.create(**session_data)
                 cls_data['c_session'] = session
-                cls.objects.create(**cls_data)
+                cy_session = cls.objects.create(**cls_data)
             else:
-                session = cy_session_qs.first().c_session
+                cy_session = cy_session_qs.first()
+                session = cy_session.c_session
                 SessionInfo.objects.filter(id=session.id).update(**session_data)
                 cy_session_qs.update(**cls_data)
             show.change_session_end_at(session.end_at)
             # 修改缓存
             show.shows_detail_copy_to_pika()
             session.redis_show_date_copy()
-            return session
+            return cy_session
+
+
+class TicketPack(models.Model):
+    """套票子项模型"""
+    id = models.CharField(max_length=50, primary_key=True, help_text="套票子项id")
+    ticket_type_id = models.CharField(max_length=50, help_text="基础票价ID")
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="基础票价格")
+    qty = models.IntegerField(validators=[MinValueValidator(1)], help_text="数量")
+
+    class Meta:
+        db_table = 'ticket_pack'
+        verbose_name = '套票子项'
+        verbose_name_plural = '套票子项'
+
+    def __str__(self):
+        return f"{self.ticket_type_id} x{self.qty}"
+
+
+class Ticket(models.Model):
+    # 类别选择
+    CATEGORY_CHOICES = [
+        (1, '基础票'),
+        (2, '固定套票'),
+        (3, '自由套票'),
+    ]
+    # 启用状态选择
+    ENABLED_CHOICES = [
+        (0, '未启用'),
+        (1, '启用'),
+    ]
+    # 停售状态选择
+    SOLD_OUT_CHOICES = [
+        (1, '可售'),
+        (2, '停售'),
+    ]
+    cy_session = models.ForeignKey(CySession, on_delete=models.CASCADE, verbose_name='关联节目')
+    # 基础字段
+    cy_no = models.CharField(max_length=64, primary_key=True, help_text="票价id")
+    std_id = models.CharField(max_length=64, help_text="中心票价id")
+    name = models.CharField(max_length=50, help_text="票价名称")
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="票价，单位：元")
+    comment = models.CharField(max_length=50, blank=True, null=True, help_text="票价说明")
+    color = models.CharField(max_length=20, help_text="颜色", null=True, blank=True)
+    # 状态字段
+    enabled = models.IntegerField(
+        choices=ENABLED_CHOICES,
+        default=1,
+        help_text="是否启用，1：启用；0：未启用"
+    )
+    sold_out_state = models.IntegerField(
+        choices=SOLD_OUT_CHOICES,
+        blank=True,
+        null=True,
+        help_text="是否停售, 1:可售，2:停售"
+    )
+    # 分类和排序
+    category = models.IntegerField(
+        choices=CATEGORY_CHOICES,
+        default=1,
+        help_text="类别，1：基础票，2：固定套票，3:自由套票"
+    )
+    seq = models.IntegerField(default=1, help_text="票价顺序")
+    # 套票关联
+    ticket_pack_list = models.ManyToManyField(
+        TicketPack,
+        blank=True,
+        help_text="套票组成信息，基础票为空"
+    )
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, help_text="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, help_text="更新时间")
+
+    class Meta:
+        verbose_name_plural = verbose_name = '票档'
+        ordering = ['seq', 'price']
+
+    def __str__(self):
+        return f"{self.name} - ¥{self.price}"
+
+    @property
+    def is_package_ticket(self):
+        """是否为套票"""
+        return self.category in [2, 3]
+
+    @property
+    def is_available(self):
+        """是否可售"""
+        return self.enabled == 1 and self.sold_out_state != 2
+
+    def get_total_package_price(self):
+        """获取套票总价"""
+        if not self.is_package_ticket:
+            return self.price
+
+        total = 0
+        for pack in self.ticket_pack_list.all():
+            total += pack.price * pack.qty
+        return total
+
+    def get_package_items_count(self):
+        """获取套票包含的票种数量"""
+        if not self.is_package_ticket:
+            return 0
+
+        total_qty = 0
+        for pack in self.ticket_pack_list.all():
+            total_qty += pack.qty
+        return total_qty
+
+    def validate_color(self):
+        """验证颜色格式"""
+        if self.color:
+            color_pattern = r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+            if not re.match(color_pattern, self.color):
+                raise ValueError("颜色格式不正确，应为十六进制格式，如 #4a7fb3")
+
+    # def clean(self):
+    #     """模型验证"""
+    #     super().clean()
+    #     self.validate_color()
+    #     # 套票验证
+    #     if self.is_package_ticket and not self.ticket_pack_list.exists():
+    #         raise ValueError("套票必须包含套票组成信息")
+    #     if self.category ==1 and self.ticket_pack_list.exists():
+    #         raise ValueError("基础票不能包含套票组成信息")
+    #
+    # def save(self, *args, **kwargs):
+    #     self.clean()
+    #     super().save(*args, **kwargs)
+
+    @classmethod
+    def update_or_create_record(cls, session_id: str):
+        cy = caiyi_cloud()
+        ticket_types_list = cy.ticket_types([session_id])
+        ticket_stock_list = cy.ticket_stock([session_id])
+        ticket_stock_dict = dict()
+        for ticket_stock in ticket_stock_list:
+            ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
+        for ticket_type in ticket_types_list:
+            stock = 0
+            if ticket_stock_dict.get(ticket_type['id']):
+                stock = ticket_stock_dict.get(ticket_type['id'])['inventory']
+            cls_data = dict(
+                name=name,
+                price=price,
+                std_id=std_id or f"std_{session_id}_{seq}",
+                comment=comment,
+                category=category,
+                seq=seq
+            )
+            tf_data = dict()
+            # 添加套票组成
+            for pack_data in ticket_packs:
+                pack = TicketPack.objects.create(**pack_data)
+                ticket.ticket_pack_list.add(pack)
