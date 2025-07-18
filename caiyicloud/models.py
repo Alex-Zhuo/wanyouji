@@ -47,32 +47,6 @@ class CaiYiCloudApp(models.Model):
         return cls.objects.first()
 
 
-class CySupplierInfo(models.Model):
-    """供应商信息模型"""
-    name = models.CharField(max_length=200, verbose_name='供应商名称')
-    supplier_id = models.CharField(max_length=100, verbose_name='供应商ID')
-
-    class Meta:
-        verbose_name = '供应商信息'
-        verbose_name_plural = '供应商信息'
-
-    def __str__(self):
-        return self.name
-
-
-class CyGroupInfo(models.Model):
-    """项目组合信息模型"""
-    group_id = models.CharField(max_length=100, verbose_name='项目组合ID')
-    group_name = models.CharField(max_length=200, verbose_name='项目组合名称')
-
-    class Meta:
-        verbose_name = '项目组合信息'
-        verbose_name_plural = '项目组合信息'
-
-    def __str__(self):
-        return self.group_name
-
-
 class CyCategory(models.Model):
     """项目组合信息模型"""
     code = models.PositiveSmallIntegerField(verbose_name='节目分类编码', unique=True)
@@ -107,12 +81,30 @@ class CyCategory(models.Model):
         return inst, show_type
 
 
+class CyVenue(models.Model):
+    venue = models.OneToOneField(Venues, verbose_name='演出场馆', on_delete=models.CASCADE, related_name='cy_venue')
+    province_name = models.CharField("省", max_length=32)
+    city_name = models.CharField("市", max_length=32)
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场馆ID')
+
+    class Meta:
+        verbose_name_plural = verbose_name = '场馆'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.venue.name
+
+    @classmethod
+    def create_record(cls, venue, province_name, city_name, cy_no):
+        return cls.objects.create(venue=venue, province_name=province_name, city_name=city_name, cy_no=cy_no)
+
+
 class CyShowEvent(models.Model):
     """事件/项目模型"""
     # 基本信息
     show = models.OneToOneField(ShowProject, verbose_name='演出项目', on_delete=models.CASCADE, related_name='cy_show')
-    event_id = models.CharField(max_length=100, unique=True, db_index=True, verbose_name='项目ID')
-    std_id = models.CharField(max_length=100, verbose_name='中心项目ID')
+    event_id = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='项目ID')
+    std_id = models.CharField(max_length=64, verbose_name='中心项目ID')
     # 座位和票务信息
     SEAT_HAS = 1
     SEAT_NO = 0
@@ -156,21 +148,8 @@ class CyShowEvent(models.Model):
         default=1,
         verbose_name='节目状态'
     )
-    supplier_info = models.ForeignKey(
-        CySupplierInfo,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name='供应商信息'
-    )
-    group_info = models.ForeignKey(
-        CyGroupInfo,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name='项目组合信息'
-    )
     expire_order_minute = models.PositiveSmallIntegerField('订单支付等待时间', help_text='单位：分钟')
+    snapshot = models.TextField('其他信息', null=True, blank=True, editable=False)
     # 时间信息
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -210,16 +189,21 @@ class CyShowEvent(models.Model):
         for event in event_list:
             event_detail = cy.event_detail(event['id'])
             show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
-            venue = Venues.objects.filter(cy_no=event_detail['venue_id']).first()
-            if not venue:
+            cy_venue = CyVenue.objects.filter(cy_no=event_detail['venue_id']).first()
+            if not cy_venue:
                 venue_detail = cy.venue_detail(event_detail['venue_id'])
                 from express.models import Division
-                city = Division.objects.filter(city=venue_detail['city_name'], type=Division.TYPE_CITY)
-                venue = Venues.objects.create(cy_no=event_detail['venue_id'], name=venue_detail['name'], city=city,
+                city = Division.objects.filter(province=venue_detail['province_name'], city=venue_detail['city_name'],
+                                               type=Division.TYPE_CITY).first()
+                venue = Venues.objects.create(name=venue_detail['name'], city=city,
                                               lat=venue_detail['latitude'], lng=venue_detail['longitude'],
                                               address=venue_detail['address'], desc=venue_detail['description'],
                                               custom_mobile=venue_detail['venue_phone'])
+                CyVenue.create_record(venue, venue_detail['province_name'], venue_detail['city_name'],
+                                      event_detail['venue_id'])
                 venue.venues_detail_copy_to_pika()
+            else:
+                venue = cy_venue.venue
             notice = ''
             if event_detail.get('watching_notices'):
                 notice += '观演须知:\n'
@@ -237,26 +221,21 @@ class CyShowEvent(models.Model):
                              city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
                              notice=notice, status=cls.get_show_status(event_detail['state']),
                              logo_mobile=logo_mobile_path)
-            show_qs = ShowProject.objects.filter(cy_no=event['id'])
-            if not show_qs:
-                show = ShowProject.objects.create(**show_data)
-            else:
-                show_qs.update(**show_data)
-                show = show_qs.first()
-            show.shows_detail_copy_to_pika()
-            supplier_info = None
-            group_info = None
-            if event_detail.get('supplier_info'):
-                supplier_info = event_detail['supplier_info']
-                supplier_info = CySupplierInfo.get_inst(supplier_info['id'], supplier_info['name'])
-            if event_detail.get('group_info'):
-                group_info = event_detail['group_info']
-                group_info = CyGroupInfo.get_inst(supplier_info['group_id'], supplier_info['group_name'])
+            cy_show_qs = cls.objects.filter(event_id=event['id'])
+            snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
             cls_data = dict(event_id=event['id'], std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
                             ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
                             poster_url=event_detail['poster_url'],
                             content_url=event_detail['content_url'], category=event_detail['category'],
-                            expire_order_minute=event_detail['expire_order_minute'], supplier_info=supplier_info,
-                            group_info=group_info)
+                            expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
+            if not cy_show_qs:
+                show = ShowProject.objects.create(**show_data)
+                cls_data['show'] = show
+                cls.objects.create(**cls_data)
+            else:
+                show = cy_show_qs.first().show
+                ShowProject.objects.filter(id=show.id).update(**show_data)
+                cy_show_qs.update(**cls_data)
+            show.shows_detail_copy_to_pika()
         # except Exception as e:
         #     log.error(e)

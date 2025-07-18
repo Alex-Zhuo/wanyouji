@@ -97,7 +97,7 @@ class VenuesAdmin(RemoveDeleteModelAdmin):
     search_fields = ['name']
     autocomplete_fields = ['city']
     inlines = [VenuesLayersInline, VenuesLogoImageInline, VenuesDetailImageInline]
-    readonly_fields = ['no', 'cy_no']
+    readonly_fields = ['no']
 
     def op(self, obj):
         html = '<a target="_blank" href="/static/talkShow/seatManager/#/hallSeat?templeteId={}" class="el-button el-button--danger el-button--small" ' \
@@ -218,7 +218,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
     inlines = [ShowNotificationInline, ShowsDetailImageInline]
-    readonly_fields = ['session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no','cy_no']
+    readonly_fields = ['session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
 

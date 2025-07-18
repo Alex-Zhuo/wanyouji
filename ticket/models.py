@@ -369,7 +369,6 @@ class Venues(UseNoAbstract):
     DIR_REVERSE = 2
     DIRECT_CHOICES = [(DIR_FORWARD, '正向'), (DIR_REVERSE, '反向')]
     direction = models.IntegerField('舞台方向', choices=DIRECT_CHOICES, default=DIR_FORWARD)
-    cy_no = models.CharField('彩艺云ID', max_length=64, unique=True, db_index=True, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '演出场馆'
@@ -384,6 +383,8 @@ class Venues(UseNoAbstract):
         from ticket.serializers import VenuesSerializer
         data = VenuesSerializer(self).data
         data['price'] = float(data['price'])
+        if hasattr(self, 'cy_venue'):
+            data['cy_no'] = self.cy_venue.cy_no
         with get_pika_redis() as pika:
             pika.hset(redis_venues_copy_key, str(self.id), json.dumps(data))
 
@@ -507,7 +508,6 @@ class TikTokQualRecord(models.Model):
 
 
 class ShowProject(UseNoAbstract):
-    cy_no = models.CharField('彩艺云ID', max_length=64, unique=True, db_index=True, null=True, blank=True)
     title = models.CharField('演出名称', max_length=100, help_text='100个字内')
     show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.CASCADE)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
@@ -742,6 +742,8 @@ class ShowProject(UseNoAbstract):
             show_cache['images'] = image_data if image_data else None
             from common.utils import get_timestamp
             show_cache['sale_time_timestamp'] = get_timestamp(self.sale_time) if self.sale_time else None
+            if hasattr(self,'cy_show'):
+                show_cache['cy_no'] = self.cy_show.event_id
             redis.hset(redis_shows_copy_key, str(self.id), json.dumps(show_cache))
 
     @classmethod
