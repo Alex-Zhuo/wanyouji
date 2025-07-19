@@ -67,6 +67,7 @@ class CaiYiCloudAbstract(object):
         #         request=res.request,
         #         response=res)
         if deubg:
+            logger.debug('url:{}'.format(url))
             logger.debug(ret_data)
         return ret_data
 
