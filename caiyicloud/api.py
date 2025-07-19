@@ -18,6 +18,8 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
+deubg = True
+
 
 def random_string(length=16):
     rule = string.ascii_letters + string.digits
@@ -64,6 +66,8 @@ class CaiYiCloudAbstract(object):
         #         client=self,
         #         request=res.request,
         #         response=res)
+        if deubg:
+            logger.debug(ret_data)
         return ret_data
 
     def parse_resp(self, response_data: dict, request_data: dict = None):
@@ -261,7 +265,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return ret['data']
 
     def seat_url(self, event_id: str, session_id: str, ticket_type_id: str, navigate_url: str,
-                 display_ticket_type_ids: list=None):
+                 display_ticket_type_ids: list = None):
         """
         该接口用于获取选座H5的UR
         """
