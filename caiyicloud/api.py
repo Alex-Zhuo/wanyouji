@@ -70,6 +70,7 @@ class CaiYiCloudAbstract(object):
         error_code = response_data["code"]
         if not is_success(error_code):
             error_message = '({}){}'.format(response_data['trace_id'], response_data['message'])
+            logger.error(error_message)
             exception = create_exception_from_error_code(
                 error_code,
                 error_message=error_message,
@@ -260,7 +261,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return ret['data']
 
     def seat_url(self, event_id: str, session_id: str, ticket_type_id: str, navigate_url: str,
-                 display_ticket_type_ids: list):
+                 display_ticket_type_ids: list=None):
         """
         该接口用于获取选座H5的UR
         """

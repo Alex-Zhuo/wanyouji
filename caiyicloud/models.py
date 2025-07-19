@@ -12,12 +12,13 @@ import json
 from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
-from ticket.models import ShowProject, ShowType, Venues, SessionInfo
+from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
 from django.core.validators import MinValueValidator
 import re
+from decimal import Decimal
 
 log = logging.getLogger(__name__)
 """
@@ -32,7 +33,7 @@ EVENT_CATEGORIES = {
 
 class ChoicesCommon(models.Model):
     code = models.PositiveSmallIntegerField('编码', unique=True)
-    name = models.CharField(max_length=64, verbose_name='名称')
+    name = models.CharField(max_length=64, verbose_name='名称', null=True)
 
     class Meta:
         abstract = True
@@ -550,30 +551,68 @@ class CySession(models.Model):
                 session = cy_session.c_session
                 SessionInfo.objects.filter(id=session.id).update(**session_data)
                 cy_session_qs.update(**cls_data)
+            # 修改多选
+            id_types_list = api_data.get('id_types', [])
+            ct_list = []
+            for code in id_types_list:
+                ct = CyIdTypes.objects.filter(code=code).first()
+                if ct:
+                    ct_list.append(ct)
+            if ct_list:
+                cy_session.id_types.set(ct_list)
+            check_in_list = api_data.get('check_in_methods', [])
+            ci_list = []
+            for code in check_in_list:
+                ci = CyCheckInMethods.objects.filter(code=code).first()
+                if ci:
+                    ci_list.append(ci)
+            if ci_list:
+                cy_session.check_in_methods.set(ci_list)
+            delivery_list = api_data.get('delivery_methods', [])
+            dl_list = []
+            for code in delivery_list:
+                dl = CyDeliveryMethods.objects.filter(code=code).first()
+                if dl:
+                    dl_list.append(dl)
+            if dl_list:
+                cy_session.delivery_methods.set(dl_list)
             show.change_session_end_at(session.end_at)
             # 修改缓存
             show.shows_detail_copy_to_pika()
             session.redis_show_date_copy()
             return cy_session
 
+    def get_seat_url(self, ticket_type_id: str, navigate_url: str):
+        cy = caiyi_cloud()
+        try:
+            data = cy.seat_url(self.event.event_id, self.cy_no, ticket_type_id, navigate_url)
+            return data
+        except Exception as e:
+            raise CustomAPIException(e)
 
-class TicketPack(models.Model):
+
+class CyTicketPack(models.Model):
     """套票子项模型"""
-    id = models.CharField(max_length=50, primary_key=True, help_text="套票子项id")
-    ticket_type_id = models.CharField(max_length=50, help_text="基础票价ID")
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, help_text="套票子项id")
+    ticket_type_id = models.CharField(max_length=50, help_text="票档-票价id")
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="基础票价格")
     qty = models.IntegerField(validators=[MinValueValidator(1)], help_text="数量")
 
     class Meta:
-        db_table = 'ticket_pack'
-        verbose_name = '套票子项'
-        verbose_name_plural = '套票子项'
+        verbose_name_plural = verbose_name = '套票子项'
 
     def __str__(self):
         return f"{self.ticket_type_id} x{self.qty}"
 
+    @classmethod
+    def update_or_create_record(cls, cy_no: str, ticket_type_id: str, price: float, qty: int):
+        obj, _ = cls.objects.get_or_create(cy_no=cy_no, ticket_type_id=ticket_type_id)
+        obj.price = price
+        obj.qty = qty
+        obj.save(update_fields=['price', 'qty'])
 
-class Ticket(models.Model):
+
+class CyTicketType(models.Model):
     # 类别选择
     CATEGORY_CHOICES = [
         (1, '基础票'),
@@ -590,9 +629,11 @@ class Ticket(models.Model):
         (1, '可售'),
         (2, '停售'),
     ]
+    ticket_file = models.OneToOneField(TicketFile, verbose_name='票档', on_delete=models.CASCADE,
+                                       related_name='cy_tf')
     cy_session = models.ForeignKey(CySession, on_delete=models.CASCADE, verbose_name='关联节目')
     # 基础字段
-    cy_no = models.CharField(max_length=64, primary_key=True, help_text="票价id")
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, help_text="票价id")
     std_id = models.CharField(max_length=64, help_text="中心票价id")
     name = models.CharField(max_length=50, help_text="票价名称")
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="票价，单位：元")
@@ -619,7 +660,7 @@ class Ticket(models.Model):
     seq = models.IntegerField(default=1, help_text="票价顺序")
     # 套票关联
     ticket_pack_list = models.ManyToManyField(
-        TicketPack,
+        CyTicketPack,
         blank=True,
         help_text="套票组成信息，基础票为空"
     )
@@ -688,25 +729,64 @@ class Ticket(models.Model):
     @classmethod
     def update_or_create_record(cls, session_id: str):
         cy = caiyi_cloud()
-        ticket_types_list = cy.ticket_types([session_id])
-        ticket_stock_list = cy.ticket_stock([session_id])
-        ticket_stock_dict = dict()
-        for ticket_stock in ticket_stock_list:
-            ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
-        for ticket_type in ticket_types_list:
-            stock = 0
-            if ticket_stock_dict.get(ticket_type['id']):
-                stock = ticket_stock_dict.get(ticket_type['id'])['inventory']
-            cls_data = dict(
-                name=name,
-                price=price,
-                std_id=std_id or f"std_{session_id}_{seq}",
-                comment=comment,
-                category=category,
-                seq=seq
-            )
-            tf_data = dict()
-            # 添加套票组成
-            for pack_data in ticket_packs:
-                pack = TicketPack.objects.create(**pack_data)
-                ticket.ticket_pack_list.add(pack)
+        cy_session = CySession.objects.filter(cy_no=session_id).first()
+        if cy_session:
+            ticket_types_list = cy.ticket_types([session_id])
+            ticket_stock_list = cy.ticket_stock([session_id])
+            ticket_stock_dict = dict()
+            for ticket_stock in ticket_stock_list:
+                ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
+            for ticket_type in ticket_types_list:
+                stock = 0
+                if ticket_stock_dict.get(ticket_type['id']):
+                    stock = int(ticket_stock_dict.get(ticket_type['id'])['inventory'])
+                price = Decimal(ticket_type['price'])
+                cls_data = dict(
+                    cy_session=cy_session,
+                    cy_no=ticket_type['id'],
+                    name=ticket_type['name'],
+                    std_id=ticket_type['std_id'],
+                    price=price,
+                    comment=ticket_type['comment'],
+                    color=ticket_type['color'],
+                    enabled=ticket_type['enabled'],
+                    sold_out_state=ticket_type['sold_out_state'],
+                    category=ticket_type['category'],
+                    seq=ticket_type['seq'],
+                )
+                desc = f"{ticket_type['name']}({ticket_type['comment']})" if ticket_type['comment'] else ticket_type[
+                    'name']
+                status = True if ticket_type['enabled'] == 1 and ticket_type['sold_out_state'] == 1 else False
+                tf_data = dict(session=cy_session.c_session, origin_price=price, price=price, stock=stock,
+                               color_code=ticket_type['color'],
+                               desc=desc, status=status)
+                cy_ticket_qs = cls.objects.filter(cy_no=ticket_type['id'])
+                if not cy_ticket_qs:
+                    tf = TicketFile.objects.create(**tf_data)
+                    cls_data['ticket_file'] = tf
+                    cy_ticket = cls.objects.create(**cls_data)
+                else:
+                    cy_ticket = cy_ticket_qs.first()
+                    tf = cy_ticket.ticket_file
+                    TicketFile.objects.filter(id=tf.id).update(**tf_data)
+                    cy_ticket_qs.update(**cls_data)
+                # 添加套票组成
+                ticket_pack_list = ticket_type.get('ticket_pack_list', [])
+                pack_list = []
+                for pack_data in ticket_pack_list:
+                    pack = CyTicketPack.update_or_create_record(pack_data['id'], pack_data['ticket_type_id'],
+                                                                Decimal(pack_data['price']), int(pack_data['qty']))
+                    pack_list.append(pack)
+                if pack_list:
+                    cy_ticket.ticket_pack_list.set(pack_list)
+                # 改缓存
+                tf.redis_ticket_level_cache()
+
+    @classmethod
+    def get_seat_info(cls, biz_id):
+        cy = caiyi_cloud()
+        try:
+            data = cy.seat_info(biz_id)
+            return data
+        except Exception as e:
+            raise CustomAPIException(e)
