@@ -634,10 +634,10 @@ class CySession(models.Model):
 
 class CyTicketPack(models.Model):
     """套票子项模型"""
-    cy_no = models.CharField(max_length=64, unique=True, db_index=True, help_text="套票子项id")
-    ticket_type_id = models.CharField(max_length=50, help_text="票档-票价id")
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="基础票价格", default=0)
-    qty = models.IntegerField(validators=[MinValueValidator(1)], help_text="数量", default=1)
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="套票子项id")
+    ticket_type_id = models.CharField(max_length=50, verbose_name="票档-票价id")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="基础票价格", default=0)
+    qty = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="数量", default=1)
 
     class Meta:
         verbose_name_plural = verbose_name = '套票子项'
@@ -674,40 +674,44 @@ class CyTicketType(models.Model):
                                        related_name='cy_tf')
     cy_session = models.ForeignKey(CySession, on_delete=models.CASCADE, verbose_name='关联节目')
     # 基础字段
-    cy_no = models.CharField(max_length=64, unique=True, db_index=True, help_text="票价id")
-    std_id = models.CharField(max_length=64, help_text="中心票价id")
-    name = models.CharField(max_length=50, help_text="票价名称")
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="票价，单位：元")
-    comment = models.CharField(max_length=50, blank=True, null=True, help_text="票价说明")
-    color = models.CharField(max_length=20, help_text="颜色", null=True, blank=True)
+    cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="票价id")
+    std_id = models.CharField(max_length=64, verbose_name="中心票价id")
+    name = models.CharField(max_length=50, verbose_name="票价名称")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="票价",help_text='单位：元')
+    comment = models.CharField(max_length=50, blank=True, null=True, verbose_name="票价说明")
+    color = models.CharField(max_length=20, verbose_name="颜色", null=True, blank=True)
     # 状态字段
     enabled = models.IntegerField(
+        '是否启用',
         choices=ENABLED_CHOICES,
         default=1,
-        help_text="是否启用，1：启用；0：未启用"
+        help_text="1：启用；0：未启用"
     )
     sold_out_state = models.IntegerField(
+        '是否停售',
         choices=SOLD_OUT_CHOICES,
         blank=True,
         null=True,
-        help_text="是否停售, 1:可售，2:停售"
+        help_text=" 1:可售，2:停售"
     )
     # 分类和排序
     category = models.IntegerField(
+        '类别',
         choices=CATEGORY_CHOICES,
         default=1,
-        help_text="类别，1：基础票，2：固定套票，3:自由套票"
+        help_text="1：基础票，2：固定套票，3:自由套票"
     )
-    seq = models.IntegerField(default=1, help_text="票价顺序")
+    seq = models.IntegerField(default=1, verbose_name="票价顺序")
     # 套票关联
     ticket_pack_list = models.ManyToManyField(
         CyTicketPack,
+        verbose_name='套票组成信息',
         blank=True,
-        help_text="套票组成信息，基础票为空"
+        help_text="基础票为空"
     )
     # 时间戳
-    created_at = models.DateTimeField(auto_now_add=True, help_text="创建时间")
-    updated_at = models.DateTimeField(auto_now=True, help_text="更新时间")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
         verbose_name_plural = verbose_name = '票档'
