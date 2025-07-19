@@ -729,7 +729,8 @@ class ShowProject(UseNoAbstract):
                         'venues', 'show_type', 'is_recommend', 'dy_show_date']
             show_cache = dict()
             for key in pop_list:
-                show_cache[key] = show_dict[key]
+                if show_dict.get(key):
+                    show_cache[key] = show_dict[key]
             show_cache['id'] = self.no
             show_cache['price'] = float(self.price)
             show_cache['sale_time'] = datetime.strftime(self.sale_time, '%Y-%m-%dT%H:%M:%S')
