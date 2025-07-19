@@ -255,7 +255,7 @@ class TicketFileBackSerializer(serializers.ModelSerializer):
 
 
 class TicketFileCreateSerializer(serializers.ModelSerializer):
-    session_id = serializers.IntegerField(required=True)
+    session_id = serializers.CharField(required=True)
     record = serializers.ListField(required=True)
 
     def create(self, validated_data):
@@ -265,7 +265,7 @@ class TicketFileCreateSerializer(serializers.ModelSerializer):
         for r in record:
             r['session_id'] = validated_data.get('session_id')
             if not session:
-                session = SessionInfo.objects.filter(id=r['session_id']).first()
+                session = SessionInfo.objects.filter(no=r['session_id']).first()
             if not session:
                 raise CustomAPIException('场次错误')
             r['title'] = session.show.title
@@ -2083,7 +2083,7 @@ class TicketOrderGiveDetailSerializer(serializers.ModelSerializer):
 
 # 后端不用改
 class TicketOrderLockSeatSerializer(serializers.ModelSerializer):
-    session_id = serializers.IntegerField(required=True)
+    session_id = serializers.CharField(required=True)
     order_id = serializers.IntegerField(required=True)
     seat_ids = serializers.ListField(required=True)
 
@@ -2108,7 +2108,7 @@ class TicketOrderLockSeatSerializer(serializers.ModelSerializer):
                 num = code_qs.count()
                 if code_qs.count() != len(validated_data['seat_ids']):
                     raise CustomAPIException('请选择正确的座位数量，数量{}'.format(num))
-                seat_qs = SessionSeat.objects.filter(session_id=main_session_id, id__in=validated_data['seat_ids'])
+                seat_qs = SessionSeat.objects.filter(session__no=main_session_id, id__in=validated_data['seat_ids'])
                 for seat in seat_qs:
                     kk = session_seat_key.format(seat.ticket_level.id, seat.id)
                     # 是否可卖，锁着的也可以手动出票

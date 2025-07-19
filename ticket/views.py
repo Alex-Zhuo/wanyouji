@@ -190,7 +190,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.debug(data)
         if not data:
             raise CustomAPIException('演出项目已下架')
-        if data['is_test']:
+        if data.get('is_test'):
             return super(ShowProjectViewSet, self).retrieve(request, *args, **kwargs)
         else:
             # log.debug(data)
