@@ -12,6 +12,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class AllOnlyViewAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class CaiYiCloudAppAdmin(TechnologyModelAdmin):
     def changelist_view(self, request, extra_context=None):
         obj = CaiYiCloudApp.get()
@@ -20,29 +31,29 @@ class CaiYiCloudAppAdmin(TechnologyModelAdmin):
         return self.add_view(request, extra_context={'show_save_and_add_another': False})
 
 
-class CyCategoryAdmin(OnlyViewAdmin):
+class CyCategoryAdmin(AllOnlyViewAdmin):
     list_display = ['code', 'name']
 
 
-class CyVenueAdmin(OnlyViewAdmin):
+class CyVenueAdmin(AllOnlyViewAdmin):
     list_display = ['cy_no', 'venue', 'province_name', 'city_name']
 
 
-class CyShowEventAdmin(OnlyViewAdmin):
+class CyShowEventAdmin(AllOnlyViewAdmin):
     list_display = ['event_id', 'show', 'category', 'show_type', 'seat_type', 'ticket_mode', 'state',
                     'expire_order_minute', 'updated_at']
     list_filter = ['state', 'show_type', 'updated_at']
 
 
-class CyIdTypesAdmin(OnlyViewAdmin):
+class CyIdTypesAdmin(AllOnlyViewAdmin):
     list_display = ['code', 'name']
 
 
-class CyCheckInMethodsAdmin(OnlyViewAdmin):
+class CyCheckInMethodsAdmin(AllOnlyViewAdmin):
     list_display = ['code', 'name']
 
 
-class CyDeliveryMethodsAdmin(OnlyViewAdmin):
+class CyDeliveryMethodsAdmin(AllOnlyViewAdmin):
     list_display = ['code', 'name']
 
 
@@ -64,7 +75,7 @@ class CyTicketTypeInline(OnlyReadTabularInline):
     ticket_pack_desc.short_description = u'套票'
 
 
-class CySessionAdmin(OnlyViewAdmin):
+class CySessionAdmin(AllOnlyViewAdmin):
     list_display = ['cy_no', 'event', 'c_session', 'start_time', 'end_time', 'sale_time', 'state',
                     'session_type', 'require_id_on_ticket', 'limit_on_session', 'limit_on_event', 'updated_at']
     list_filter = ['start_time', 'state', 'updated_at']
