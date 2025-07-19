@@ -585,29 +585,32 @@ class CySession(models.Model):
             cy_session_qs.update(**cls_data)
         # 修改多选
         id_types_list = api_data.get('id_types', [])
-        ct_list = []
-        for code in id_types_list:
-            ct = CyIdTypes.objects.filter(code=code).first()
-            if ct:
-                ct_list.append(ct)
-        if ct_list:
-            cy_session.id_types.set(ct_list)
+        if id_types_list:
+            ct_list = []
+            for code in id_types_list:
+                ct = CyIdTypes.objects.filter(code=code).first()
+                if ct:
+                    ct_list.append(ct)
+            if ct_list:
+                cy_session.id_types.set(ct_list)
         check_in_list = api_data.get('check_in_methods', [])
-        ci_list = []
-        for code in check_in_list:
-            ci = CyCheckInMethods.objects.filter(code=code).first()
-            if ci:
-                ci_list.append(ci)
-        if ci_list:
-            cy_session.check_in_methods.set(ci_list)
+        if check_in_list:
+            ci_list = []
+            for code in check_in_list:
+                ci = CyCheckInMethods.objects.filter(code=code).first()
+                if ci:
+                    ci_list.append(ci)
+            if ci_list:
+                cy_session.check_in_methods.set(ci_list)
         delivery_list = api_data.get('delivery_methods', [])
-        dl_list = []
-        for code in delivery_list:
-            dl = CyDeliveryMethods.objects.filter(code=code).first()
-            if dl:
-                dl_list.append(dl)
-        if dl_list:
-            cy_session.delivery_methods.set(dl_list)
+        if delivery_list:
+            dl_list = []
+            for code in delivery_list:
+                dl = CyDeliveryMethods.objects.filter(code=code).first()
+                if dl:
+                    dl_list.append(dl)
+            if dl_list:
+                cy_session.delivery_methods.set(dl_list)
         show.change_session_end_at(session.end_at)
         # 修改缓存
         show.shows_detail_copy_to_pika()
@@ -804,13 +807,14 @@ class CyTicketType(models.Model):
                     cy_ticket_qs.update(**cls_data)
                 # 添加套票组成
                 ticket_pack_list = ticket_type.get('ticket_pack_list', [])
-                pack_list = []
-                for pack_data in ticket_pack_list:
-                    pack = CyTicketPack.update_or_create_record(pack_data['id'], pack_data['ticket_type_id'],
-                                                                Decimal(pack_data['price']), int(pack_data['qty']))
-                    pack_list.append(pack)
-                if pack_list:
-                    cy_ticket.ticket_pack_list.set(pack_list)
+                if ticket_pack_list:
+                    pack_list = []
+                    for pack_data in ticket_pack_list:
+                        pack = CyTicketPack.update_or_create_record(pack_data['id'], pack_data['ticket_type_id'],
+                                                                    Decimal(pack_data['price']), int(pack_data['qty']))
+                        pack_list.append(pack)
+                    if pack_list:
+                        cy_ticket.ticket_pack_list.set(pack_list)
                 # 改缓存
                 tf.redis_ticket_level_cache()
 
