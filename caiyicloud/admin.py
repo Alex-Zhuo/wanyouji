@@ -57,7 +57,7 @@ class CyTicketTypeInline(OnlyReadTabularInline):
         ret = ''
         if ticket_pack_list:
             for pack in ticket_pack_list:
-                ct = CyTicketType.objects.filter(cy_no=pack['ticket_type_id']).first()
+                ct = CyTicketType.objects.filter(cy_no=pack.ticket_type_id).first()
                 ret += f'{ct.name}-价格:{pack.price}-数量:{pack.qty},'
         return ret
 
