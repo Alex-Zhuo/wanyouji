@@ -227,8 +227,7 @@ class CyShowEvent(models.Model):
                 event_list += event_data['list']
         redis = get_redis()
         key = get_redis_name('cyiniteventkey')
-        has_change_event_list = redis.lrange(key, 0, -1)
-        has_change_event_list = json.loads(has_change_event_list) if has_change_event_list else []
+        has_change_event_list = redis.lrange(key, 0, -1) or []
         for event in event_list:
             if event['id'] not in has_change_event_list:
                 cls.update_or_create_record(event['id'])
@@ -505,11 +504,9 @@ class CySession(models.Model):
                 session_list += sessions_data['list']
         redis = get_redis()
         key = get_redis_name('cyinitsessionkey')
-        has_change_session_list = redis.lrange(key, 0, -1)
-        has_change_session_list = json.loads(has_change_session_list) if has_change_session_list else []
+        has_change_session_list = redis.lrange(key, 0, -1) or []
         tk_key = get_redis_name('cyinitticketkey')
-        has_change_ticket_list = redis.lrange(tk_key, 0, -1)
-        has_change_ticket_list = json.loads(has_change_ticket_list) if has_change_ticket_list else []
+        has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
 
         for api_data in session_list:
             if api_data['id'] not in has_change_session_list:
