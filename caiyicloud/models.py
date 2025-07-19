@@ -539,7 +539,7 @@ class CySession(models.Model):
         if api_data.get('purchase_limit'):
             limit_on_session = api_data['purchase_limit'].get('limit_on_session', 0)
             limit_on_event = api_data['purchase_limit'].get('limit_on_event', 0)
-        require_id_on_ticket = True if api_data.get('require_id_on_ticket') else None
+        require_id_on_ticket = True if api_data.get('require_id_on_ticket') else False
         cls_data = dict(
             event=cy_show,
             cy_no=api_data['id'],
