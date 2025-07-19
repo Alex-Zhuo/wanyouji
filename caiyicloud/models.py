@@ -31,6 +31,13 @@ EVENT_CATEGORIES = {
 }
 
 
+def init_all():
+    CyCategory.init_record()
+    CyIdTypes.init_record()
+    CyCheckInMethods.init_record()
+    CyDeliveryMethods.init_record()
+
+
 class ChoicesCommon(models.Model):
     code = models.PositiveSmallIntegerField('编码', unique=True)
     name = models.CharField(max_length=64, verbose_name='名称', null=True)
@@ -133,6 +140,17 @@ class CyVenue(models.Model):
 class CyShowEvent(models.Model):
     # 基本信息
     show = models.OneToOneField(ShowProject, verbose_name='演出项目', on_delete=models.CASCADE, related_name='cy_show')
+    category = models.PositiveSmallIntegerField(
+        choices=[
+            (1, '演出'),
+            (2, '赛事'),
+            (3, '活动'),
+            (4, '展览')
+        ],
+        default=1,
+        verbose_name='节目大类'
+    )
+    show_type = models.ForeignKey(CyCategory, verbose_name='节目分类', on_delete=models.SET_NULL, null=True)
     event_id = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='项目ID')
     std_id = models.CharField(max_length=64, verbose_name='中心项目ID')
     # 座位和票务信息
@@ -154,16 +172,6 @@ class CyShowEvent(models.Model):
     # 媒体信息
     poster_url = models.URLField(verbose_name='项目海报地址', blank=True, null=True)
     content_url = models.URLField(verbose_name='项目简介链接', blank=True, null=True)
-    category = models.PositiveSmallIntegerField(
-        choices=[
-            (1, '演出'),
-            (2, '赛事'),
-            (3, '活动'),
-            (4, '展览')
-        ],
-        default=1,
-        verbose_name='节目大类'
-    )
     # 状态信息
     state = models.PositiveSmallIntegerField(
         choices=[
@@ -224,7 +232,7 @@ class CyShowEvent(models.Model):
     def update_or_create_record(cls, event_id: str):
         cy = caiyi_cloud()
         event_detail = cy.event_detail(event_id)
-        show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
+        cy_show_type, show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
         venue = CyVenue.init_venue(event_detail['venue_id'])
         notice = ''
         if event_detail.get('watching_notices'):
@@ -246,7 +254,7 @@ class CyShowEvent(models.Model):
         cy_show_qs = cls.objects.filter(event_id=event_id)
         snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
         cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
-                        ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
+                        cy_show_type=cy_show_type, ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
                         poster_url=event_detail['poster_url'],
                         content_url=event_detail['content_url'], category=event_detail['category'],
                         expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
