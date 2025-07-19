@@ -260,7 +260,7 @@ class CyShowEvent(models.Model):
         cy_show_qs = cls.objects.filter(event_id=event_id)
         snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
         cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
-                        show_type=cy_show_type, ticket_mode=event_detail.get('ticket_mode', cls.MD_DEFAULT),
+                        show_type=cy_show_type, ticket_mode=event_detail.get('ticket_mode') or cls.MD_DEFAULT,
                         poster_url=event_detail['poster_url'],
                         content_url=event_detail['content_url'], category=event_detail['category'],
                         expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
@@ -543,7 +543,7 @@ class CySession(models.Model):
         cls_data = dict(
             event=cy_show,
             cy_no=api_data['id'],
-            std_id=api_data.get('std_id', ''),
+            std_id=api_data.get('std_id'),
             name=api_data['name'],
             state=api_data['state'],
             start_time=start_time,
@@ -806,7 +806,7 @@ class CyTicketType(models.Model):
                     TicketFile.objects.filter(id=tf.id).update(**tf_data)
                     cy_ticket_qs.update(**cls_data)
                 # 添加套票组成
-                ticket_pack_list = ticket_type.get('ticket_pack_list', [])
+                ticket_pack_list = ticket_type.get('ticket_pack_list') or  []
                 if ticket_pack_list:
                     pack_list = []
                     for pack_data in ticket_pack_list:
