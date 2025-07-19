@@ -66,8 +66,8 @@ class ShowContentCategoryAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
 
 
 class ShowTypeAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
-    list_display = ['name', 'source_type', 'is_use', 'slug']
-    list_filter = ['source_type', 'is_use']
+    list_display = ['name', 'is_use', 'slug']
+    list_filter = ['is_use']
     search_fields = ['name']
 
     def get_readonly_fields(self, request, obj=None):

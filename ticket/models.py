@@ -293,7 +293,7 @@ class ShowType(models.Model):
     source_type = models.SmallIntegerField('演出行业标准分类', choices=SOURCE_CHOICES, default=SOURCE_MUSIC, null=True,
                                            blank=True, editable=False)
     category = models.ForeignKey(ShowTopCategory, verbose_name='抖音类目', related_name='cate', null=True, blank=True,
-                                 on_delete=models.SET_NULL)
+                                 on_delete=models.SET_NULL, editable=False)
     cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
                                    blank=True, on_delete=models.SET_NULL)
     is_use = models.BooleanField('是否启用', default=True)
