@@ -630,8 +630,8 @@ class CyTicketPack(models.Model):
     """套票子项模型"""
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, help_text="套票子项id")
     ticket_type_id = models.CharField(max_length=50, help_text="票档-票价id")
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="基础票价格")
-    qty = models.IntegerField(validators=[MinValueValidator(1)], help_text="数量")
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="基础票价格", default=0)
+    qty = models.IntegerField(validators=[MinValueValidator(1)], help_text="数量", default=1)
 
     class Meta:
         verbose_name_plural = verbose_name = '套票子项'
