@@ -19,6 +19,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 import re
 from decimal import Decimal
+from caches import get_redis, get_redis_name
 
 log = logging.getLogger(__name__)
 """
@@ -224,9 +225,15 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
+        redis = get_redis()
+        key = get_redis_name('cyiniteventkey')
+        has_change_event_list = redis.lrange(key, 0, -1)
+        has_change_event_list = json.loads(has_change_event_list) if has_change_event_list else []
         for event in event_list:
-            cls.update_or_create_record(event['id'])
-            CySession.update_or_create_record(event['id'])
+            if event['id'] not in has_change_event_list:
+                cls.update_or_create_record(event['id'])
+                redis.lpush(key, event['id'])
+            CySession.init_cy_session(event['id'])
 
     @classmethod
     def update_or_create_record(cls, event_id: str):
@@ -481,114 +488,134 @@ class CySession(models.Model):
         return ", ".join(qs)
 
     @classmethod
-    def update_or_create_record(cls, event_id: str):
-        """
-        从API数据创建场次
-        Args:
-            event_id: 关联的项目ID
-        Returns:
-            创建的场次实例
-        """
+    def init_cy_session(cls, event_id: str):
         cy = caiyi_cloud()
         cy_show = CyShowEvent.objects.filter(event_id=event_id).first()
         if not cy_show:
             cy_show = CyShowEvent.update_or_create_record(event_id)
-        sessions_list = cy.sessions_list(event_id=event_id)
-        for api_data in sessions_list:
-            # 处理时间字段
-            start_time = None
-            end_time = None
-            sale_time = None
-            close_sale_time = None
-            if api_data.get('start_time'):
-                start_time = datetime.strptime(api_data['start_time'], '%Y-%m-%d %H:%M')
-            if api_data.get('end_time'):
-                end_time = datetime.strptime(api_data['end_time'], '%Y-%m-%d %H:%M')
-            if api_data.get('sale_time'):
-                sale_time = datetime.strptime(api_data['sale_time'], '%Y-%m-%d %H:%M')
-            if api_data.get('close_sale_time'):
-                close_sale_time = datetime.strptime(api_data['close_sale_time'], '%Y-%m-%d %H:%M')
-            # 创建场次
-            # 创建限购信息
-            limit_on_session = 0
-            limit_on_event = 0
-            if api_data.get('purchase_limit'):
-                limit_on_session = api_data['purchase_limit'].get('limit_on_session', 0),
-                limit_on_event = api_data['purchase_limit'].get('limit_on_event', 0),
-            require_id_on_ticket = True if api_data.get('require_id_on_ticket') else None
-            cls_data = dict(
-                event=cy_show,
-                cy_no=api_data['id'],
-                std_id=api_data.get('std_id', ''),
-                name=api_data['name'],
-                state=api_data['state'],
-                start_time=start_time,
-                end_time=end_time,
-                sale_time=sale_time,
-                session_type=api_data.get('session_type', 0),
-                admission_code_type=api_data.get('admission_code_type'),
-                upload_photo=api_data.get('upload_photo'),
-                support_no_seat=api_data.get('support_no_seat'),
-                require_id_on_ticket=api_data.get('require_id_on_ticket'),
-                # id_types=api_data.get('id_types', []),
-                e_ticket=api_data.get('e_ticket', 1),
-                paper_ticket=api_data.get('paper_ticket', 1),
-                # check_in_methods=api_data.get('check_in_methods', []),
-                # delivery_methods=api_data.get('delivery_methods', []),
-                enable_close_sale_time=api_data.get('enable_close_sale_time', 1),
-                close_sale_time_rule_type=api_data.get('close_sale_time_rule_type'),
-                close_sale_time=close_sale_time,
-                close_sale_time_interval=api_data.get('close_sale_time_interval'),
-                close_sale_type=api_data.get('close_sale_type'),
-                limit_on_session=limit_on_session,
-                limit_on_event=limit_on_event
-            )
-            show = cy_show.show
-            has_seat = SessionInfo.SEAT_HAS if cy_show.seat_type == 1 else SessionInfo.SEAT_NO
-            session_data = dict(show=show, venue_id=show.venues.id, title=api_data['name'], start_at=start_time,
-                                end_at=end_time, dy_sale_time=sale_time, order_limit_num=limit_on_session,
-                                one_id_one_ticket=require_id_on_ticket, name_buy_num=1 if require_id_on_ticket else 0,
-                                is_name_buy=True, has_seat=has_seat, status=cls.get_session_status(api_data['state']))
-            cy_session_qs = cls.objects.filter(cy_no=api_data['id'])
-            if not cy_session_qs:
-                session = SessionInfo.objects.create(**session_data)
-                cls_data['c_session'] = session
-                cy_session = cls.objects.create(**cls_data)
-            else:
-                cy_session = cy_session_qs.first()
-                session = cy_session.c_session
-                SessionInfo.objects.filter(id=session.id).update(**session_data)
-                cy_session_qs.update(**cls_data)
-            # 修改多选
-            id_types_list = api_data.get('id_types', [])
-            ct_list = []
-            for code in id_types_list:
-                ct = CyIdTypes.objects.filter(code=code).first()
-                if ct:
-                    ct_list.append(ct)
-            if ct_list:
-                cy_session.id_types.set(ct_list)
-            check_in_list = api_data.get('check_in_methods', [])
-            ci_list = []
-            for code in check_in_list:
-                ci = CyCheckInMethods.objects.filter(code=code).first()
-                if ci:
-                    ci_list.append(ci)
-            if ci_list:
-                cy_session.check_in_methods.set(ci_list)
-            delivery_list = api_data.get('delivery_methods', [])
-            dl_list = []
-            for code in delivery_list:
-                dl = CyDeliveryMethods.objects.filter(code=code).first()
-                if dl:
-                    dl_list.append(dl)
-            if dl_list:
-                cy_session.delivery_methods.set(dl_list)
-            show.change_session_end_at(session.end_at)
-            # 修改缓存
-            show.shows_detail_copy_to_pika()
-            session.redis_show_date_copy()
-            return cy_session
+        sessions_data = cy.sessions_list(event_id=event_id)
+        page = 1
+        page_size = 50
+        total = sessions_data['total']
+        session_list = sessions_data.get('list') or []
+        while total > page * page_size and page < 50:
+            page += 1
+            sessions_data = cy.sessions_list(event_id=event_id, page=page, page_size=page_size)
+            if sessions_data.get('list'):
+                session_list += sessions_data['list']
+        redis = get_redis()
+        key = get_redis_name('cyinitsessionkey')
+        has_change_session_list = redis.lrange(key, 0, -1)
+        has_change_session_list = json.loads(has_change_session_list) if has_change_session_list else []
+        tk_key = get_redis_name('cyinitticketkey')
+        has_change_ticket_list = redis.lrange(tk_key, 0, -1)
+        has_change_ticket_list = json.loads(has_change_ticket_list) if has_change_ticket_list else []
+
+        for api_data in session_list:
+            if api_data['id'] not in has_change_session_list:
+                cls.update_or_create_record(cy_show, api_data)
+                redis.lpush(key, api_data['id'])
+            # 更新票档
+            if api_data['id'] not in has_change_ticket_list:
+                CyTicketType.update_or_create_record(api_data['id'])
+                redis.lpush(tk_key, api_data['id'])
+
+    @classmethod
+    def update_or_create_record(cls, cy_show: CyShowEvent, api_data: dict):
+        # 处理时间字段
+        start_time = None
+        end_time = None
+        sale_time = None
+        close_sale_time = None
+        if api_data.get('start_time'):
+            start_time = datetime.strptime(api_data['start_time'], '%Y-%m-%d %H:%M')
+        if api_data.get('end_time'):
+            end_time = datetime.strptime(api_data['end_time'], '%Y-%m-%d %H:%M')
+        if api_data.get('sale_time'):
+            sale_time = datetime.strptime(api_data['sale_time'], '%Y-%m-%d %H:%M')
+        if api_data.get('close_sale_time'):
+            close_sale_time = datetime.strptime(api_data['close_sale_time'], '%Y-%m-%d %H:%M')
+        # 创建场次
+        # 创建限购信息
+        limit_on_session = 0
+        limit_on_event = 0
+        if api_data.get('purchase_limit'):
+            limit_on_session = api_data['purchase_limit'].get('limit_on_session', 0),
+            limit_on_event = api_data['purchase_limit'].get('limit_on_event', 0),
+        require_id_on_ticket = True if api_data.get('require_id_on_ticket') else None
+        cls_data = dict(
+            event=cy_show,
+            cy_no=api_data['id'],
+            std_id=api_data.get('std_id', ''),
+            name=api_data['name'],
+            state=api_data['state'],
+            start_time=start_time,
+            end_time=end_time,
+            sale_time=sale_time,
+            session_type=api_data.get('session_type', 0),
+            admission_code_type=api_data.get('admission_code_type'),
+            upload_photo=api_data.get('upload_photo'),
+            support_no_seat=api_data.get('support_no_seat'),
+            require_id_on_ticket=api_data.get('require_id_on_ticket'),
+            # id_types=api_data.get('id_types', []),
+            e_ticket=api_data.get('e_ticket', 1),
+            paper_ticket=api_data.get('paper_ticket', 1),
+            # check_in_methods=api_data.get('check_in_methods', []),
+            # delivery_methods=api_data.get('delivery_methods', []),
+            enable_close_sale_time=api_data.get('enable_close_sale_time', 1),
+            close_sale_time_rule_type=api_data.get('close_sale_time_rule_type'),
+            close_sale_time=close_sale_time,
+            close_sale_time_interval=api_data.get('close_sale_time_interval'),
+            close_sale_type=api_data.get('close_sale_type'),
+            limit_on_session=limit_on_session,
+            limit_on_event=limit_on_event
+        )
+        show = cy_show.show
+        has_seat = SessionInfo.SEAT_HAS if cy_show.seat_type == 1 else SessionInfo.SEAT_NO
+        session_data = dict(show=show, venue_id=show.venues.id, title=api_data['name'], start_at=start_time,
+                            end_at=end_time, dy_sale_time=sale_time, order_limit_num=limit_on_session,
+                            one_id_one_ticket=require_id_on_ticket, name_buy_num=1 if require_id_on_ticket else 0,
+                            is_name_buy=True, has_seat=has_seat, status=cls.get_session_status(api_data['state']))
+        cy_session_qs = cls.objects.filter(cy_no=api_data['id'])
+        if not cy_session_qs:
+            session = SessionInfo.objects.create(**session_data)
+            cls_data['c_session'] = session
+            cy_session = cls.objects.create(**cls_data)
+        else:
+            cy_session = cy_session_qs.first()
+            session = cy_session.c_session
+            SessionInfo.objects.filter(id=session.id).update(**session_data)
+            cy_session_qs.update(**cls_data)
+        # 修改多选
+        id_types_list = api_data.get('id_types', [])
+        ct_list = []
+        for code in id_types_list:
+            ct = CyIdTypes.objects.filter(code=code).first()
+            if ct:
+                ct_list.append(ct)
+        if ct_list:
+            cy_session.id_types.set(ct_list)
+        check_in_list = api_data.get('check_in_methods', [])
+        ci_list = []
+        for code in check_in_list:
+            ci = CyCheckInMethods.objects.filter(code=code).first()
+            if ci:
+                ci_list.append(ci)
+        if ci_list:
+            cy_session.check_in_methods.set(ci_list)
+        delivery_list = api_data.get('delivery_methods', [])
+        dl_list = []
+        for code in delivery_list:
+            dl = CyDeliveryMethods.objects.filter(code=code).first()
+            if dl:
+                dl_list.append(dl)
+        if dl_list:
+            cy_session.delivery_methods.set(dl_list)
+        show.change_session_end_at(session.end_at)
+        # 修改缓存
+        show.shows_detail_copy_to_pika()
+        session.redis_show_date_copy()
+        return cy_session
 
     def get_seat_url(self, ticket_type_id: str, navigate_url: str):
         cy = caiyi_cloud()
@@ -735,12 +762,12 @@ class CyTicketType(models.Model):
     #     super().save(*args, **kwargs)
 
     @classmethod
-    def update_or_create_record(cls, session_id: str):
+    def update_or_create_record(cls, cy_session_id: str):
         cy = caiyi_cloud()
-        cy_session = CySession.objects.filter(cy_no=session_id).first()
+        cy_session = CySession.objects.filter(cy_no=cy_session_id).first()
         if cy_session:
-            ticket_types_list = cy.ticket_types([session_id])
-            ticket_stock_list = cy.ticket_stock([session_id])
+            ticket_types_list = cy.ticket_types([cy_session_id])
+            ticket_stock_list = cy.ticket_stock([cy_session_id])
             ticket_stock_dict = dict()
             for ticket_stock in ticket_stock_list:
                 ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
