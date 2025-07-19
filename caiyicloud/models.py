@@ -528,13 +528,13 @@ class CySession(models.Model):
         sale_time = None
         close_sale_time = None
         if api_data.get('start_time'):
-            start_time = datetime.strptime(api_data['start_time'], '%Y-%m-%d %H:%M')
+            start_time = datetime.strptime(api_data['start_time'], '%Y-%m-%d %H:%M:%S')
         if api_data.get('end_time'):
-            end_time = datetime.strptime(api_data['end_time'], '%Y-%m-%d %H:%M')
+            end_time = datetime.strptime(api_data['end_time'], '%Y-%m-%d %H:%M:%S')
         if api_data.get('sale_time'):
-            sale_time = datetime.strptime(api_data['sale_time'], '%Y-%m-%d %H:%M')
+            sale_time = datetime.strptime(api_data['sale_time'], '%Y-%m-%d %H:%M:%S')
         if api_data.get('close_sale_time'):
-            close_sale_time = datetime.strptime(api_data['close_sale_time'], '%Y-%m-%d %H:%M')
+            close_sale_time = datetime.strptime(api_data['close_sale_time'], '%Y-%m-%d %H:%M:%S')
         # 创建场次
         # 创建限购信息
         limit_on_session = 0
