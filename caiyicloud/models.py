@@ -464,7 +464,7 @@ class CySession(models.Model):
 
     @classmethod
     def get_session_status(cls, state: int):
-        if state == 3:
+        if state == 4:
             return SessionInfo.STATUS_ON
         return SessionInfo.STATUS_OFF
 
