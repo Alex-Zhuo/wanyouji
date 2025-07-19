@@ -5053,7 +5053,7 @@ class TicketOrderRefund(models.Model):
     ST_CARD = 3
     ST_KS = 4
     ST_XHS = 5
-    ST_CHOICES = ((ST_WX, '微信退款'), (ST_TIKTOK, '抖音退款'), (ST_CARD, '剧场卡订单退款'), (ST_KS, '快手退款'), (ST_XHS, '小红书退款'))
+    ST_CHOICES = ((ST_WX, '微信退款'), (ST_CARD, '剧场卡订单退款'))
     source_type = models.IntegerField('退款类型', choices=ST_CHOICES, default=ST_WX)
     user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
     order = models.ForeignKey(TicketOrder, related_name='ticket_refund_apply', verbose_name='退款订单',

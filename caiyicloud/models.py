@@ -12,7 +12,7 @@ import json
 from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
-from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile
+from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -511,13 +511,15 @@ class CySession(models.Model):
         tk_key = get_redis_name('cyinitticketkey')
         has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
         for api_data in session_list:
-            if is_refresh or api_data['id'] not in has_change_session_list:
-                cls.update_or_create_record(cy_show, api_data)
-                redis.lpush(key, api_data['id'])
-            # 更新票档
-            if is_refresh or api_data['id'] not in has_change_ticket_list:
-                CyTicketType.update_or_create_record(api_data['id'])
-                redis.lpush(tk_key, api_data['id'])
+            # 场次类型,0:普通场次;1:联票场次 只做普通场次
+            if api_data['session_type']==0:
+                if is_refresh or api_data['id'] not in has_change_session_list:
+                    cls.update_or_create_record(cy_show, api_data)
+                    redis.lpush(key, api_data['id'])
+                # 更新票档
+                if is_refresh or api_data['id'] not in has_change_ticket_list:
+                    CyTicketType.update_or_create_record(api_data['id'])
+                    redis.lpush(tk_key, api_data['id'])
         if is_refresh:
             redis.delete(key)
             redis.delete(tk_key)
@@ -838,3 +840,53 @@ class CyTicketType(models.Model):
             return data
         except Exception as e:
             raise CustomAPIException(e)
+
+
+class CyOrder(models.Model):
+    ticket_order = models.OneToOneField(TicketOrder, verbose_name='订单', on_delete=models.CASCADE,
+                                        related_name='cy_order')
+    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', on_delete=models.CASCADE)
+    cy_order_no = models.CharField('彩艺云订单号', max_length=100, db_index=True)
+    ST_DEFAULT = 1
+    ST_PAY = 2
+    ST_OUT = 3
+    ST_FINISH = 5
+    ST_CLOSE = 7
+    ST_CANCEL = 8
+    ST_CHOICES = (
+        (ST_DEFAULT, '已下单'), (ST_PAY, '已支付'), (ST_OUT, '已出票'), (ST_FINISH, '已完成'),
+        (ST_CLOSE, '已关闭'), (ST_CANCEL, '已取消'))
+    order_state = models.PositiveSmallIntegerField('退款审核状态', choices=ST_CHOICES, default=ST_DEFAULT)
+    buyer_cellphone = models.CharField(max_length=20, help_text="购票人手机号")
+    auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
+    pay_snapshot = models.TextField('支付参数', max_length=1000, editable=False)
+    item_snapshot = models.TextField('下单票档规格', editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name_plural = verbose_name = '订单'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.cy_order_no
+
+
+class CyOrderRefund(models.Model):
+    refund = models.OneToOneField(TicketOrderRefund, verbose_name='退款记录', on_delete=models.PROTECT,
+                                  related_name='cy_refund')
+    cy_order_no = models.CharField('彩艺云订单号', unique=True, db_index=True, max_length=64)
+    apply_id = models.CharField('售后申请id', max_length=64)
+    STATUS_DEFAULT = 1
+    STATUS_SUCCESS = 2
+    STATUS_FAIL = 3
+    STATUS_CHOICES = (
+        (STATUS_DEFAULT, '审核中'), (STATUS_SUCCESS, '审核通过'), (STATUS_FAIL, '审核失败'))
+    status = models.PositiveSmallIntegerField('退款审核状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '退款记录'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.apply_id
