@@ -235,6 +235,7 @@ class CyShowEvent(models.Model):
             CySession.init_cy_session(event['id'])
 
     @classmethod
+    @atomic
     def update_or_create_record(cls, event_id: str):
         cy = caiyi_cloud()
         event_detail = cy.event_detail(event_id)
@@ -518,6 +519,7 @@ class CySession(models.Model):
                 redis.lpush(tk_key, api_data['id'])
 
     @classmethod
+    @atomic
     def update_or_create_record(cls, cy_show: CyShowEvent, api_data: dict):
         # 处理时间字段
         start_time = None
@@ -762,6 +764,7 @@ class CyTicketType(models.Model):
     #     super().save(*args, **kwargs)
 
     @classmethod
+    @atomic
     def update_or_create_record(cls, cy_session_id: str):
         cy = caiyi_cloud()
         cy_session = CySession.objects.filter(cy_no=cy_session_id).first()
