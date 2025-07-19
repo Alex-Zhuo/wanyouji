@@ -212,7 +212,7 @@ class CyShowEvent(models.Model):
         return self.state not in [5, 7]
 
     @classmethod
-    def init_cy_show(cls):
+    def init_cy_show(cls, is_refresh=False):
         cy = caiyi_cloud()
         # try:
         page = 1
@@ -229,10 +229,12 @@ class CyShowEvent(models.Model):
         key = get_redis_name('cyiniteventkey')
         has_change_event_list = redis.lrange(key, 0, -1) or []
         for event in event_list:
-            if event['id'] not in has_change_event_list:
+            if is_refresh or event['id'] not in has_change_event_list:
                 cls.update_or_create_record(event['id'])
                 redis.lpush(key, event['id'])
-            CySession.init_cy_session(event['id'])
+            CySession.init_cy_session(event['id'], is_refresh)
+        if is_refresh:
+            redis.delete(key)
 
     @classmethod
     @atomic
@@ -488,7 +490,7 @@ class CySession(models.Model):
         return ", ".join(qs)
 
     @classmethod
-    def init_cy_session(cls, event_id: str):
+    def init_cy_session(cls, event_id: str, is_refresh=False):
         cy = caiyi_cloud()
         cy_show = CyShowEvent.objects.filter(event_id=event_id).first()
         if not cy_show:
@@ -508,15 +510,17 @@ class CySession(models.Model):
         has_change_session_list = redis.lrange(key, 0, -1) or []
         tk_key = get_redis_name('cyinitticketkey')
         has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
-
         for api_data in session_list:
-            if api_data['id'] not in has_change_session_list:
+            if is_refresh or api_data['id'] not in has_change_session_list:
                 cls.update_or_create_record(cy_show, api_data)
                 redis.lpush(key, api_data['id'])
             # 更新票档
-            if api_data['id'] not in has_change_ticket_list:
+            if is_refresh or api_data['id'] not in has_change_ticket_list:
                 CyTicketType.update_or_create_record(api_data['id'])
                 redis.lpush(tk_key, api_data['id'])
+        if is_refresh:
+            redis.delete(key)
+            redis.delete(tk_key)
 
     @classmethod
     @atomic
@@ -809,7 +813,7 @@ class CyTicketType(models.Model):
                     TicketFile.objects.filter(id=tf.id).update(**tf_data)
                     cy_ticket_qs.update(**cls_data)
                 # 添加套票组成
-                ticket_pack_list = ticket_type.get('ticket_pack_list') or  []
+                ticket_pack_list = ticket_type.get('ticket_pack_list') or []
                 if ticket_pack_list:
                     pack_list = []
                     for pack_data in ticket_pack_list:
