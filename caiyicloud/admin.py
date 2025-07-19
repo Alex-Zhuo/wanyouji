@@ -49,8 +49,10 @@ class CyDeliveryMethodsAdmin(OnlyViewAdmin):
 class CyTicketTypeInline(OnlyReadTabularInline):
     model = CyTicketType
     extra = 0
+    exclude = ['ticket_pack_list']
+    readonly_fields = ['ticket_pack_desc']
 
-    def ticket_pack_list(self, obj):
+    def ticket_pack_desc(self, obj):
         ticket_pack_list = obj.ticket_pack_list.all()
         ret = ''
         if ticket_pack_list:
@@ -59,7 +61,7 @@ class CyTicketTypeInline(OnlyReadTabularInline):
                 ret += f'{ct.name}-价格:{pack.price}-数量:{pack.qty},'
         return ret
 
-    ticket_pack_list.short_description = u'套票'
+    ticket_pack_desc.short_description = u'套票'
 
 
 class CySessionAdmin(OnlyViewAdmin):
