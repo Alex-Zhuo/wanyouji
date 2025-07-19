@@ -635,7 +635,7 @@ class CySession(models.Model):
 class CyTicketPack(models.Model):
     """套票子项模型"""
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="套票子项id")
-    ticket_type_id = models.CharField(max_length=50, verbose_name="票档-票价id")
+    ticket_type_id = models.CharField(max_length=50, verbose_name="票档-票价id", db_index=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="基础票价格", default=0)
     qty = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="数量", default=1)
 
@@ -651,6 +651,7 @@ class CyTicketPack(models.Model):
         obj.price = price
         obj.qty = qty
         obj.save(update_fields=['price', 'qty'])
+        return obj
 
 
 class CyTicketType(models.Model):
@@ -677,7 +678,7 @@ class CyTicketType(models.Model):
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="票价id")
     std_id = models.CharField(max_length=64, verbose_name="中心票价id")
     name = models.CharField(max_length=50, verbose_name="票价名称")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="票价",help_text='单位：元')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="票价", help_text='单位：元')
     comment = models.CharField(max_length=50, blank=True, null=True, verbose_name="票价说明")
     color = models.CharField(max_length=20, verbose_name="颜色", null=True, blank=True)
     # 状态字段
