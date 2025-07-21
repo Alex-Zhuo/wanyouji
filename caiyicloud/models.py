@@ -917,7 +917,7 @@ class CyOrder(models.Model):
     @classmethod
     def confirm_order_task(cls):
         """
-        确认订单，重试三次
+        确认订单，重试{CONFIRM_RETRY_TIMES}次
         """
         cy = caiyi_cloud()
         if not cy.is_init:
