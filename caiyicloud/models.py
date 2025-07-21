@@ -890,7 +890,14 @@ class CyOrder(models.Model):
     def __str__(self):
         return self.cy_order_no
 
-    def order_detail_api(self):
+    @classmethod
+    def order_create(cls, ticket_order: ticket_order):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            raise CustomAPIException('彩艺云账号未配置')
+        cy.orders_create(ticket_order.order_no)
+
+    def get_order_detail(self):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -976,7 +983,7 @@ class CyTicketCodeRecord(models.Model):
 
     class Meta:
         verbose_name_plural = verbose_name = '小红书核销码'
-        unique_together = ['ticket_code', 'voucher_code']
+        ordering = ['-pk']
 
     @classmethod
     def get_or_create_record(cls, ticket_code: TicketUserCode, voucher_code: str):
@@ -1004,6 +1011,7 @@ class CyOrderRefund(models.Model):
     STATUS_CHOICES = (
         (STATUS_DEFAULT, '审核中'), (STATUS_SUCCESS, '审核通过'), (STATUS_FAIL, '审核失败'))
     status = models.PositiveSmallIntegerField('退款审核状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
+    error_msg = models.CharField('退款返回信息', max_length=1000, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '退款记录'
@@ -1024,6 +1032,7 @@ class CyOrderRefund(models.Model):
             if data.get('apply_id'):
                 cls.objects.get_or_create(refund=refund, cy_order_no=cy_order.cy_order_no, apply_id=data['apply_id'])
         except Exception as e:
+            log.error(e)
             msg = str(e)
             st = False
         return st, msg

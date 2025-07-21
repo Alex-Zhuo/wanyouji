@@ -5070,12 +5070,14 @@ class SessionPushTiktokTask(models.Model):
 
 class TicketOrderRefund(models.Model):
     STATUS_DEFAULT = 1
-    STATUS_PAYING = 2
-    STATUS_PAY_FAILED = 3
-    STATUS_FINISHED = 4
-    STATUS_CANCELED = 5
+    STATUS_NEED_CONFIRM = 2
+    STATUS_PAYING = 3
+    STATUS_PAY_FAILED = 4
+    STATUS_FINISHED = 5
+    STATUS_CANCELED = 6
     STATUS_CHOICES = (
-        (STATUS_DEFAULT, '待退款'), (STATUS_PAYING, '退款支付中'), (STATUS_PAY_FAILED, '退款支付失败'), (STATUS_FINISHED, '已完成'),
+        (STATUS_DEFAULT, '待退款'), (STATUS_NEED_CONFIRM, '待第三方确认'),
+        (STATUS_PAYING, '退款支付中'), (STATUS_PAY_FAILED, '退款支付失败'), (STATUS_FINISHED, '已完成'),
         (STATUS_CANCELED, '已取消'))
     status = models.IntegerField('状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
     ST_WX = 1
@@ -5204,10 +5206,13 @@ class TicketOrderRefund(models.Model):
                     msg = None
                     is_finish = True
         if st:
+            fields = ['status', 'confirm_at']
             self.status = self.STATUS_PAYING
             self.confirm_at = timezone.now()
-            self.op_user = op_user
-            self.save(update_fields=['status', 'confirm_at', 'op_user'])
+            if op_user:
+                self.op_user = op_user
+                fields.append('op_user')
+            self.save(update_fields=fields)
             self.order_refund_back()
             if is_finish:
                 self.set_finished(0)
@@ -5355,12 +5360,19 @@ class TicketOrderRefund(models.Model):
         self.save(update_fields=['status', 'finish_at', 'amount'])
         self.order.status = TicketOrder.STATUS_REFUNDED
         self.order.save(update_fields=['status'])
-        self.biz_refund()
 
-    def biz_refund(self):
+    def biz_refund(self, op_user):
         if hasattr(self.order, 'cy_order'):
             from caiyicloud.models import CyOrderRefund
-            CyOrderRefund.confirm_refund(self)
+            st, msg = CyOrderRefund.confirm_refund(self)
+            if st:
+                self.status = self.STATUS_NEED_CONFIRM
+                self.op_user = op_user
+                self.save(update_fields=['status', 'op_user'])
+        else:
+            st, msg = self.set_confirm(op_user)
+        return st, msg
+
 
 def validate_commission_rate(min=0, max=2900):
     """
