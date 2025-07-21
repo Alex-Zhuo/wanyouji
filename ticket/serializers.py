@@ -1184,8 +1184,6 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     def validate_show_user_id(self, value):
         if value:
             user = self.context.get('user')
-            log.error(user)
-            log.error(value)
             try:
                 return ShowUser.objects.get(pk=value, user=user)
             except ShowUser.DoesNotExist:
