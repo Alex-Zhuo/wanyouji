@@ -3186,6 +3186,29 @@ class TicketOrder(models.Model):
         return ['下单用户', '姓名', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
 
+    @classmethod
+    def can_refund_status(cls):
+        return [cls.STATUS_PAID, cls.STATUS_REFUNDED_FAIL]
+
+    def auto_refund(self):
+        refund_amount = self.actual_amount
+        st, msg_or_obj = TicketOrderRefund.create_record(self, refund_amount, '下单确认失败自动退款',
+                                                         TicketOrderRefund.ST_WX)
+        if st:
+            self.refund_amount += refund_amount
+            self.status_before_refund = self.status
+            self.status = self.STATUS_REFUNDING
+            self.save(update_fields=['refund_amount', 'status', 'status_before_refund'])
+            try:
+                re_st, msg = msg_or_obj.set_confirm()
+                if not re_st:
+                    msg_or_obj.error_msg = msg
+            except Exception as e:
+                msg_or_obj.error_msg = str(e)
+            msg_or_obj.save(update_fields=['error_msg'])
+        else:
+            log.error(msg_or_obj)
+
     def cps_stl(self, num):
         from statistical.models import TotalStatistical
         dy_order_num = 0
@@ -5073,7 +5096,8 @@ class TicketOrderRefund(models.Model):
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     confirm_at = models.DateTimeField('确认时间', null=True, blank=True)
     finish_at = models.DateTimeField('完成时间', null=True, blank=True)
-    op_user = models.ForeignKey(User, verbose_name='操作人员', on_delete=models.CASCADE, null=True, related_name='op_user')
+    op_user = models.ForeignKey(User, verbose_name='操作人员', on_delete=models.SET_NULL, blank=True, null=True,
+                                related_name='op_user')
 
     class Meta:
         verbose_name_plural = verbose_name = '退款记录'
@@ -5145,7 +5169,7 @@ class TicketOrderRefund(models.Model):
                     user_card.add_discount_total(-amount)
 
     @atomic
-    def set_confirm(self, op_user, request):
+    def set_confirm(self, op_user=None):
         st = False
         msg = '退款类型不对'
         is_finish = False
@@ -5157,7 +5181,7 @@ class TicketOrderRefund(models.Model):
             st = KsOrderSettleRecord.ks_refund(self)
             msg = self.error_msg
         elif self.source_type == self.ST_WX:
-            st = self.wx_refund(request)
+            st = self.wx_refund()
             msg = self.error_msg
         elif self.source_type == self.ST_XHS:
             from xiaohongshu.models import XhsOrder
@@ -5166,7 +5190,7 @@ class TicketOrderRefund(models.Model):
         elif self.source_type == self.ST_CARD:
             if self.order.pay_type == Receipt.PAY_CARD_JC:
                 if self.order.receipt.pay_type == Receipt.PAY_WeiXin_LP:
-                    st = self.wx_refund(request)
+                    st = self.wx_refund()
                     msg = self.error_msg
                 elif self.order.receipt.pay_type == Receipt.PAY_CARD_JC:
                     st = True
@@ -5285,12 +5309,13 @@ class TicketOrderRefund(models.Model):
                 self.order.item_order_info_list = json.dumps(item_order_info_list)
                 self.order.save(update_fields=['item_order_info_list'])
 
-    def wx_refund(self, request):
+    def wx_refund(self):
         if not self.order.receipt.transaction_id:
             self.order.receipt.update_info()
         from mall.pay_service import get_mp_pay_client
         mp_pay_client = get_mp_pay_client(self.order.receipt.pay_type, self.order.receipt.wx_pay_config)
-        refund_notify_url = request.build_absolute_uri(self.get_refund_notify_url())
+        config = get_config()
+        refund_notify_url = config['uri'] + self.get_refund_notify_url()
         result = mp_pay_client.ticket_refund(self, refund_notify_url=refund_notify_url)
         self.return_code = result.get('return_code')
         self.result_code = result.get('result_code')

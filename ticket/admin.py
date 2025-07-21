@@ -1644,7 +1644,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         else:
             amount = post.get('amount')
             reason = post.get('reason')
-            qs = queryset.filter(status__in=[TicketOrder.STATUS_PAID, TicketOrder.STATUS_REFUNDED_FAIL])
+            qs = queryset.filter(status__in=TicketOrder.can_refund_status())
             if qs.count() > 1:
                 return JsonResponse(data={
                     'status': 'error',
@@ -1964,7 +1964,7 @@ def set_confirm(modeladmin, request, queryset):
         if redis.setnx(ticket_order_refund_key, 1):
             redis.expire(ticket_order_refund_key, 5)
             try:
-                st, msg = inst.set_confirm(request.user, request)
+                st, msg = inst.set_confirm(request.user)
                 if not st:
                     raise AdminException(msg)
                 messages.success(request, '执行成功')

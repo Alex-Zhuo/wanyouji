@@ -45,8 +45,7 @@ class ReceiptAbstract(DateDetailAbstract):
     PAY_KS = 10
     PAY_XHS = 11
     PAY_CHOICES = (
-        (PAY_NOT_SET, '空'), (PAY_WeiXin_LP, '微信小程序支付'), (PAY_TikTok_LP, '抖音小程序支付'), (PAY_CARD_JC, '剧场会员卡余额'),
-        (PAY_KS, '快手小程序支付'), (PAY_XHS, '小红书小程序支付'))
+        (PAY_NOT_SET, '空'), (PAY_WeiXin_LP, '微信小程序支付'), (PAY_CARD_JC, '剧场会员卡余额'))
     pay_type = models.SmallIntegerField('付款类型', choices=PAY_CHOICES, default=PAY_NOT_SET)
     sign = models.CharField('微信支付签名', max_length=32, null=True, blank=True)
     transaction_id = models.CharField('微信(抖音)支付单号', max_length=32, null=True, blank=True)

@@ -57,7 +57,7 @@ def set_confirm(modeladmin, request, queryset):
         with run_with_lock(ticket_order_refund_key, 5) as acquired:
             if acquired:
                 try:
-                    st, msg = inst.set_confirm(request.user, request)
+                    st, msg = inst.set_confirm(request.user)
                     if not st:
                         raise AdminException(msg)
                     messages.success(request, '执行成功')

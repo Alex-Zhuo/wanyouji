@@ -113,9 +113,12 @@ class CaiYiCloud(CaiYiCloudAbstract):
     def __init__(self):
         from caiyicloud.models import CaiYiCloudApp
         caiyi = CaiYiCloudApp.get()
-        self.app_id = caiyi.app_id
-        self.supplier_id = caiyi.supplier_id
-        self.private_key = caiyi.private_key
+        self.is_init = False
+        if caiyi:
+            self.is_init = True
+            self.app_id = caiyi.app_id
+            self.supplier_id = caiyi.supplier_id
+            self.private_key = caiyi.private_key
 
     def get_redis_key(self, key):
         config = get_config()
@@ -388,7 +391,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         self.parse_resp(ret)
         return ret['data']
 
-    def cancel_order(self, order_no: str):
+    def cancel_order(self, order_no: str) -> bool:
         """
         取消订单
         """

@@ -20,7 +20,8 @@ from django.db import models
 from django.core.validators import MinValueValidator
 import re
 from decimal import Decimal
-from caches import get_redis, get_redis_name
+from caches import get_redis, get_redis_name, get_pika_redis
+from common.utils import get_timestamp
 
 log = logging.getLogger(__name__)
 """
@@ -31,6 +32,8 @@ EVENT_CATEGORIES = {
     23: "音乐会", 24: "亲子剧", 25: "戏曲", 26: "舞蹈", 27: "脱口秀", 28: "相声", 29: "杂技马戏", 30: "展览", 31: "乐园市集",
     32: "剧本密室", 33: "演讲讲座", 34: "其他玩乐", 35: "赛事", 36: "电竞", 37: "健身运动", 38: "儿童剧", 39: "沉浸式", 40: "旅游"
 }
+CY_NEED_CONFIRM_DICT_KEY = get_redis_name('cy_need_confirm_key')
+CONFIRM_RETRY_TIMES = 3
 
 
 def init_all():
@@ -124,6 +127,8 @@ class CyVenue(models.Model):
         cy_venue = CyVenue.objects.filter(cy_no=cy_venue_id).first()
         if not cy_venue:
             cy = caiyi_cloud()
+            if not cy.is_init:
+                return
             venue_detail = cy.venue_detail(cy_venue_id)
             from express.models import Division
             city = Division.objects.filter(province=venue_detail['province_name'], city=venue_detail['city_name'],
@@ -215,7 +220,9 @@ class CyShowEvent(models.Model):
     @classmethod
     def init_cy_show(cls, is_refresh=False):
         cy = caiyi_cloud()
-        # try:
+        if not cy.is_init:
+            return
+            # try:
         page = 1
         page_size = 50
         event_data = cy.get_events(page=page, page_size=page_size)
@@ -241,6 +248,8 @@ class CyShowEvent(models.Model):
     @atomic
     def update_or_create_record(cls, event_id: str):
         cy = caiyi_cloud()
+        if not cy.is_init:
+            return
         event_detail = cy.event_detail(event_id)
         cy_show_type, show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
         venue = CyVenue.init_venue(event_detail['venue_id'])
@@ -628,6 +637,8 @@ class CySession(models.Model):
 
     def get_seat_url(self, ticket_type_id: str, navigate_url: str):
         cy = caiyi_cloud()
+        if not cy.is_init:
+            return
         try:
             data = cy.seat_url(self.event.event_id, self.cy_no, ticket_type_id, navigate_url)
             return data
@@ -779,6 +790,8 @@ class CyTicketType(models.Model):
     @atomic
     def update_or_create_record(cls, cy_session_id: str):
         cy = caiyi_cloud()
+        if not cy.is_init:
+            return
         cy_session = CySession.objects.filter(cy_no=cy_session_id).first()
         if cy_session:
             ticket_types_list = cy.ticket_types([cy_session_id])
@@ -836,6 +849,8 @@ class CyTicketType(models.Model):
     @classmethod
     def get_seat_info(cls, biz_id):
         cy = caiyi_cloud()
+        if not cy.is_init:
+            return
         try:
             data = cy.seat_info(biz_id)
             return data
@@ -858,6 +873,8 @@ class CyOrder(models.Model):
         (ST_DEFAULT, '已下单'), (ST_PAY, '已支付'), (ST_OUT, '已出票'), (ST_FINISH, '已完成'),
         (ST_CLOSE, '已关闭'), (ST_CANCEL, '已取消'))
     order_state = models.PositiveSmallIntegerField('退款审核状态', choices=ST_CHOICES, default=ST_DEFAULT)
+    need_confirm = models.BooleanField('是否需要确认', default=False)
+    confirm_times = models.PositiveSmallIntegerField('确认订单次数', default=0)
     buyer_cellphone = models.CharField(max_length=20, help_text="购票人手机号")
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
     pay_snapshot = models.TextField('支付参数', max_length=1000, editable=False)
@@ -871,6 +888,60 @@ class CyOrder(models.Model):
 
     def __str__(self):
         return self.cy_order_no
+
+    def order_detail_api(self):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        data = cy.order_detail(cy_order_no=self.cy_order_no)
+        return data
+
+    def cancel_order(self):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        try:
+            has_cancel = cy.cancel_order(cy_order_no=self.cy_order_no)
+        except Exception as e:
+            log.error('彩艺云取消订单失败,{}'.format(self.cy_order_no))
+        self.order_state = self.ST_CANCEL
+        self.save(update_fields=['order_state'])
+
+    def set_need_confirm(self):
+        self.need_confirm = True
+        self.save(update_fields=['need_confirm'])
+        with get_pika_redis() as pika:
+            timestamp = get_timestamp(self.auto_cancel_order_time)
+            pika.hset(CY_NEED_CONFIRM_DICT_KEY, self.cy_order_no, json.dumps([timestamp, 0]))
+
+    @classmethod
+    def confirm_order_task(cls):
+        """
+        确认订单，重试三次
+        """
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        now_timestamp = get_timestamp(timezone.now())
+        with get_pika_redis() as pika:
+            confirm_keys = pika.hkeys(CY_NEED_CONFIRM_DICT_KEY)
+            for cy_order_no in confirm_keys:
+                data_list = pika.hget(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                cancel_timestamp, retry_times = json.loads(data_list)
+                if now_timestamp < cancel_timestamp and retry_times < CONFIRM_RETRY_TIMES:
+                    retry_times += 1
+                    has_confirm = cy.confirm_order(order_no=cy_order_no)
+                    qs = cls.objects.filter(cy_order_no=cy_order_no)
+                    if has_confirm:
+                        qs.update(order_state=cls.ST_PAY, confirm_times=retry_times)
+                        pika.hdel(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                    else:
+                        pika.hset(CY_NEED_CONFIRM_DICT_KEY, cy_order_no, json.dumps([cancel_timestamp, retry_times]))
+                else:
+                    # 彩艺云取消 和 微信自动执行退款
+                    obj = cls.objects.filter(cy_order_no=cy_order_no).first()
+                    obj.cancel_order()
+                    obj.ticket_order.auto_refund()
 
 
 class CyTicketCodeRecord(models.Model):
