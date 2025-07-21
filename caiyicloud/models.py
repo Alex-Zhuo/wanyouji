@@ -34,6 +34,7 @@ EVENT_CATEGORIES = {
 }
 CY_NEED_CONFIRM_DICT_KEY = get_redis_name('cy_need_confirm_key')
 CONFIRM_RETRY_TIMES = 3
+APPLY_PLATFORM = '深圳文旅体'
 
 
 def init_all():
@@ -995,7 +996,7 @@ class CyTicketCodeRecord(models.Model):
 class CyOrderRefund(models.Model):
     refund = models.OneToOneField(TicketOrderRefund, verbose_name='退款记录', on_delete=models.PROTECT,
                                   related_name='cy_refund')
-    cy_order_no = models.CharField('彩艺云订单号', unique=True, db_index=True, max_length=64)
+    cy_order = models.ForeignKey(CyOrder, verbose_name='退款订单', on_delete=models.CASCADE)
     apply_id = models.CharField('售后申请id', max_length=64)
     STATUS_DEFAULT = 1
     STATUS_SUCCESS = 2
@@ -1010,3 +1011,19 @@ class CyOrderRefund(models.Model):
 
     def __str__(self):
         return self.apply_id
+
+    @classmethod
+    def confirm_refund(cls, refund: TicketOrderRefund):
+        msg = None
+        st = True
+        cy_order = refund.order.cy_order
+        try:
+            cy = caiyi_cloud()
+            data = cy.refund_apply(cy_order=cy_order, apply_remark=refund.return_reason,
+                                   apply_platform=APPLY_PLATFORM)
+            if data.get('apply_id'):
+                cls.objects.get_or_create(refund=refund, cy_order_no=cy_order.cy_order_no, apply_id=data['apply_id'])
+        except Exception as e:
+            msg = str(e)
+            st = False
+        return st, msg

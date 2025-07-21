@@ -5355,7 +5355,12 @@ class TicketOrderRefund(models.Model):
         self.save(update_fields=['status', 'finish_at', 'amount'])
         self.order.status = TicketOrder.STATUS_REFUNDED
         self.order.save(update_fields=['status'])
+        self.biz_refund()
 
+    def biz_refund(self):
+        if hasattr(self.order, 'cy_order'):
+            from caiyicloud.models import CyOrderRefund
+            CyOrderRefund.confirm_refund(self)
 
 def validate_commission_rate(min=0, max=2900):
     """
