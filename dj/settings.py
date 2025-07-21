@@ -351,6 +351,7 @@ CELERY_WORKER_CONCURRENCY = celery_config['worker_concurrency'] if celery_config
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 200
 # 设置定时和周期性任务
 CELERY_BEAT_SCHEDULE = {
+    # 麦座任务
     # 'auto_sync_mai_zuo': {
     #     'task': 'ticket.tasks.auto_sync_mai_zuo',
     #     'schedule': timedelta(seconds=91),  # 每隔10s执行一次（datetime的 timedelta方式来实现）
@@ -366,6 +367,8 @@ CELERY_BEAT_SCHEDULE = {
     #     'schedule': timedelta(seconds=125),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     #     # 'schedule': crontab(minute='*/2'),  # 每隔2分钟执行一次 （celery.schedule 的 crontab方式实现）
     # },
+
+    # 其他任务
     'down_load_task': {
         'task': 'ticket.tasks.down_load_task',
         'schedule': timedelta(seconds=181),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -390,46 +393,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ticket.tasks.update_ticket_file_stock_from_redis',
         'schedule': timedelta(seconds=33),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'session_push_to_ks': {
-    #     'task': 'kuaishou_wxa.tasks.session_push_to_ks',
-    #     'schedule': timedelta(seconds=81),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'settle_order_to_ks': {
-    #     'task': 'kuaishou_wxa.tasks.settle_order_to_ks',
-    #     'schedule': timedelta(seconds=307),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'ks_order_report_task': {
-    #     'task': 'kuaishou_wxa.tasks.ks_order_report_task',
-    #     'schedule': timedelta(seconds=91),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'ks_check_cps': {
-    #     'task': 'kuaishou_wxa.tasks.ks_check_cps',
-    #     'schedule': timedelta(seconds=900),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
     'settle_order_award_task': {
         'task': 'ticket.tasks.settle_order_award_task',
         'schedule': timedelta(seconds=73)
     },
-    # 'check_add_booking_task': {
-    #     'task': 'ticket.tasks.check_add_booking_task',
-    #     'schedule': crontab(minute=00, hour=1)
-    # },
-    # 'session_push_to_xhs_task': {
-    #     'task': 'xiaohongshu.tasks.session_push_to_xhs',
-    #     'schedule': timedelta(seconds=67)
-    # },
-    # 'xhs_auto_verify_code_task': {
-    #     'task': 'xiaohongshu.tasks.xhs_auto_verify_code',
-    #     'schedule': timedelta(seconds=63)
-    # },
-    # 'xhs_check_approve_task': {
-    #     'task': 'xiaohongshu.tasks.xhs_check_approve_task',
-    #     'schedule': timedelta(seconds=125)
-    # },
-    # 'xhs_get_poi_list': {
-    #     'task': 'ticket.tasks.xhs_get_poi_list',
-    #     'schedule': crontab(minute=30, hour=0)
-    # },
     'update_stl_redis': {
         'task': 'statistical.tasks.update_stl_redis',
         'schedule': timedelta(seconds=130),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -450,26 +417,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ticket.tasks.ticket_order_expire',
         'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'goods_push_to_dou_yin': {
-    #     'task': 'ticket.tasks.goods_push_to_dou_yin',
-    #     'schedule': timedelta(seconds=310),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'goods_draft_dou_yin': {
-    #     'task': 'ticket.tasks.goods_draft_dou_yin',
-    #     'schedule': timedelta(seconds=150),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
     'auth_check_over_time_code': {
         'task': 'ticket.tasks.auth_check_over_time_code',
         'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'auth_check_over_time_code_tiktok': {
-    #     'task': 'ticket.tasks.auth_check_over_time_code_tiktok',
-    #     'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'plan_to_dou_yin': {
-    #     'task': 'ticket.tasks.plan_to_dou_yin',
-    #     'schedule': timedelta(seconds=155),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
     'update_goods_sales': {
         'task': 'ticket.tasks.update_goods_sales',
         'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -478,10 +429,7 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ticket.tasks.update_focus_num',
         'schedule': timedelta(seconds=155),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'check_cps_source': {
-    #     'task': 'ticket.tasks.check_cps_source',
-    #     'schedule': timedelta(seconds=605),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
+
     'show_expire_off': {
         'task': 'ticket.tasks.show_expire_off',
         'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -490,12 +438,75 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ticket.tasks.task_add_commission_balance',
         'schedule': timedelta(seconds=75),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'pull_tiktok_qual': {
-    #     'task': 'ticket.tasks.pull_tiktok_qual',
-    #     'schedule': timedelta(hours=12),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
     'coupon_expire_task': {
         'task': 'coupon.tasks.coupon_expire_task',
         'schedule': timedelta(seconds=61),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
+
+    # 快手任务
+    # 'session_push_to_ks': {
+    #     'task': 'kuaishou_wxa.tasks.session_push_to_ks',
+    #     'schedule': timedelta(seconds=81),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'settle_order_to_ks': {
+    #     'task': 'kuaishou_wxa.tasks.settle_order_to_ks',
+    #     'schedule': timedelta(seconds=307),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'ks_order_report_task': {
+    #     'task': 'kuaishou_wxa.tasks.ks_order_report_task',
+    #     'schedule': timedelta(seconds=91),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'ks_check_cps': {
+    #     'task': 'kuaishou_wxa.tasks.ks_check_cps',
+    #     'schedule': timedelta(seconds=900),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+
+    # 抖音任务
+    # 'check_add_booking_task': {
+    #     'task': 'ticket.tasks.check_add_booking_task',
+    #     'schedule': crontab(minute=00, hour=1)
+    # },
+    # 'session_push_to_xhs_task': {
+    #     'task': 'xiaohongshu.tasks.session_push_to_xhs',
+    #     'schedule': timedelta(seconds=67)
+    # },
+    # 'goods_push_to_dou_yin': {
+    #     'task': 'ticket.tasks.goods_push_to_dou_yin',
+    #     'schedule': timedelta(seconds=310),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'goods_draft_dou_yin': {
+    #     'task': 'ticket.tasks.goods_draft_dou_yin',
+    #     'schedule': timedelta(seconds=150),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'auth_check_over_time_code_tiktok': {
+    #     'task': 'ticket.tasks.auth_check_over_time_code_tiktok',
+    #     'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'plan_to_dou_yin': {
+    #     'task': 'ticket.tasks.plan_to_dou_yin',
+    #     'schedule': timedelta(seconds=155),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'check_cps_source': {
+    #     'task': 'ticket.tasks.check_cps_source',
+    #     'schedule': timedelta(seconds=605),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+    # 'pull_tiktok_qual': {
+    #     'task': 'ticket.tasks.pull_tiktok_qual',
+    #     'schedule': timedelta(hours=12),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
+
+    # 小红书任务
+    # 'xhs_auto_verify_code_task': {
+    #     'task': 'xiaohongshu.tasks.xhs_auto_verify_code',
+    #     'schedule': timedelta(seconds=63)
+    # },
+    # 'xhs_check_approve_task': {
+    #     'task': 'xiaohongshu.tasks.xhs_check_approve_task',
+    #     'schedule': timedelta(seconds=125)
+    # },
+    # 'xhs_get_poi_list': {
+    #     'task': 'ticket.tasks.xhs_get_poi_list',
+    #     'schedule': crontab(minute=30, hour=0)
+    # },
+
 }
