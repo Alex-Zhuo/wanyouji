@@ -3544,14 +3544,18 @@ class TicketOrder(models.Model):
         from mp.models import BasicConfig
         bc = BasicConfig.get()
         cancel_minutes = bc.auto_cancel_minutes - 1 if bc.auto_cancel_minutes > 1 else bc.auto_cancel_minutes
-        end_at = self.create_at + timedelta(minutes=cancel_minutes)
-        return end_at
+        pay_end_at = self.create_at + timedelta(minutes=cancel_minutes)
+        if hasattr(self, 'cy_order'):
+            cy_pay_end_at = self.cy_order.auto_cancel_order_time - timedelta(seconds=30)
+            if pay_end_at > cy_pay_end_at:
+                pay_end_at = cy_pay_end_at
+        return pay_end_at
 
     def get_end_at(self):
         # 转时间戳
-        end_at = self.get_wx_pay_end_at()
+        pay_end_at = self.get_wx_pay_end_at()
         from common.utils import get_timestamp
-        end_at = get_timestamp(end_at)
+        end_at = get_timestamp(pay_end_at)
         return end_at
 
     def team_award(self, parent, lv, check_parent_list=None):
@@ -3824,6 +3828,9 @@ class TicketOrder(models.Model):
                 TheaterCardChangeRecord.add_record(user=self.user,
                                                    source_type=TheaterCardChangeRecord.SOURCE_TYPE_CANCEL,
                                                    amount=self.card_jc_amount, ticket_order=self)
+            # 其他渠道取消，不调也无错误。会自动取消
+            # if hasattr(self, 'cy_order'):
+            #     self.cy_order.cancel_order()
         return True, ''
 
     def release_seat(self, is_cancel=False):
