@@ -1172,7 +1172,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     ticket_list = serializers.ListField(required=True, label='场馆座位ID列表', write_only=False)
     express_address_id = serializers.IntegerField(required=False, label='地址ID', min_value=1)
     express_fee = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
-    id_card = serializers.CharField(required=False)
+    show_user_id = serializers.IntegerField(required=False)
 
     def validate_express_address_id(self, value):
         if value:
@@ -1180,6 +1180,14 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                 return UserAddress.objects.get(pk=value)
             except UserAddress.DoesNotExist:
                 raise CustomAPIException('收获地址不存在')
+
+    def validate_show_user_id(self, value):
+        if value:
+            user = self.context.get('user')
+            try:
+                return ShowUser.objects.get(pk=value, user=user)
+            except ShowUser.DoesNotExist:
+                raise CustomAPIException('常用联系不存在')
 
     def validate_session_id(self, value):
         try:
@@ -1350,6 +1358,10 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None):
         if user.flag != user.FLAG_BUY:
             if session.is_name_buy:
+                show_user = validated_data['show_user_id']
+                if not show_user.id_card:
+                    raise CustomAPIException('常用联系人请先实名认证')
+                validated_data['id_card'] = show_user.id_card
                 if session.name_buy_num > 0:
                     buy_num = TicketOrder.get_or_set_real_name_buy_num(session.id, validated_data['id_card'], 0)
                     if buy_num + real_multiply > session.name_buy_num:
@@ -1401,7 +1413,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'name', 'mobile', 'session_id',
-                  'ticket_list', 'express_fee', 'express_address_id', 'id_card']
+                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_id']
         read_only_fields = ['receipt']
 
 
