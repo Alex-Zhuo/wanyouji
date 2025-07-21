@@ -1356,10 +1356,14 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         order.change_scroll_list()
 
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None):
+        show_user = None
+        if validated_data.get('show_user_id'):
+            show_user = validated_data.get('show_user_id')
+            validated_data['name'] = show_user.name
+            validated_data['mobile'] = show_user.mobile
         if user.flag != user.FLAG_BUY:
             if session.is_name_buy:
-                show_user = validated_data['show_user_id']
-                if not show_user.id_card:
+                if not show_user or not show_user.id_card:
                     raise CustomAPIException('常用联系人请先实名认证')
                 validated_data['id_card'] = show_user.id_card
                 if session.name_buy_num > 0:
@@ -1412,7 +1416,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketOrder
-        fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'name', 'mobile', 'session_id',
+        fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id',
                   'ticket_list', 'express_fee', 'express_address_id', 'show_user_id']
         read_only_fields = ['receipt']
 
