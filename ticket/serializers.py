@@ -1732,15 +1732,7 @@ class TicketOrderMarginCreateSerializer(serializers.ModelSerializer):
 
 
 class ShowUserSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    mobile = serializers.SerializerMethodField()
     id_card = serializers.SerializerMethodField()
-
-    def get_name(self, obj):
-        return s_name(obj.name) if obj.name else None
-
-    def get_mobile(self, obj):
-        return s_mobile(obj.mobile) if obj.mobile else None
 
     def get_id_card(self, obj):
         return s_id_card(obj.id_card) if obj.id_card else None
@@ -1757,8 +1749,6 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         id_card = validated_data.get('id_card', None)
-        if validated_data.get('id') == 99999999:
-            raise CustomAPIException('请新建一条实名联系人')
         if id_card:
             # 是否已经验证过了，验证过的不需要再验证
             has_auth = ShowUser.objects.filter(id_card=id_card, name=validated_data['name']).first()
