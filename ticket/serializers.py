@@ -1183,7 +1183,8 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     def validate_show_user_id(self, value):
         if value:
-            user = self.context.get('user')
+            request = self.context.get('request')
+            user = request.user
             try:
                 return ShowUser.objects.get(pk=value, user=user)
             except ShowUser.DoesNotExist:
@@ -1358,7 +1359,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None):
         show_user = None
         if validated_data.get('show_user_id'):
-            show_user = validated_data.get('show_user_id')
+            show_user = validated_data.pop('show_user_id')
             validated_data['name'] = show_user.name
             validated_data['mobile'] = show_user.mobile
         if user.flag != user.FLAG_BUY:
