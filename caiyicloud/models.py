@@ -12,7 +12,8 @@ import json
 from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
-from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder
+from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder, \
+    TicketUserCode
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -512,7 +513,7 @@ class CySession(models.Model):
         has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
         for api_data in session_list:
             # 场次类型,0:普通场次;1:联票场次 只做普通场次
-            if api_data['session_type']==0:
+            if api_data['session_type'] == 0:
                 if is_refresh or api_data['id'] not in has_change_session_list:
                     cls.update_or_create_record(cy_show, api_data)
                     redis.lpush(key, api_data['id'])
@@ -860,7 +861,7 @@ class CyOrder(models.Model):
     buyer_cellphone = models.CharField(max_length=20, help_text="购票人手机号")
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
     pay_snapshot = models.TextField('支付参数', max_length=1000, editable=False)
-    item_snapshot = models.TextField('下单票档规格', editable=False)
+    item_snapshot = models.TextField('下单票档规格', editable=False, help_text='彩艺云order返回的ticket_list')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -870,6 +871,54 @@ class CyOrder(models.Model):
 
     def __str__(self):
         return self.cy_order_no
+
+
+class CyTicketCodeRecord(models.Model):
+    # 二维码类型
+    CHECK_IN_TYPE_CHOICES = [
+        (1, '二维码类型'),
+        (3, 'URL链接'),
+    ]
+    # 码状态选择
+    STATE_CHOICES = [
+        (0, '已生效'),
+        (1, '已锁定'),
+        (2, '已退'),
+        (3, '转出中'),
+        (4, '已转出'),
+        (6, '转出票已退票'),
+    ]
+    # 核销状态选择
+    CHECK_STATE_CHOICES = [
+        (0, '未核销'),
+        (1, '已核销'),
+        (2, '部分核销'),
+    ]
+    ticket_code = models.OneToOneField(TicketUserCode, verbose_name='演出票(座位)信息', on_delete=models.CASCADE,
+                                       related_name='cy_code')
+    cy_order = models.ForeignKey(CyOrder, verbose_name='订单', on_delete=models.CASCADE)
+    check_in_type = models.PositiveSmallIntegerField('二维码类型', choices=CHECK_IN_TYPE_CHOICES, default=1)
+    check_in_code = models.CharField('二维码', max_length=500, db_index=True)
+    state = models.PositiveSmallIntegerField('状态', choices=STATE_CHOICES, default=0)
+    check_state = models.PositiveSmallIntegerField('核销状态', choices=CHECK_STATE_CHOICES, default=0)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '小红书核销码'
+        unique_together = ['ticket_code', 'voucher_code']
+
+    @classmethod
+    def get_or_create_record(cls, ticket_code: TicketUserCode, voucher_code: str):
+        inst, _ = cls.objects.get_or_create(ticket_code=ticket_code, voucher_code=voucher_code,
+                                            ticket_order=ticket_code.order)
+        return inst
+
+    @classmethod
+    def order_create(cls, voucher_infos: List[Dict], ticket_order: TicketOrder):
+        code_qs = TicketUserCode.objects.filter(order_id=ticket_order.id)
+        i = 0
+        for code in code_qs:
+            cls.get_or_create_record(code, voucher_infos[i]['VoucherCode'])
+            i = i + 1
 
 
 class CyOrderRefund(models.Model):
