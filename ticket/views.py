@@ -28,7 +28,7 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     TicketBookingSetStatusSerializer, TicketOrderChangePriceSerializer, \
     SessionInfoStaffDetailSerializer, TicketOrderMarginCreateSerializer, SessionSearchListSerializer, \
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
-    TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, TicketUserCodeSerializer, \
+    TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, \
     TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer, \
     VenuesCustomerDetailSerializer
 from restframework_ext.exceptions import CustomAPIException

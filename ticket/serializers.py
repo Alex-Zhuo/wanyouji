@@ -968,7 +968,7 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
     session_seat = SessionSeatSerializer()
     check_user = serializers.SerializerMethodField()
-    code_img = serializers.SerializerMethodField()
+    # code_img = serializers.SerializerMethodField()
     snapshot = serializers.SerializerMethodField()
     give_status_display = serializers.SerializerMethodField()
 
@@ -999,14 +999,14 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
     def get_check_user(self, obj):
         return dict(name=str(obj.check_user) if obj.check_user else None)
 
-    def get_code_img(self, obj):
-        url, code = obj.get_code_img_new()
-        request = self.context.get('request')
-        return request.build_absolute_uri(obj.code_img.url)
+    # def get_code_img(self, obj):
+    #     url, code = obj.get_code_img_new()
+    #     request = self.context.get('request')
+    #     return request.build_absolute_uri(obj.code_img.url)
 
     class Meta:
         model = TicketUserCode
-        fields = ['id', 'session_seat', 'status', 'status_display', 'check_user', 'code', 'check_at', 'code_img',
+        fields = ['id', 'session_seat', 'status', 'status_display', 'check_user', 'code', 'check_at',
                   'snapshot', 'give_status', 'give_status_display', 'give_mobile']
 
 
@@ -1025,7 +1025,7 @@ class TicketUserCodeNewSerializer(TicketUserCodeSerializer):
             url, code = obj.get_code_img_new(is_refresh)
             can_share, deadline_at, deadline_timestamp = obj.check_can_share()
         else:
-            url = obj.code_img.url
+            url = obj.code_img.url if obj.code_img else None
         return dict(url=request.build_absolute_uri(url) if url else None, code=code, can_share=can_share,
                     deadline_at=deadline_at, deadline_timestamp=deadline_timestamp)
 
@@ -1114,13 +1114,8 @@ class TicketOrderSerializer(serializers.ModelSerializer):
 class TicketOrderDetailSerializer(TicketOrderSerializer):
     session = SessionInfoSerializer()
     code_list = serializers.SerializerMethodField()
-    content = serializers.SerializerMethodField()
     snapshot = serializers.SerializerMethodField()
     show_data = serializers.SerializerMethodField()
-
-    def get_content(self, obj):
-        # 过多几版就可以删除
-        return obj.session.show.content if obj.session and obj.session.show else None
 
     def get_show_data(self, obj):
         data = dict(content=None, notice=None)
