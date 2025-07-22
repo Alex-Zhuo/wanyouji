@@ -375,8 +375,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         if address_info:
             data['address_info'] = address_info
         ret = self._post('api/event/v1/ticket_types/url', params=params, data=data, headers=headers)
-        self.parse_resp(ret)
-        return ret['data']
+        # self.parse_resp(ret)
+        return ret
 
     def order_detail(self, external_order_no: str = None, order_no: str = None):
         """

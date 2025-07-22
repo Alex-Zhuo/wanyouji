@@ -17,7 +17,7 @@ from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, validate_image_file_extension
 import re
 from decimal import Decimal
 from caches import get_redis, get_redis_name, get_pika_redis
@@ -326,7 +326,7 @@ class CyCheckInMethods(ChoicesCommon):
 class CyDeliveryMethods(ChoicesCommon):
     class Meta:
         verbose_name_plural = verbose_name = '配送方式'
-        ordering = ['-pk']
+        ordering = ['code']
 
     # 配送方式选择
     INIT_DATA = [
@@ -446,7 +446,11 @@ class CySession(models.Model):
     # 限购信息
     limit_on_session = models.PositiveSmallIntegerField(default=6, verbose_name='单场次限购张数')
     limit_on_event = models.PositiveSmallIntegerField(default=20, verbose_name='单节目限购张数')
-
+    require_id_on_order = models.PositiveSmallIntegerField(
+        choices=[(0, '否'), (1, '是')],
+        default=0,
+        verbose_name='是否需要一单一证购买'
+    )
     # 时间戳
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -555,9 +559,11 @@ class CySession(models.Model):
         # 创建限购信息
         limit_on_session = 0
         limit_on_event = 0
+        require_id_on_order = 0
         if api_data.get('purchase_limit'):
             limit_on_session = api_data['purchase_limit'].get('limit_on_session', 0)
             limit_on_event = api_data['purchase_limit'].get('limit_on_event', 0)
+            require_id_on_order = api_data['purchase_limit'].get('require_id_on_order', 0)
         require_id_on_ticket = True if api_data.get('require_id_on_ticket') else False
         cls_data = dict(
             event=cy_show,
@@ -584,14 +590,16 @@ class CySession(models.Model):
             close_sale_time_interval=api_data.get('close_sale_time_interval'),
             close_sale_type=api_data.get('close_sale_type'),
             limit_on_session=limit_on_session,
-            limit_on_event=limit_on_event
+            limit_on_event=limit_on_event,
+            require_id_on_order=require_id_on_order,
         )
         show = cy_show.show
         has_seat = SessionInfo.SEAT_HAS if cy_show.seat_type == 1 else SessionInfo.SEAT_NO
         session_data = dict(show=show, venue_id=show.venues.id, title=api_data['name'], start_at=start_time,
-                            end_at=end_time, dy_sale_time=sale_time, order_limit_num=limit_on_session,
-                            one_id_one_ticket=require_id_on_ticket, name_buy_num=1 if require_id_on_ticket else 0,
-                            is_name_buy=True, has_seat=has_seat, status=cls.get_session_status(api_data['state']))
+                            end_at=end_time, dy_sale_time=sale_time, one_id_one_ticket=require_id_on_ticket,
+                            name_buy_num=limit_on_session,
+                            is_name_buy=require_id_on_order, has_seat=has_seat,
+                            status=cls.get_session_status(api_data['state']))
         cy_session_qs = cls.objects.filter(cy_no=api_data['id'])
         if not cy_session_qs:
             session = SessionInfo.objects.create(**session_data)
@@ -859,6 +867,13 @@ class CyTicketType(models.Model):
             raise CustomAPIException(e)
 
 
+"""
+纸质票上是否有check_in_code是看票面设计的。这是两个码
+exchange_code(单码或者叫换票码)-一般来说是用来换票的，具体的得看场馆方
+check_in_code(票码、核销码)-一般来说是直接刷码入场使用，也有可能可以用来换票，具体得看实际的场馆方
+"""
+
+
 class CyOrder(models.Model):
     ticket_order = models.OneToOneField(TicketOrder, verbose_name='订单', on_delete=models.CASCADE,
                                         related_name='cy_order')
@@ -873,13 +888,28 @@ class CyOrder(models.Model):
     ST_CHOICES = (
         (ST_DEFAULT, '已下单'), (ST_PAY, '已支付'), (ST_OUT, '已出票'), (ST_FINISH, '已完成'),
         (ST_CLOSE, '已关闭'), (ST_CANCEL, '已取消'))
-    order_state = models.PositiveSmallIntegerField('退款审核状态', choices=ST_CHOICES, default=ST_DEFAULT)
-    need_confirm = models.BooleanField('是否需要确认', default=False)
-    confirm_times = models.PositiveSmallIntegerField('确认订单次数', default=0)
+    order_state = models.PositiveSmallIntegerField('订单状态', choices=ST_CHOICES, default=ST_DEFAULT)
     buyer_cellphone = models.CharField(max_length=20, help_text="购票人手机号")
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
-    pay_snapshot = models.TextField('支付参数', max_length=1000, editable=False)
-    item_snapshot = models.TextField('下单票档规格', editable=False, help_text='彩艺云order返回的ticket_list')
+    exchange_code = models.CharField('换票码', max_length=64, null=True, blank=True)
+    exchange_qr_code = models.CharField('换二维票码', max_length=64, null=True, blank=True)
+    code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(1, '文本码'), (3, 'URL链接')], default=1)
+    delivery_method = models.ForeignKey(CyDeliveryMethods, verbose_name='配送方式', null=True, on_delete=models.PROTECT)
+    # ST_DEFAULT = 0
+    # ST_PAY = 1
+    # ST_CHECK = 2
+    # ST_FINISH = 3
+    # ST_INVALID = 4
+    # ST_EXPIRED = 5
+    # ST_REFUND = 6
+    # CODE_CHOICES = (
+    #     (ST_DEFAULT, '待生效'), (ST_PAY, '已生效'), (ST_CHECK, '已核销'), (ST_FINISH, '已完成'),
+    #     (ST_CLOSE, '已失效'), (ST_CANCEL, '已过期'), (ST_CANCEL, '已退'))
+    # code_state =models.PositiveSmallIntegerField('码状态', choices=CODE_CHOICES, default=ST_DEFAULT)
+    ticket_list_snapshot = models.TextField('下单票档规格', editable=False, help_text='下单时的ticket_list')
+
+    need_confirm = models.BooleanField('是否需要确认', default=False)
+    confirm_times = models.PositiveSmallIntegerField('确认订单次数', default=0)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -891,7 +921,11 @@ class CyOrder(models.Model):
         return self.cy_order_no
 
     @classmethod
-    def order_create(cls, ticket_order: ticket_order):
+    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, price_infos: list,
+                     real_name_list: list = None):
+        """
+        price_infos: 彩艺云seat_info接口获取的数据
+        """
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
@@ -899,14 +933,51 @@ class CyOrder(models.Model):
         express_amount = 0
         address_info = None
         promotion_list = None
-
-
-        cy.orders_create(external_order_no=ticket_order.order_no, original_total_amount=ticket_order.amount,
-                         actual_total_amount=ticket_order.actual_amount, buyer_cellphone=ticket_order.mobile,
-                         ticket_list=ticket_list, id_info=id_info, promotion_list=promotion_list,
-                         address_info=address_info,
-                         express_amount=express_amount
-                         )
+        id_info = None
+        cy_session = session.cy_session
+        if not session.one_id_one_ticket and session.is_name_buy and real_name_list:
+            id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
+        ticket_list = []
+        delivery_method = cy_session.delivery_methods.first()
+        i = 0
+        for t_info in price_infos:
+            seats = []
+            for seat in t_info['seat_infos']:
+                data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
+                            photo_url=None)
+                if session.one_id_one_ticket and real_name_list:
+                    data['id_info'] = dict(number=real_name_list[i]['id_card'], cellphone=real_name_list[i]['mobile'],
+                                           name=real_name_list[i]['name'], type=1)
+                    i += 1
+            ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
+                                    delivery_method=delivery_method.code,
+                                    ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
+                                    qty=t_info['count'],
+                                    seats=seats))
+            try:
+                response_data = cy.orders_create(external_order_no=ticket_order.order_no,
+                                                 original_total_amount=ticket_order.amount,
+                                                 actual_total_amount=ticket_order.actual_amount,
+                                                 buyer_cellphone=ticket_order.mobile,
+                                                 ticket_list=ticket_list, id_info=id_info,
+                                                 promotion_list=promotion_list,
+                                                 address_info=address_info,
+                                                 express_amount=express_amount
+                                                 )
+            except Exception as e:
+                raise CustomAPIException('下单失败，请稍后再试。。。')
+            from caiyicloud.error_codes import is_success
+            if not is_success(response_data["code"]):
+                raise CustomAPIException(response_data['msg'])
+            else:
+                auto_cancel_order_time = datetime.strptime(response_data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
+                cy_order = cls.objects.create(ticket_order=ticket_order, cy_session=cy_session,
+                                              cy_order_no=response_data['order_no'],
+                                              buyer_cellphone=ticket_order.mobile,
+                                              auto_cancel_order_time=auto_cancel_order_time,
+                                              delivery_method=delivery_method,
+                                              ticket_list_snapshot=json.dumps(ticket_list))
+            return cy_order
 
     def get_order_detail(self):
         cy = caiyi_cloud()

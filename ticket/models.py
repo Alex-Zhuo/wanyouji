@@ -1011,10 +1011,10 @@ class SessionInfo(UseNoAbstract):
                                             editable=False)
     desc = models.CharField('场次备注', max_length=100, null=True, blank=True)
     # 限购相关
-    order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购')
-    one_id_one_ticket = models.BooleanField(default=False, verbose_name='是否需要一票一证购买')
-    name_buy_num = models.PositiveIntegerField('实名购票限购数量', default=0)
-    is_name_buy = models.BooleanField('是否实名购票', default=False, help_text='开启后用户购买时需要选择已实名的常用联系人信息，0.01购票权限用户不走实名流程')
+    order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购', editable=False)
+    is_name_buy = models.BooleanField('是否一单一证', default=False, help_text='0.01购票权限用户不走一单一证流程')
+    name_buy_num = models.PositiveIntegerField('单证限购数量', default=0, help_text='用于限制一证最多购买多少张票，配合一单一证使用')
+    one_id_one_ticket = models.BooleanField(default=False, verbose_name='是否一票一证购买')
     SEAT_HAS = 1
     SEAT_NO = 2
     SEAT_CHOICES = [(SEAT_HAS, '有座'), (SEAT_NO, '无座')]
@@ -1102,8 +1102,12 @@ class SessionInfo(UseNoAbstract):
                 data.append([show.no, show.title, show_at, venue.name, str(show.price), logo, rate])
                 cursor.execute(sql, data)
 
+    @property
+    def is_real_name_buy(self):
+        return self.is_name_buy or self.one_id_one_ticket
+
     def clean(self):
-        if self.is_name_buy and self.is_paper:
+        if self.is_real_name_buy and self.is_paper:
             raise ValidationError('演出场次的实名购票项与是否纸质票不能同时勾选')
         if self.has_seat == self.SEAT_HAS and self.main_session:
             raise ValidationError('有座场次不予许选择主场次')
@@ -3060,9 +3064,7 @@ class TicketOrder(models.Model):
     title = models.CharField('演出名称', max_length=60)
     session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.CASCADE)
     venue = models.ForeignKey(Venues, verbose_name='演出场馆', on_delete=models.CASCADE, null=True)
-    name = models.CharField(u'姓名', max_length=20, null=True)
     mobile = models.CharField('手机号', max_length=20, null=True)
-    id_card = models.CharField('身份证号', max_length=20, null=True, blank=True)
     express_address = models.CharField('送货地址', max_length=200, null=True, blank=True)
     order_no = models.CharField(u'订单号', max_length=128, unique=True, default=randomstrwithdatetime, db_index=True)
     tiktok_order_id = models.CharField(u'抖音订单号', max_length=128, unique=True, db_index=True, null=True, blank=True)
@@ -4338,6 +4340,25 @@ class TicketOrder(models.Model):
         _write_row_by_xlwt(ws, ['END'], row_index)
         wb.save(filepath)
         return '{}/{}'.format(xlsx_dir, filename)
+
+
+class TicketOrderRealName(models.Model):
+    order = models.ForeignKey(TicketOrder, verbose_name='订单', on_delete=models.CASCADE, related_name='real_name_order')
+    name = models.CharField('姓名', max_length=30)
+    mobile = models.CharField('手机号', max_length=20)
+    id_card = models.CharField('身份证号', max_length=20, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '订单实名信息'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def create_record(cls, order: TicketOrder, name, mobile, id_card=None):
+        inst = cls.objects.create(order=order, name=name, mobile=mobile, id_card=id_card)
+        return inst
 
 
 class TicketOrderExpress(models.Model):

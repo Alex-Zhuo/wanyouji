@@ -13,12 +13,13 @@ from ticket.models import TicketOrder, ShowProject, ShowType, Venues, TicketColo
     SessionPushTiktokTask, TicketOrderRefund, TiktokUser, ShortVideoCps, ShortVideoCpsItem, LiveRoomCps, \
     LiveRoomCpsItem, CommonPlanCps, CpsDirectional, VenuesLayers, ShowComment, ShowCommentImage, TicketBooking, \
     TicketBookingItem, MaiZuoTask, TicketOrderChangePrice, DownLoadTask, SessionChangeSaleTimeRecord, \
-    ShowContentCategory, ShowPerformerBanner, MaiZuoLoginLog, TicketOrderExpress, TicketGiveRecord, TicketGiveDetail
+    ShowContentCategory, ShowPerformerBanner, MaiZuoLoginLog, TicketOrderExpress, TicketGiveRecord, TicketGiveDetail, \
+    TicketOrderRealName
 import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.contrib import messages
-from common.utils import get_config, s_mobile, s_name, show_content
+from common.utils import get_config, s_mobile, s_name, show_content, s_id_card
 from django.db.transaction import atomic
 from dj_ext.exceptions import AdminException
 import pysnooper
@@ -1463,6 +1464,18 @@ def re_push_delivery(modeladmin, request, queryset):
 re_push_delivery.short_description = u'重新核销'
 
 
+class TicketOrderRealNameInline(OnlyReadTabularInline):
+    model = TicketOrderRealName
+    extra = 0
+    exclude = ['id_card']
+    readonly_fields = ['s_id_card']
+
+    def s_id_card(self, obj):
+        return s_id_card(obj.id_card) if obj.id_card else None
+
+    s_id_card.short_description = u'身份证号'
+
+
 class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     # paginator = LargeTablePaginator
     show_full_result_count = False
@@ -1479,16 +1492,10 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     autocomplete_fields = ['user']
     readonly_fields = [f.name for f in TicketOrder._meta.fields if
                        f.name not in ['status', 'snapshot', 'u_agent_id', 'discount_amount',
-                                      'status_before_refund', 'item_order_info_list', 'id_card']] + ['s_id_card']
-    inlines = [TicketOrderChangePriceInline, TicketUserCodeInline, TicketOrderInline]
-    exclude = ['snapshot', 'u_user_id', 'u_agent_id', 'discount_amount', 'status_before_refund', 'item_order_info_list',
-               'id_card']
+                                      'status_before_refund', 'item_order_info_list']]
+    inlines = [TicketOrderRealNameInline, TicketUserCodeInline, TicketOrderChangePriceInline, TicketOrderInline]
+    exclude = ['snapshot', 'u_user_id', 'u_agent_id', 'discount_amount', 'status_before_refund', 'item_order_info_list']
     list_per_page = 10
-
-    def s_id_card(self, obj):
-        return show_content(obj.id_card) if obj.id_card else ''
-
-    s_id_card.short_description = u'身份证号'
 
     def get_search_results(self, request, queryset, search_term):
         o_qs = queryset
