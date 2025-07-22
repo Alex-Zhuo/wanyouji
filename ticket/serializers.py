@@ -78,11 +78,10 @@ class PKtoNoSerializer(serializers.ModelSerializer):
         fields = ['id', 'no']
 
 
-class VenuesDetailSerializer(PKtoNoSerializer):
+class VenuesCustomerDetailSerializer(PKtoNoSerializer):
     city = DivisionSerializer()
     logo_images = serializers.SerializerMethodField()
     detail_images = serializers.SerializerMethodField()
-    id = serializers.SerializerMethodField()
 
     def get_logo_images(self, obj):
         qs = VenuesLogoImage.objects.filter(venue=obj)
@@ -95,10 +94,14 @@ class VenuesDetailSerializer(PKtoNoSerializer):
     class Meta:
         model = Venues
         fields = PKtoNoSerializer.Meta.fields + ['name', 'layers', 'city', 'lat', 'lng', 'address', 'desc',
-                                                 'map', 'is_use', 'custom_mobile', 'custom_wechat', 'custom_code',
-                                                 'is_seat', 'seat_data', 'direction',
-                                                 'logo_images', 'detail_images']
+                                                 'map', 'custom_mobile', 'custom_wechat', 'custom_code', 'logo_images',
+                                                 'detail_images']
 
+
+class VenuesDetailSerializer(VenuesCustomerDetailSerializer):
+    class Meta:
+        model = Venues
+        fields = VenuesCustomerDetailSerializer.Meta.fields + ['is_use', 'is_seat', 'seat_data', 'direction']
 
 class VenuesLayersSerializer(serializers.ModelSerializer):
     class Meta:

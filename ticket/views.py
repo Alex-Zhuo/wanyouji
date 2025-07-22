@@ -29,7 +29,8 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     SessionInfoStaffDetailSerializer, TicketOrderMarginCreateSerializer, SessionSearchListSerializer, \
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
     TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, TicketUserCodeSerializer, \
-    TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer
+    TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer, \
+    VenuesCustomerDetailSerializer
 from restframework_ext.exceptions import CustomAPIException
 from django.utils import timezone
 from django.db.models import Max, Min
@@ -63,7 +64,7 @@ class TicketReceiptViewSet(ReceiptViewset):
 class VenuesViewSet(SerializerSelector, DetailPKtoNoViewSet):
     queryset = Venues.objects.filter(is_use=True)
     serializer_class = VenuesSerializer
-    # serializer_class_retrieve = VenuesDetailSerializer
+    serializer_class_retrieve = VenuesCustomerDetailSerializer
     permission_classes = [IsPermittedUser]
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get', 'post']

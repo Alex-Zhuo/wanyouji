@@ -15,7 +15,7 @@ from common.utils import get_config
 from typing import List, Dict
 from requests import Response
 import uuid
-
+from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 deubg = True
@@ -295,10 +295,10 @@ class CaiYiCloud(CaiYiCloudAbstract):
         self.parse_resp(ret)
         return ret['data']
 
-    def orders_create(self, external_order_no: str, original_total_amount: float, actual_total_amount: float,
+    def orders_create(self, external_order_no: str, original_total_amount: Decimal, actual_total_amount: Decimal,
                       buyer_cellphone: str, ticket_list: List[dict], id_info: dict = None,
                       promotion_list: List[dict] = None,
-                      address_info: dict = None, express_amount: float = 0):
+                      address_info: dict = None, express_amount: Decimal = 0):
         """
         文档 https://platform.caiyicloud.com/#/doc/v1/distribution/order/create
         该接口用于创建订单
@@ -458,7 +458,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         self.parse_resp(ret)
         return ret['data']
 
-    def refund_apply(self, cy_order_no: str, apply_remark: str, apply_platform: str, refund_rate: float = 0,
+    def refund_apply(self, cy_order_no: str, apply_remark: str, apply_platform: str, refund_rate: Decimal = 0,
                      refund_tickets: list = None):
         """
         该接口用于对已出票的订单进行售后申请。

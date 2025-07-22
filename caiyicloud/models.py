@@ -895,7 +895,18 @@ class CyOrder(models.Model):
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
-        cy.orders_create(ticket_order.order_no)
+        # 快递和营销活动不做
+        express_amount = 0
+        address_info = None
+        promotion_list = None
+
+
+        cy.orders_create(external_order_no=ticket_order.order_no, original_total_amount=ticket_order.amount,
+                         actual_total_amount=ticket_order.actual_amount, buyer_cellphone=ticket_order.mobile,
+                         ticket_list=ticket_list, id_info=id_info, promotion_list=promotion_list,
+                         address_info=address_info,
+                         express_amount=express_amount
+                         )
 
     def get_order_detail(self):
         cy = caiyi_cloud()
