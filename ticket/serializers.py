@@ -103,6 +103,7 @@ class VenuesDetailSerializer(VenuesCustomerDetailSerializer):
         model = Venues
         fields = VenuesCustomerDetailSerializer.Meta.fields + ['is_use', 'is_seat', 'seat_data', 'direction']
 
+
 class VenuesLayersSerializer(serializers.ModelSerializer):
     class Meta:
         model = VenuesLayers
@@ -938,7 +939,7 @@ class SessionSeatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SessionSeat
-        fields = ['row', 'column', 'layers', 'price', 'showRow', 'showCol', 'box_no_special', 'order_no']
+        fields = ['row', 'column', 'layers', 'price', 'showRow', 'showCol', 'box_no_special', 'order_no', 'can_buy']
 
 
 class SessionSeatCreateSerializer(serializers.ModelSerializer):

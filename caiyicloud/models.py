@@ -862,7 +862,7 @@ class CyTicketType(models.Model):
 class CyOrder(models.Model):
     ticket_order = models.OneToOneField(TicketOrder, verbose_name='订单', on_delete=models.CASCADE,
                                         related_name='cy_order')
-    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', on_delete=models.CASCADE)
+    cy_session = models.ForeignKey(CySession, verbose_name=u'彩艺场次', on_delete=models.CASCADE)
     cy_order_no = models.CharField('彩艺云订单号', max_length=100, db_index=True)
     ST_DEFAULT = 1
     ST_PAY = 2
