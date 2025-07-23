@@ -604,21 +604,20 @@ class ReceiptViewset(BaseReceiptViewset):
         bc = BasicConfig.get()
         auto_cancel_minutes = bc.auto_cancel_minutes if bc else 10
         expire_at = now + timedelta(minutes=-auto_cancel_minutes)
-        if not hasattr(receipt, 'ticket_order'):
-            raise CustomAPIException('付款类型错误')
-        order = receipt.ticket_order
-        if not order.session.can_buy:
-            raise CustomAPIException('该场次已停止购买')
-        if not order.session.show.can_buy:
-            raise CustomAPIException('演出已停止购买')
-        receipt.query_status(order.order_no)
-        if receipt.paid:
-            raise CustomAPIException('该订单已经付款，请尝试刷新订单页面')
-        if order.status != order.STATUS_UNPAID:
-            raise CustomAPIException('订单状态错误')
-        if order.create_at < expire_at:
-            order.cancel()
-            raise CustomAPIException('该订单已经过期，请重新下单')
+        if hasattr(receipt, 'ticket_order'):
+            order = receipt.ticket_order
+            if not order.session.can_buy:
+                raise CustomAPIException('该场次已停止购买')
+            if not order.session.show.can_buy:
+                raise CustomAPIException('演出已停止购买')
+            receipt.query_status(order.order_no)
+            if receipt.paid:
+                raise CustomAPIException('该订单已经付款，请尝试刷新订单页面')
+            if order.status != order.STATUS_UNPAID:
+                raise CustomAPIException('订单状态错误')
+            if order.create_at < expire_at:
+                order.cancel()
+                raise CustomAPIException('该订单已经过期，请重新下单')
         # if order.order_type == Order.TYPE_GROUP_BUY:
         #     order.group_buy_part.group_buy_record.refresh_status()
         #     if order.group_buy_part.group_buy_record.status in (GroupBuyRecord.STATUS_OUT_DATE,
