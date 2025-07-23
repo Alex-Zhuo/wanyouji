@@ -1456,7 +1456,7 @@ class TicketGiveRecordViewSet(DetailPKtoNoViewSet):
         s = TicketGiveRecordCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         inst = s.create(s.validated_data)
-        return Response(inst.id)
+        return Response(inst.no)
 
     @action(methods=['get'], detail=False)
     def set_cancel(self, request):
