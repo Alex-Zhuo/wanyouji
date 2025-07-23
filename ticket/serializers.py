@@ -2029,7 +2029,7 @@ class TicketGiveRecordCreateSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-        log.debug(validated_data)
+        # log.debug(validated_data)
         user = self.context.get('request').user
         num = len(validated_data['code_ids'])
         qs = TicketUserCode.objects.filter(order__order_no=validated_data['order_id'], give_id=0,
