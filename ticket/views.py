@@ -1067,7 +1067,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         if not code_id:
             raise CustomAPIException('参数错误')
         try:
-            obj = TicketUserCode.objects.get(pk=int(code_id))
+            obj = TicketUserCode.objects.get(code=code_id)
         except TicketUserCode.DoesNotExist:
             raise CustomAPIException('找不到核销码')
         if not (obj.order.user == request.user or obj.give_mobile == request.user.mobile):
@@ -1464,8 +1464,7 @@ class TicketGiveRecordViewSet(DetailPKtoNoViewSet):
         if not code_id:
             raise CustomAPIException('参数错误')
         from caches import get_pika_redis, give_cancel_key, give_code_key
-        code_id = int(code_id)
-        qs = TicketGiveDetail.objects.filter(ticket_code_id=code_id, record__user_id=request.user.id,
+        qs = TicketGiveDetail.objects.filter(ticket_code__code=code_id, record__user_id=request.user.id,
                                              record__status=TicketGiveRecord.STAT_DEFAULT)
         if qs:
             inst = qs.first()
