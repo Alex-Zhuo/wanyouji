@@ -604,7 +604,7 @@ class ReceiptViewset(BaseReceiptViewset):
         bc = BasicConfig.get()
         auto_cancel_minutes = bc.auto_cancel_minutes if bc else 10
         expire_at = now + timedelta(minutes=-auto_cancel_minutes)
-        if hasattr(receipt, 'ticket_order'):
+        if receipt.biz == receipt.BIZ_TICKET and hasattr(receipt, 'ticket_order'):
             order = receipt.ticket_order
             if not order.session.can_buy:
                 raise CustomAPIException('该场次已停止购买')
