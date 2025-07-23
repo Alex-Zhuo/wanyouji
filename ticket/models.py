@@ -6092,12 +6092,13 @@ class TicketGiveRecord(UseNoAbstract):
         return self.order.order_no if self.order else None
 
     @classmethod
-    def create_record(cls, user, order, give_mobile: str, ticket_code_ids: list):
+    def create_record(cls, user, give_mobile: str, ticket_code_qs):
+        order = ticket_code_qs.first().order
         inst = cls.objects.create(user=user, order=order, give_mobile=give_mobile, mobile=user.mobile,
                                   session=order.session)
         tg = []
-        for ticket_code_id in ticket_code_ids:
-            tg.append(TicketGiveDetail(record=inst, ticket_code_id=ticket_code_id))
+        for ticket_code in ticket_code_qs:
+            tg.append(TicketGiveDetail(record=inst, ticket_code=ticket_code))
         if tg:
             TicketGiveDetail.objects.bulk_create(tg)
         return inst

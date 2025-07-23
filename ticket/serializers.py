@@ -1012,6 +1012,10 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
 
 class TicketUserCodeNewSerializer(TicketUserCodeSerializer):
     code_img_data = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.code
 
     def get_code_img_data(self, obj):
         request = self.context.get('request')
@@ -2029,20 +2033,15 @@ class TicketGiveRecordCreateSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-        # log.debug(validated_data)
         user = self.context.get('request').user
         num = len(validated_data['code_ids'])
         qs = TicketUserCode.objects.filter(order__order_no=validated_data['order_id'], give_id=0,
-                                           id__in=validated_data['code_ids'],
+                                           code__in=validated_data['code_ids'],
                                            order__express_status=TicketOrder.EXPRESS_DEFAULT,
-                                           order__user_id=user.id)
+                                           order__user_id=user.id, status=TicketUserCode.STATUS_DEFAULT)
         if not qs or qs.count() != num:
-            raise CustomAPIException('请先取消赠送后再重新赠送')
-        code = qs.first()
-        if code.status != TicketUserCode.STATUS_DEFAULT:
-            raise CustomAPIException('只有未使用的票才能赠送')
-        inst = TicketGiveRecord.create_record(user, code.order, validated_data['give_mobile'],
-                                              validated_data['code_ids'])
+            raise CustomAPIException('只有未使用且未赠送的票才能赠送')
+        inst = TicketGiveRecord.create_record(user, validated_data['give_mobile'], qs)
         qs.update(give_status=TicketUserCode.GIVE_UNCLAIMED, give_mobile=validated_data['give_mobile'], give_id=inst.id)
         return inst
 
