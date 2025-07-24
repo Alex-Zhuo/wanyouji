@@ -278,7 +278,7 @@ class ShowPerformerBanner(models.Model):
 
 
 class ShowType(models.Model):
-    name = models.CharField('演出类型名称', max_length=20)
+    name = models.CharField('类型名称', max_length=20)
     SOURCE_MUSIC = 1
     SOURCE_DRAMA = 2
     SOURCE_QY = 3
@@ -300,7 +300,7 @@ class ShowType(models.Model):
     slug = models.CharField('标识', null=True, blank=True, max_length=15)
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出类型'
+        verbose_name_plural = verbose_name = '节目分类'
         ordering = ['-pk']
 
     def __str__(self):
@@ -371,7 +371,7 @@ class Venues(UseNoAbstract):
     direction = models.IntegerField('舞台方向', choices=DIRECT_CHOICES, default=DIR_FORWARD)
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出场馆'
+        verbose_name_plural = verbose_name = '场馆'
         ordering = ['display_order']
 
     def __str__(self):
@@ -427,7 +427,7 @@ class VenuesDetailImage(models.Model):
 
 
 class Seat(models.Model):
-    venue = models.ForeignKey(Venues, verbose_name='演出场馆', on_delete=models.CASCADE)
+    venue = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE)
     seat_no = models.CharField('座位编号', null=True, max_length=100, editable=False, db_index=True)
     row = models.IntegerField('行数', default=0)
     column = models.IntegerField('列数', default=0)
@@ -447,7 +447,7 @@ class ShowFlag(models.Model):
                             validators=[validate_image_file_extension])
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出标签'
+        verbose_name_plural = verbose_name = '节目标签'
 
     def __str__(self):
         return self.title
@@ -508,11 +508,11 @@ class TikTokQualRecord(models.Model):
 
 
 class ShowProject(UseNoAbstract):
-    title = models.CharField('演出名称', max_length=100, help_text='100个字内')
-    show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.CASCADE)
+    title = models.CharField('节目名称', max_length=100, help_text='100个字内')
+    show_type = models.ForeignKey(ShowType, verbose_name='节目类型', on_delete=models.CASCADE)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
                              blank=True)
-    venues = models.ForeignKey(Venues, verbose_name='演出场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
+    venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
     lat = models.FloatField('纬度', default=0, help_text='场馆纬度')
     lng = models.FloatField('经度', default=0, help_text='场馆经度')
     city_id = models.IntegerField('城市ID', editable=False, default=0)
@@ -523,7 +523,7 @@ class ShowProject(UseNoAbstract):
     sale_time = models.DateTimeField('开售时间')
     session_end_at = models.DateTimeField('场次最后结束时间', null=True, blank=True, editable=False, db_index=True)
     dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True,
-                                    blank=True)
+                                    blank=True, editable=False)
     price = models.DecimalField('最低价格', max_digits=13, decimal_places=2, default=0, help_text='实际支付价格,用于展示和排序')
     # cert_type = models.ManyToManyField(CertificateType, verbose_name='支持的证件类型')
     name_limit_num = models.IntegerField('每个证件限购数量', default=1, help_text='实名制售票', editable=False)
@@ -547,14 +547,14 @@ class ShowProject(UseNoAbstract):
                                                limit_choices_to=models.Q(qualification_type=5005),
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
-    content = models.TextField('演出介绍', null=True)
+    content = models.TextField('节目介绍', null=True)
     notice = models.TextField('购票须知')
     other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
     STATUS_ON = 1
     STATUS_OFF = 0
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
-    is_recommend = models.BooleanField('近期演出', default=True)
+    is_recommend = models.BooleanField('是否近期节目', default=True)
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
@@ -573,7 +573,7 @@ class ShowProject(UseNoAbstract):
         return self.title
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出项目'
+        verbose_name_plural = verbose_name = '节目'
         ordering = ['-pk']
 
     @classmethod
@@ -896,12 +896,12 @@ class ShowNotification(models.Model):
 
 
 class ShowsDetailImage(models.Model):
-    show = models.ForeignKey(ShowProject, verbose_name='演出', on_delete=models.CASCADE)
+    show = models.ForeignKey(ShowProject, verbose_name='节目', on_delete=models.CASCADE)
     image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/shows/detail',
                               validators=[file_size, validate_image_file_extension])
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出详情图'
+        verbose_name_plural = verbose_name = '节目详情图'
 
     def __str__(self):
         return str(self.id)
@@ -948,7 +948,7 @@ class ShowCompany(models.Model):
 
 
 class ContractInfo(models.Model):
-    show = models.OneToOneField(ShowProject, verbose_name='演出', on_delete=models.CASCADE)
+    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.CASCADE)
     company = models.ForeignKey(ShowCompany, verbose_name='合同主办', on_delete=models.CASCADE,
                                 help_text='主办方提交保存后不可变更，请谨慎选择')
     police_approval = models.ImageField(u'公安批文', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/contract',
@@ -1002,12 +1002,12 @@ class SessionInfo(UseNoAbstract):
     venue_id = models.IntegerField('场馆ID', editable=False, default=0)
     title = models.CharField('场次名称', max_length=60, help_text='60个字内,不填则默认项目名称，其他平台使用', null=True,
                              blank=True)
-    start_at = models.DateTimeField('演出开始时间', db_index=True)
-    end_at = models.DateTimeField('演出结束时间', db_index=True)
+    start_at = models.DateTimeField('场次开始时间', db_index=True)
+    end_at = models.DateTimeField('场次结束时间', db_index=True)
     dy_sale_time = models.DateTimeField('开售时间', null=True, blank=True, help_text='其他平台用')
     tiktok_store = models.ForeignKey(DouYinStore, verbose_name='抖音店铺', null=True, blank=True, help_text='推送商品到抖音必填',
                                      on_delete=models.SET_NULL, editable=False)
-    valid_start_time = models.DateTimeField('门票有效期开始时间', null=True, blank=True, help_text='抖音用：不填默认演出开始时间前2个小时',
+    valid_start_time = models.DateTimeField('门票有效期开始时间', null=True, blank=True, help_text='抖音用：不填默认场次开始时间前2个小时',
                                             editable=False)
     desc = models.CharField('场次备注', max_length=100, null=True, blank=True)
     # 限购相关
@@ -1075,7 +1075,7 @@ class SessionInfo(UseNoAbstract):
                                      self.get_has_seat_display(), self.id)
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出场次'
+        verbose_name_plural = verbose_name = '场次'
         ordering = ['-start_at']
 
     @classmethod
@@ -1108,7 +1108,7 @@ class SessionInfo(UseNoAbstract):
 
     def clean(self):
         if self.is_real_name_buy and self.is_paper:
-            raise ValidationError('演出场次的实名购票项与是否纸质票不能同时勾选')
+            raise ValidationError('场次的实名购票项与是否纸质票不能同时勾选')
         if self.has_seat == self.SEAT_HAS and self.main_session:
             raise ValidationError('有座场次不予许选择主场次')
 
@@ -2187,7 +2187,7 @@ class TicketColor(models.Model):
 
 class TicketFile(models.Model):
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE, related_name='session_level')
-    title = models.CharField('演出名称', max_length=100, null=True, blank=True)
+    title = models.CharField('节目名称', max_length=100, null=True, blank=True)
     color = models.ForeignKey(TicketColor, verbose_name='票档颜色', on_delete=models.CASCADE, null=True, blank=True)
     color_code = models.CharField('色号', max_length=10, help_text='16进制色号', null=True, blank=True, editable=False)
     origin_price = models.DecimalField('票档', max_digits=13, decimal_places=2, default=0)
@@ -2583,7 +2583,7 @@ class SessionSeat(models.Model):
     push_mz_lock = models.BooleanField('是否推送麦座锁座', default=False)
 
     class Meta:
-        verbose_name_plural = verbose_name = '演出场次座位'
+        verbose_name_plural = verbose_name = '场次座位'
         unique_together = ['seats', 'session_id']
 
     def __str__(self):
@@ -3061,9 +3061,9 @@ class TicketOrder(models.Model):
                               related_name='agent')
     u_user_id = models.IntegerField('用户id', default=0)
     u_agent_id = models.IntegerField('代理id', default=0)
-    title = models.CharField('演出名称', max_length=60)
+    title = models.CharField('节目名称', max_length=60)
     session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.CASCADE)
-    venue = models.ForeignKey(Venues, verbose_name='演出场馆', on_delete=models.CASCADE, null=True)
+    venue = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, null=True)
     mobile = models.CharField('手机号', max_length=20, null=True)
     express_address = models.CharField('送货地址', max_length=200, null=True, blank=True)
     order_no = models.CharField(u'订单号', max_length=128, unique=True, default=randomstrwithdatetime, db_index=True)
@@ -3142,8 +3142,8 @@ class TicketOrder(models.Model):
     pay_at = models.DateTimeField(u'支付时间', null=True, blank=True)
     deliver_at = models.DateTimeField(u'发货时间', null=True, blank=True)
     create_at = models.DateTimeField(u'下单时间', auto_now_add=True)
-    start_at = models.DateTimeField(u'演出开场时间', null=True, blank=True)
-    end_at = models.DateTimeField('演出结束时间', null=True, blank=True)
+    start_at = models.DateTimeField(u'场次开场时间', null=True, blank=True)
+    end_at = models.DateTimeField('场次结束时间', null=True, blank=True)
     snapshot = models.TextField('场次演出快照', null=True, blank=True, help_text='下单时保存的快照', editable=False, max_length=2048)
     item_order_info_list = models.TextField('抖音下单明细', null=True, blank=True)
     push_message = models.BooleanField('是否已推送开场2小时前短信', default=False)
@@ -3712,6 +3712,9 @@ class TicketOrder(models.Model):
             elif self.order_type == self.TY_MARGIN:
                 # 补差价订单退出付款页面就直接取消，付款后直接变为已完成；
                 self.set_finish()
+            if hasattr(self,'cy_order'):
+                from caiyicloud.tasks import  async_confirm_order
+                async_confirm_order.delay(self.id)
         elif self.status == self.STATUS_CANCELED:
             if self.receipt.status == Receipt.STATUS_FINISHED:
                 self.is_cancel_pay = True

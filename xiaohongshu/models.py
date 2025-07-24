@@ -208,7 +208,7 @@ class XhsShowThirdCategory(XhsShowCategoryAbstract):
 
 
 class XhsShow(models.Model):
-    show = models.OneToOneField('ticket.ShowProject', verbose_name='演出项目', related_name='xhs_show',
+    show = models.OneToOneField('ticket.ShowProject', verbose_name='演出节目', related_name='xhs_show',
                                 on_delete=models.CASCADE)
     short_title = models.CharField('短标题', max_length=12)
 

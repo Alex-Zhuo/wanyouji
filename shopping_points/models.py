@@ -91,7 +91,7 @@ class UserAccount(models.Model):
     MG_SALE = 1
     manager = models.SmallIntegerField('改价身份', choices=[(MG_DEFAULT, '无'), (MG_SALE, '销售经理')], default=MG_DEFAULT)
     level = models.ForeignKey(UserAccountLevel, verbose_name='代理等级', null=True, blank=True, on_delete=models.SET_NULL)
-    venue = models.ManyToManyField(Venues, verbose_name='演出场馆', blank=True)
+    venue = models.ManyToManyField(Venues, verbose_name='场馆', blank=True)
     promote_venue = models.ForeignKey(Venues, verbose_name='运营推广门店', null=True, blank=True,
                                       related_name='promote_venue', on_delete=models.SET_NULL)
     team_starter_account = models.ForeignKey('self', verbose_name='团队初始人账号', related_name='team_members',

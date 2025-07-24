@@ -107,7 +107,7 @@ class CyCategory(ChoicesCommon):
 
 
 class CyVenue(models.Model):
-    venue = models.OneToOneField(Venues, verbose_name='演出场馆', on_delete=models.CASCADE, related_name='cy_venue')
+    venue = models.OneToOneField(Venues, verbose_name='场馆', on_delete=models.CASCADE, related_name='cy_venue')
     province_name = models.CharField("省", max_length=32)
     city_name = models.CharField("市", max_length=32)
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场馆ID')
@@ -147,7 +147,7 @@ class CyVenue(models.Model):
 
 class CyShowEvent(models.Model):
     # 基本信息
-    show = models.OneToOneField(ShowProject, verbose_name='演出项目', on_delete=models.CASCADE, related_name='cy_show')
+    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.CASCADE, related_name='cy_show')
     category = models.PositiveSmallIntegerField(
         choices=[
             (1, '演出'),
@@ -371,7 +371,7 @@ class CySession(models.Model):
         (3, '场次开始后'),
     ]
     # 基本信息
-    c_session = models.OneToOneField(SessionInfo, verbose_name='演出场次', on_delete=models.CASCADE,
+    c_session = models.OneToOneField(SessionInfo, verbose_name='场次', on_delete=models.CASCADE,
                                      related_name='cy_session')
     # 关联信息
     event = models.ForeignKey(CyShowEvent, on_delete=models.CASCADE, verbose_name='关联节目')
@@ -908,7 +908,7 @@ class CyOrder(models.Model):
     # code_state =models.PositiveSmallIntegerField('码状态', choices=CODE_CHOICES, default=ST_DEFAULT)
     ticket_list_snapshot = models.TextField('下单票档规格', editable=False, help_text='下单时的ticket_list')
 
-    need_confirm = models.BooleanField('是否需要确认', default=False)
+    need_confirm = models.BooleanField('是否需要任务确认', default=False)
     confirm_times = models.PositiveSmallIntegerField('确认订单次数', default=0)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -921,14 +921,43 @@ class CyOrder(models.Model):
         return self.cy_order_no
 
     @classmethod
-    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, price_infos: list,
+    def cy_seat_info_key(cls, biz_id: str):
+        return get_redis_name('cy_seat_i_{}'.format(biz_id))
+
+    def delete_redis_cache(self, biz_id: str):
+        key = self.cy_seat_info_key(biz_id)
+        with get_pika_redis() as redis:
+            redis.delete(key)
+
+    @classmethod
+    def get_cy_seat_info(cls, biz_id: str):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            raise CustomAPIException('彩艺云账号未配置')
+        key = cls.cy_seat_info_key(biz_id)
+        with get_pika_redis() as redis:
+            seat_data = redis.get(key)
+            if not seat_data:
+                seat_data = cy.seat_info(biz_id)
+                if seat_data:
+                    redis.set(key, json.dumps(seat_data))
+                    redis.expire(key, 3600)
+            else:
+                seat_data = json.loads(seat_data)
+        return seat_data
+
+    @classmethod
+    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, biz_id: str,
                      real_name_list: list = None):
         """
-        price_infos: 彩艺云seat_info接口获取的数据
+        biz_id 彩艺云获取选座H5座位信息
         """
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
+        seat_info = cls.get_cy_seat_info(biz_id)
+        if not seat_info:
+            raise CustomAPIException('下单失败，参数错误')
         # 快递和营销活动不做
         express_amount = 0
         address_info = None
@@ -940,7 +969,7 @@ class CyOrder(models.Model):
         ticket_list = []
         delivery_method = cy_session.delivery_methods.first()
         i = 0
-        for t_info in price_infos:
+        for t_info in seat_info['price_infos']:
             seats = []
             for seat in t_info['seat_infos']:
                 data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
@@ -977,14 +1006,8 @@ class CyOrder(models.Model):
                                               auto_cancel_order_time=auto_cancel_order_time,
                                               delivery_method=delivery_method,
                                               ticket_list_snapshot=json.dumps(ticket_list))
+            cy_order.delete_redis_cache(biz_id)
             return cy_order
-
-    def get_order_detail(self):
-        cy = caiyi_cloud()
-        if not cy.is_init:
-            return
-        data = cy.order_detail(cy_order_no=self.cy_order_no)
-        return data
 
     def cancel_order(self):
         cy = caiyi_cloud()
@@ -1000,9 +1023,45 @@ class CyOrder(models.Model):
     def set_need_confirm(self):
         self.need_confirm = True
         self.save(update_fields=['need_confirm'])
+        # 用于重试
         with get_pika_redis() as pika:
             timestamp = get_timestamp(self.auto_cancel_order_time)
-            pika.hset(CY_NEED_CONFIRM_DICT_KEY, self.cy_order_no, json.dumps([timestamp, 0]))
+            pika.hset(CY_NEED_CONFIRM_DICT_KEY, self.cy_order_no, json.dumps([timestamp, 1]))
+
+    def set_ticket_code(self):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        try:
+            cy_order_detail = cy.order_detail(cy_order_no=self.cy_order_no)
+            self.exchange_code = cy_order_detail.get('exchange_code')
+            self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
+            self.code_type = cy_order_detail.get('code_type')
+            self.save(update_fields=['exchange_code', 'exchange_qr_code', 'code_type'])
+            CyTicketCode.order_create(cy_order_detail['ticket_list'], self.ticket_order.id)
+        except Exception as e:
+            log.error(e)
+
+    @classmethod
+    def async_confirm_order(cls, ticket_order_id):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        obj = cls.objects.filter(ticket_order_id=ticket_order_id).first()
+        if obj:
+            has_confirm = False
+            try:
+                has_confirm = cy.confirm_order(order_no=obj.cy_order_no)
+            except Exception as e:
+                log.error(e)
+            if has_confirm:
+                obj.order_state = cls.ST_PAY
+                obj.confirm_times = 1
+                obj.save(update_fields=['order_state', 'confirm_times'])
+                obj.set_ticket_code()
+            else:
+                # 写入任务重试
+                obj.set_need_confirm()
 
     @classmethod
     def confirm_order_task(cls):
@@ -1034,7 +1093,7 @@ class CyOrder(models.Model):
                     obj.ticket_order.auto_refund()
 
 
-class CyTicketCodeRecord(models.Model):
+class CyTicketCode(models.Model):
     # 二维码类型
     CHECK_IN_TYPE_CHOICES = [
         (1, '二维码类型'),
@@ -1074,8 +1133,8 @@ class CyTicketCodeRecord(models.Model):
         return inst
 
     @classmethod
-    def order_create(cls, voucher_infos: List[Dict], ticket_order: TicketOrder):
-        code_qs = TicketUserCode.objects.filter(order_id=ticket_order.id)
+    def order_create(cls, ticket_list: List[Dict], ticket_order_id:int):
+        code_qs = TicketUserCode.objects.filter(order_id=ticket_order_id)
         i = 0
         for code in code_qs:
             cls.get_or_create_record(code, voucher_infos[i]['VoucherCode'])
