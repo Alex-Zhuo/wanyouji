@@ -882,24 +882,6 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             raise Http404
         return Response(data)
 
-    # @action(methods=['post'], detail=False)
-    # @atomic
-    # def create_order(self, request):
-    #     s = TicketOrderCreateSerializer(data=request.data, context={'request': request})
-    #     s.is_valid(True)
-    #     order, prepare_order, pay_end_at = s.create(s.validated_data)
-    #     return Response(data=dict(receipt_id=order.receipt.id, prepare_order=prepare_order, pay_end_at=pay_end_at,
-    #                               order_id=order.id))
-    #
-    # @action(methods=['post'], detail=False)
-    # @atomic
-    # def noseat_order(self, request):
-    #     s = TicketOrderOnSeatCreateSerializer(data=request.data, context={'request': request})
-    #     s.is_valid(True)
-    #     order, prepare_order, pay_end_at = s.create(s.validated_data)
-    #     return Response(data=dict(receipt_id=order.receipt.id, prepare_order=prepare_order, pay_end_at=pay_end_at,
-    #                               order_id=order.id))
-
     @action(methods=['post'], detail=False)
     @atomic
     def create_order_new(self, request):

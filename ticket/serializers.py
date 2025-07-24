@@ -539,7 +539,7 @@ class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
                 data = pika.hget(redis_show_content_copy_key, str(obj.cate_id))
         # data = None
         if data:
-            data.pop('show_type_list',None)
+            data.pop('show_type_list', None)
             return json.loads(data)
         else:
             return ShowContentCategorySerializer(obj.cate).data
@@ -1434,119 +1434,6 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id',
                   'ticket_list', 'express_fee', 'express_address_id', 'show_user_id']
-        read_only_fields = ['receipt']
-
-
-class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
-    @atomic
-    def create(self, validated_data):
-        # ticket_list [dict(level_id=1,seat_id=***)]
-        request = self.context.get('request')
-        is_tiktok = True if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok' else False
-        from caches import get_redis
-        redis = get_redis()
-        validated_data['user'] = user = request.user
-        user_key = 'user_key_{}'.format(user.id)
-        if redis.setnx(user_key, 1):
-            # 防止用户重复下单
-            redis.expire(user_key, 5)
-        else:
-            raise CustomAPIException('请勿重复下单')
-        validated_data['session'] = session = validated_data.pop('session_id')
-        if session.has_seat == SessionInfo.SEAT_NO:
-            raise CustomAPIException('下单错误，无需选择座位')
-        real_multiply, amount, actual_amount, session_seat_list = SessionSeat.get_order_amount(user, session,
-                                                                                               validated_data.pop(
-                                                                                                   'ticket_list'),
-                                                                                               is_tiktok)
-        if real_multiply != validated_data['multiply']:
-            raise CustomAPIException('选座数量错误，请重新选座')
-        actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount)
-        self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data = self.set_validated_data(session, user, real_multiply, validated_data)
-        validated_data['receipt'] = self.create_receipt(validated_data)
-        validated_data['order_type'] = TicketOrder.TY_HAS_SEAT
-        inst = TicketOrder.objects.create(**validated_data)
-        dd = []
-        for session_seat in session_seat_list:
-            # 写入订单号
-            session_seat.order_no = inst.order_no
-            # session_seat.save(update_fields=['order_no'])
-            dd.append(
-                dict(level_id=session_seat.ticket_level.id, showRow=session_seat.showRow, showCol=session_seat.showCol,
-                     layers=session_seat.layers, multiply=1,
-                     price=float(session_seat.ticket_level.price)))
-            session_seat.change_pika_redis(is_buy=True, can_buy=False, order_no=inst.order_no)
-        inst.snapshot = inst.get_snapshot(dd)
-        inst.save(update_fields=['snapshot'])
-        SessionSeat.objects.bulk_update(session_seat_list, ['order_no'])
-        prepare_order = None
-        if inst.pay_type == Receipt.PAY_TikTok_LP:
-            prepare_order = inst.tiktok_client_prepare_order(session_seat_list)
-        pay_end_at = inst.get_end_at()
-        self.after_create(inst)
-        return inst, prepare_order, pay_end_at
-
-    class Meta(TicketOrderCreateCommonSerializer.Meta):
-        model = TicketOrder
-        fields = TicketOrderCreateCommonSerializer.Meta.fields
-        read_only_fields = ['receipt']
-
-
-class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
-    @atomic
-    def create(self, validated_data):
-        # ticket_list [dict(level_id=1,multiply=2)]
-        request = self.context.get('request')
-        is_tiktok = True if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok' else False
-        from caches import get_redis
-        redis = get_redis()
-        validated_data['user'] = user = request.user
-        user_key = 'user_key_{}'.format(user.id)
-        if redis.setnx(user_key, 1):
-            # 防止用户重复下单
-            redis.expire(user_key, 5)
-        else:
-            raise CustomAPIException('请勿重复下单')
-        validated_data['session'] = session = validated_data.pop('session_id')
-        if session.has_seat == SessionInfo.SEAT_HAS:
-            raise CustomAPIException('下单错误，必须选择座位')
-        pay_type = validated_data['pay_type']
-        real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
-            user,
-            validated_data.pop(
-                'ticket_list'),
-            pay_type, session,
-            is_tiktok)
-        if real_multiply != validated_data['multiply']:
-            raise CustomAPIException('选座数量错误，请重新选座')
-        actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount)
-        self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data = self.set_validated_data(session, user, real_multiply, validated_data)
-        validated_data['receipt'] = self.create_receipt(validated_data)
-        validated_data['order_type'] = TicketOrder.TY_NO_SEAT
-        inst = TicketOrder.objects.create(**validated_data)
-        dd = []
-        seat_dict = dict()
-        for ll in level_list:
-            level = ll['level']
-            dd.append(dict(level_id=level.id, price=float(level.price), multiply=ll['multiply'], desc=level.desc))
-            if seat_dict.get(str(level.id)):
-                seat_dict[str(level.id)] += ll['multiply']
-            else:
-                seat_dict[str(level.id)] = ll['multiply']
-        inst.snapshot = inst.get_snapshot(dd)
-        inst.save(update_fields=['snapshot'])
-        prepare_order = None
-        if inst.pay_type == Receipt.PAY_TikTok_LP:
-            prepare_order = inst.tiktok_client_prepare_order(seat_dict=seat_dict)
-        pay_end_at = inst.get_end_at()
-        self.after_create(inst)
-        return inst, prepare_order, pay_end_at
-
-    class Meta(TicketOrderCreateCommonSerializer.Meta):
-        model = TicketOrder
-        fields = TicketOrderCreateCommonSerializer.Meta.fields
         read_only_fields = ['receipt']
 
 
