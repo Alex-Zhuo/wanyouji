@@ -14,7 +14,7 @@ from ticket.models import TicketOrder, ShowProject, ShowType, Venues, TicketColo
     LiveRoomCpsItem, CommonPlanCps, CpsDirectional, VenuesLayers, ShowComment, ShowCommentImage, TicketBooking, \
     TicketBookingItem, MaiZuoTask, TicketOrderChangePrice, DownLoadTask, SessionChangeSaleTimeRecord, \
     ShowContentCategory, ShowPerformerBanner, MaiZuoLoginLog, TicketOrderExpress, TicketGiveRecord, TicketGiveDetail, \
-    TicketOrderRealName
+    TicketOrderRealName, ShowContentCategorySecond
 import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -56,9 +56,15 @@ class CommonAdmin(RemoveDeleteModelAdmin):
         return False
 
 
+class ShowContentCategorySecondInline(admin.TabularInline):
+    model = ShowContentCategorySecond
+    extra = 0
+
+
 class ShowContentCategoryAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
     list_display = ['id', 'title', 'url']
     search_fields = ['title']
+    inlines = [ShowContentCategorySecondInline]
 
     def url(self, obj):
         return 'systemPage=/pages/pagesKage/cateShow/cateShow?cate_id={}&title={}'.format(obj.id, obj.title)
@@ -947,7 +953,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            fields = ['out_id','start_at', 'end_at'] + self.readonly_fields
+            fields = ['out_id', 'start_at', 'end_at'] + self.readonly_fields
             if obj.is_delete:
                 fields = fields + ['is_delete']
             if obj.is_dy_code:

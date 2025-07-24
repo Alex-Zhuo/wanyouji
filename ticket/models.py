@@ -193,6 +193,7 @@ class ShowThirdCategory(ShowCategoryAbstract):
 
 class ShowContentCategory(models.Model):
     title = models.CharField(max_length=20, verbose_name='分类名称')
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序,首页展示前5项')
 
     class Meta:
         verbose_name_plural = verbose_name = '内容分类'
@@ -344,6 +345,20 @@ class ShowType(models.Model):
         data = ShowTypeSerializer(self).data
         with get_pika_redis() as pika:
             pika.hset(redis_show_type_copy_key, str(self.id), json.dumps(data))
+
+
+class ShowContentCategorySecond(models.Model):
+    cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.CASCADE)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE)
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序')
+
+    class Meta:
+        verbose_name_plural = verbose_name = '内容分类'
+        unique_together = ['cate', 'show_type']
+        ordering = ['display_order']
+
+    def __str__(self):
+        return str(self.display_order)
 
 
 class Venues(UseNoAbstract):
@@ -509,7 +524,7 @@ class TikTokQualRecord(models.Model):
 
 class ShowProject(UseNoAbstract):
     title = models.CharField('节目名称', max_length=100, help_text='100个字内')
-    show_type = models.ForeignKey(ShowType, verbose_name='节目类型', on_delete=models.CASCADE)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
                              blank=True)
     venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
@@ -3712,8 +3727,8 @@ class TicketOrder(models.Model):
             elif self.order_type == self.TY_MARGIN:
                 # 补差价订单退出付款页面就直接取消，付款后直接变为已完成；
                 self.set_finish()
-            if hasattr(self,'cy_order'):
-                from caiyicloud.tasks import  async_confirm_order
+            if hasattr(self, 'cy_order'):
+                from caiyicloud.tasks import async_confirm_order
                 async_confirm_order.delay(self.id)
         elif self.status == self.STATUS_CANCELED:
             if self.receipt.status == Receipt.STATUS_FINISHED:
