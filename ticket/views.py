@@ -23,8 +23,7 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     ShowPerformerRecommendSerializer, ShowProjectStatisticsSerializer, \
     SessionCopySerializer, TicketFileBackSerializer, SessionInfoEditDetailSerializer, \
     ShowCommentCreateSerializer, ShowCommentImageSerializer, ShowCommentImageCreateSerializer, ShowCommentSerializer, \
-    TicketCheckCodeSerializer, TicketCheckOrderCodeSerializer, ShowProjectStaffNewSerializer, \
-    TicketOrderOnSeatCreateNewSerializer, TicketOrderCreateNewSerializer, TicketBookingSerializer, \
+    TicketCheckCodeSerializer, TicketCheckOrderCodeSerializer, ShowProjectStaffNewSerializer, TicketBookingSerializer, \
     TicketBookingSetStatusSerializer, TicketOrderChangePriceSerializer, \
     SessionInfoStaffDetailSerializer, TicketOrderMarginCreateSerializer, SessionSearchListSerializer, \
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
@@ -50,7 +49,7 @@ from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from ticket.serializers import get_origin
 from caches import get_prefix
-
+from ticket.order_serializer import ticket_order_dispatch
 log = logging.getLogger(__name__)
 
 PREFIX = get_prefix()
@@ -894,7 +893,9 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 log.warning(f" got the queue")
                 # time.sleep(10)
                 log.warning(f" got the queue, and sleep over")
-                s = TicketOrderCreateNewSerializer(data=request.data, context={'request': request})
+                source_type = self.request.data.get('source_type')
+                create_serializer = ticket_order_dispatch(TicketOrder.TY_HAS_SEAT, source_type)
+                s = create_serializer(data=request.data, context={'request': request})
                 s.is_valid(True)
                 order, prepare_order, pay_end_at, ks_order_info, xhs_order_info = s.create(s.validated_data)
                 log.warning(f"got the queue and exec over")
@@ -919,7 +920,9 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 log.warning(f" got the queue")
                 # time.sleep(10)
                 log.warning(f" got the queue, and sleep over")
-                s = TicketOrderOnSeatCreateNewSerializer(data=request.data, context={'request': request})
+                source_type = self.request.data.get('source_type')
+                create_serializer = ticket_order_dispatch(TicketOrder.TY_NO_SEAT, source_type)
+                s = create_serializer(data=request.data, context={'request': request})
                 s.is_valid(True)
                 order, prepare_order, pay_end_at, ks_order_info, xhs_order_info = s.create(s.validated_data)
                 log.warning(f"got the queue and exec over")

@@ -597,7 +597,7 @@ class CySession(models.Model):
         has_seat = SessionInfo.SEAT_HAS if cy_show.seat_type == 1 else SessionInfo.SEAT_NO
         session_data = dict(show=show, venue_id=show.venues.id, title=api_data['name'], start_at=start_time,
                             end_at=end_time, dy_sale_time=sale_time, one_id_one_ticket=require_id_on_ticket,
-                            name_buy_num=limit_on_session,
+                            name_buy_num=limit_on_session, source_type=SessionInfo.SR_CY,
                             is_name_buy=require_id_on_order, has_seat=has_seat,
                             status=cls.get_session_status(api_data['state']))
         cy_session_qs = cls.objects.filter(cy_no=api_data['id'])

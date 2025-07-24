@@ -1040,6 +1040,10 @@ class SessionInfo(UseNoAbstract):
     SEAT_NO = 2
     SEAT_CHOICES = [(SEAT_HAS, '有座'), (SEAT_NO, '无座')]
     has_seat = models.IntegerField('是否有座', choices=SEAT_CHOICES, default=SEAT_HAS)
+    SR_DEFAULT = 1
+    SR_CY = 2
+    SR_CHOICES = ((SR_DEFAULT, U'自建'), (SR_CY, '彩艺云'))
+    source_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
     main_session = models.ForeignKey('self', verbose_name='关联主场次', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='m_session', limit_choices_to=models.Q(has_seat=SEAT_HAS),
                                      help_text='有座场次才能选为主场次')
@@ -1158,13 +1162,14 @@ class SessionInfo(UseNoAbstract):
             'start_at')
         from ticket.serializers import ShowSessionCacheSerializer
         session_list = ShowSessionCacheSerializer(qs, many=True).data
-        session_tiktok_list = ShowSessionCacheSerializer(qs_tiktok, many=True).data
-        from kuaishou_wxa.models import KsGoodsConfig
-        qs_ks = KsGoodsConfig.get_session_qs(qs).order_by('start_at')
-        session_ks_list = ShowSessionCacheSerializer(qs_ks, many=True).data
-        from xiaohongshu.models import XhsGoodsConfig
-        xhs_ks = XhsGoodsConfig.get_session_qs(qs).order_by('start_at')
-        session_xhs_list = ShowSessionCacheSerializer(xhs_ks, many=True).data
+        session_tiktok_list = session_ks_list = session_xhs_list = None
+        # session_tiktok_list = ShowSessionCacheSerializer(qs_tiktok, many=True).data
+        # from kuaishou_wxa.models import KsGoodsConfig
+        # qs_ks = KsGoodsConfig.get_session_qs(qs).order_by('start_at')
+        # session_ks_list = ShowSessionCacheSerializer(qs_ks, many=True).data
+        # from xiaohongshu.models import XhsGoodsConfig
+        # xhs_ks = XhsGoodsConfig.get_session_qs(qs).order_by('start_at')
+        # session_xhs_list = ShowSessionCacheSerializer(xhs_ks, many=True).data
         with get_pika_redis() as pika:
             if self.status == SessionInfo.STATUS_ON:
                 pika.hset(redis_session_no_key, self.no, self.id)
@@ -3108,6 +3113,10 @@ class TicketOrder(models.Model):
     TY_MARGIN = 3
     TY_CHOICES = ((TY_HAS_SEAT, u'有座订单'), (TY_NO_SEAT, '无座订单'), (TY_MARGIN, '补差订单'))
     order_type = models.SmallIntegerField(u'订单类型', choices=TY_CHOICES, default=TY_HAS_SEAT)
+    SR_DEFAULT = 1
+    SR_CY = 2
+    SR_CHOICES = ((SR_DEFAULT, U'自建'), (SR_CY, '彩艺云'))
+    source_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
     STATUS_UNPAID = 1
     STATUS_PAID = 2
     STATUS_CANCELED = 3
