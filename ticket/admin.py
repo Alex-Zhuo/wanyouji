@@ -63,9 +63,10 @@ class ShowContentCategorySecondInline(admin.TabularInline):
 
 
 class ShowContentCategoryAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
-    list_display = ['id', 'title', 'url']
+    list_display = ['id', 'title', 'display_order']
     search_fields = ['title']
     inlines = [ShowContentCategorySecondInline]
+    list_editable = ['display_order']
 
     def url(self, obj):
         return 'systemPage=/pages/pagesKage/cateShow/cateShow?cate_id={}&title={}'.format(obj.id, obj.title)
