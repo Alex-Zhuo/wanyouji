@@ -581,6 +581,8 @@ def gen_get_qr_scene(user_id, save_to, bg, nickname=None, avatar_url=None, wxa_c
     from mp.wechat_client import get_mp_client
     client = get_mp_client()
     if not wxa_code:
+        from mp.wechat_client import get_mp_client
+        client = get_mp_client()
         data = client.get_qr_scene(user_id)
         code = open_image_by_url(data['url'])
     else:
