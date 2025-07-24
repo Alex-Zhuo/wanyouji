@@ -804,7 +804,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     list_filter = ['has_seat', 'status', 'dy_status', 'push_status', 'show', 'tiktok_store', 'start_at', 'is_delete',
                    'pull_mz_status', 'is_paper', 'is_name_buy']
     list_per_page = 25
-    readonly_fields = ['out_id', 'product_id', 'plan_id', 'actual_amount', 'no']
+    readonly_fields = ['product_id', 'plan_id', 'actual_amount', 'no']
     exclude = ['is_price']
 
     def get_actions(self, request):
@@ -947,7 +947,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            fields = ['start_at', 'end_at'] + self.readonly_fields
+            fields = ['out_id','start_at', 'end_at'] + self.readonly_fields
             if obj.is_delete:
                 fields = fields + ['is_delete']
             if obj.is_dy_code:

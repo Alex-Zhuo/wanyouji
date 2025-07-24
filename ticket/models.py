@@ -1042,7 +1042,7 @@ class SessionInfo(UseNoAbstract):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     actual_amount = models.DecimalField('总实收', max_digits=9, decimal_places=2, default=0)
 
-    is_price = models.BooleanField('是否已设价格', default=False, editable=False)
+    is_price = models.BooleanField('是否已设价格', default=False)
     cache_seat = models.TextField('座位价格数据', editable=False, null=True, blank=True)
     PUSH_DEFAULT = 1
     PUSH_APPROVE = 2

@@ -667,7 +667,7 @@ class SessionInfoDetailSerializer(SessionInfoEditDetailSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = SessionInfoEditDetailSerializer.Meta.fields
+        fields = SessionInfoEditDetailSerializer.Meta.fields + ['seats']
 
 
 class ShowsDetailImageSerializer(serializers.ModelSerializer):
