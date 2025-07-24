@@ -197,6 +197,7 @@ class ShowContentCategory(models.Model):
 
     class Meta:
         verbose_name_plural = verbose_name = '内容分类'
+        ordering = ['display_order']
 
     def __str__(self):
         return self.title
