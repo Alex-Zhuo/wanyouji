@@ -958,8 +958,11 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
             fields = ['out_id', 'start_at', 'end_at'] + self.readonly_fields
             if obj.is_delete:
                 fields = fields + ['is_delete']
-            if obj.is_dy_code:
-                fields.append('is_dy_code')
+            if obj.source_type == SessionInfo.SR_CY:
+                fields = fields + ['is_dy_code', 'dc_expires_in']
+            else:
+                if obj.is_dy_code:
+                    fields.append('is_dy_code')
             return fields
         return self.readonly_fields
 
