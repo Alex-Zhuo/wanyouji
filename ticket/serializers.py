@@ -9,7 +9,7 @@ from ticket.models import Venues, Seat, TicketColor, ShowProject, ShowCollectRec
     SessionSeat, TicketOrder, TicketUserCode, ShowPerformer, PerformerFlag, PerformerFocusRecord, VenuesLogoImage, \
     ShowType, ShowsDetailImage, VenuesDetailImage, ShowFlag, ShowUser, SessionChangeRecord, VenuesLayers, ShowComment, \
     ShowCommentImage, TicketBooking, TicketOrderChangePrice, ShowContentCategory, ShowPerformerBanner, TicketGiveRecord, \
-    TicketGiveDetail, TicketOrderRealName
+    TicketGiveDetail, TicketOrderRealName, ShowContentCategorySecond
 import json
 from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, TheaterCard, TheaterCardChangeRecord, \
     UserAddress
@@ -511,6 +511,12 @@ class ShowContentCategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
+class ShowContentCategorySecondSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShowContentCategorySecond
+        fields = ['show_type']
+
+
 class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
     cate = serializers.SerializerMethodField()
     show_type = serializers.SerializerMethodField()
@@ -533,6 +539,7 @@ class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
                 data = pika.hget(redis_show_content_copy_key, str(obj.cate_id))
         # data = None
         if data:
+            data.pop('show_type_list',None)
             return json.loads(data)
         else:
             return ShowContentCategorySerializer(obj.cate).data

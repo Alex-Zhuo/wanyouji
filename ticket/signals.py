@@ -41,8 +41,8 @@ def show_type_change(sender, **kwargs):
 @receiver(post_save, sender=ShowContentCategory)
 def show_content_category_change(sender, **kwargs):
     created, instance, update_fields = map(kwargs.get, ('created', 'instance', 'update_fields'))
-    if created or update_fields:
-        instance.show_content_copy_to_pika()
+    # if created or update_fields:
+    instance.show_content_copy_to_pika()
 
 
 @receiver(post_save, sender=Venues)

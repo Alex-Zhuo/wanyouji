@@ -203,9 +203,13 @@ class ShowContentCategory(models.Model):
         return self.title
 
     def show_content_copy_to_pika(self):
+        from ticket.serializers import ShowContentCategorySecondSerializer
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
-            pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(dict(id=self.id, title=self.title)))
+            qs = ShowContentCategorySecond.objects.filter(cate=self)
+            show_type_list = ShowContentCategorySecondSerializer(qs, many=True).data
+            pika.hset(redis_show_content_copy_key, str(self.id),
+                      json.dumps(dict(id=self.id, title=self.title, show_type_list=json.dumps(show_type_list))))
 
 
 class PerformerFlag(models.Model):
@@ -661,6 +665,7 @@ class ShowProject(UseNoAbstract):
             data['venues'] = json.loads(pika.hget(redis_venues_copy_key, data['venues']))
             if data['cate']:
                 data['cate'] = json.loads(pika.hget(redis_show_content_copy_key, data['cate']))
+                data['cate'].pop('show_type_list', None)
             date_data = pika.hget(redis_show_date_copy, show_id)
             data['date'] = json.loads(date_data) if date_data else None
             if is_tiktok:
