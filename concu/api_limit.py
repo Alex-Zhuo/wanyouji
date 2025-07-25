@@ -38,7 +38,7 @@ def get_max_wait():
     key = get_redis_name('app-limit-max-wait')
     qs = r.get(key)
     if not qs:
-        r.set(key, 20)
+        r.set(key, 3)
     try:
         ret = int(qs)
     except:
