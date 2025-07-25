@@ -256,7 +256,7 @@ class TransferBalanceRecordDetailSerializer(ModelSerializer):
 
     class Meta:
         model = TransferBalanceRecord
-        fields = ( 'amount', 'source', 'to', 'create_at', 'status', 'confirm_at', 'is_out')
+        fields = ('amount', 'source', 'to', 'create_at', 'status', 'confirm_at', 'is_out')
 
 
 class UserBalanceTransferCreateSerializer(ModelSerializer):
@@ -326,13 +326,13 @@ class BasicConfigSerializer(ModelSerializer):
     class Meta:
         model = BasicConfig
         fields = ['mall_name', 'wx_share_title', 'wx_share_desc', 'wx_share_img', 'venue_mobile', 'custom_work_at',
-                  'platform_mobile', 'tiktok_kf', 'withdraw_min', 'business_img', 'dy_images']
+                  'platform_mobile', 'tiktok_kf', 'withdraw_min', 'business_img', 'dy_images', 'auto_cancel_minutes']
 
 
 class ReturnAddressSerializer(ModelSerializer):
     class Meta:
         model = ReturnAddress
-        fields = ['name','mobile','address']
+        fields = ['name', 'mobile', 'address']
 
 
 class DouYinImagesSerializer(ModelSerializer):
