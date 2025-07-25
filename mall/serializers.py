@@ -606,13 +606,12 @@ class MembershipCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MembershipCard
-        fields = '__all__'
-
+        fields = ['title', 'amount', 'days', 'discount', 'customer_mobile', 'customer_mobile_s']
 
 class MemberCardRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberCardRecord
-        fields = '__all__'
+        fields = ['order_no']
 
 
 class MemberCardRecordCreateSerializer(serializers.ModelSerializer):
@@ -688,7 +687,7 @@ class TheaterCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TheaterCard
-        fields = '__all__'
+        fields = ['title', 'amount', 'receive_amount', 'day_max_num', 'customer_mobile', 'customer_mobile_s']
 
 
 class TheaterCardOrderSerializer(serializers.ModelSerializer):

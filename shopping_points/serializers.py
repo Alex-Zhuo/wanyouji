@@ -325,13 +325,14 @@ class BasicConfigSerializer(ModelSerializer):
 
     class Meta:
         model = BasicConfig
-        fields = '__all__'
+        fields = ['mall_name', 'wx_share_title', 'wx_share_desc', 'wx_share_img', 'venue_mobile', 'custom_work_at',
+                  'platform_mobile', 'tiktok_kf', 'withdraw_min', 'business_img', 'dy_images']
 
 
 class ReturnAddressSerializer(ModelSerializer):
     class Meta:
         model = ReturnAddress
-        fields = '__all__'
+        fields = ['name','mobile','address']
 
 
 class DouYinImagesSerializer(ModelSerializer):
