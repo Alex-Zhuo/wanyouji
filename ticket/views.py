@@ -939,7 +939,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         s = TicketOrderMarginCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         order = s.create(s.validated_data)
-        return Response(data=dict(receipt_id=order.receipt.id, order_id=order.order_no))
+        return Response(data=dict(receipt_id=order.receipt.payno, order_id=order.order_no))
 
     # @action(methods=['get'], detail=True)
     # def booking_order(self, request, pk):

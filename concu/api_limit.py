@@ -8,6 +8,7 @@ from typing import Callable
 from redis.client import Redis
 from concu import get_redis, set_redis_provider
 from caches import get_redis_name
+
 log = logging.getLogger(__name__)
 
 """
@@ -21,25 +22,34 @@ _get_redis = get_redis
 
 def get_queue_size():
     r = _get_redis()
-    qs = r.get(get_redis_name('app-limit-queue-size'))
+    key = get_redis_name('app-limit-queue-size')
+    qs = r.get(key)
+    if not qs:
+        r.set(key, 20)
     try:
         ret = int(qs)
     except:
         ret = 20
     return ret if ret > 1 else 1
 
+
 def get_max_wait():
     r = _get_redis()
-    qs = r.get(get_redis_name('app-limit-max-wait'))
+    key = get_redis_name('app-limit-max-wait')
+    qs = r.get(key)
+    if not qs:
+        r.set(key, 20)
     try:
         ret = int(qs)
     except:
         ret = 3
     return ret if ret > 1 else 3
 
+
 class try2:
-    def __init__(self, a:int):
+    def __init__(self, a: int):
         self._a = a + 1
+
     def __enter__(self):
         return self._a
 
@@ -47,8 +57,10 @@ class try2:
         print((exc_type, exc_val, exc_tb))
         raise ValueError('sadas')
         # return True
+
+
 # contextmanager在yield后无发抛出异常, 无论是with语句块里的异常还是yield后的异常,因此不满足需求.即它设计为不抛异常.所以只能用__enter__类实现，可以
-#精准控制异常. 参考: http://www.bjhee.com/python-context.html
+# 精准控制异常. 参考: http://www.bjhee.com/python-context.html
 # @contextlib.contextmanager
 class try_queue:
     def __init__(self, queue: str, limit: int, max_wait: int = 3, sleep_func: Callable = None) -> typing.NoReturn:
