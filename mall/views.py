@@ -307,6 +307,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if s.is_valid(True):
             s.save()
         return Response()
+
     #
     # @action(methods=['get'], permission_classes=[IsPermittedUser], detail=False)
     # def info(self, request):
@@ -791,16 +792,19 @@ class MembershipCardViewSet(viewsets.ModelViewSet):
 
 class MemberCardRecordViewSet(SerializerSelector, viewsets.ModelViewSet):
     serializer_class = MemberCardRecordSerializer
-    serializer_class_create = MemberCardRecordCreateSerializer
+    # serializer_class_create = MemberCardRecordCreateSerializer
     queryset = MemberCardRecord.objects.all()
     permission_classes = [IsPermittedUser]
     http_method_names = ['get', 'post']
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
 
-    # def list(self, request, *args, **kwargs):
-    #     qs = self.queryset.filter(user=request.user)
-    #     page = self.paginate_queryset(qs)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+    def create(self, request, *args, **kwargs):
+        if not hasattr(request, 'current_action'):
+            request.current_action = 'create'
+        s = MemberCardRecordCreateSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        obj = s.create(s.validated_data)
+        return Response(data=dict(order_no=obj.order_no, receipt_id=obj.receipt.payno))
 
 
 class AgreementRecordViewSet(ReturnNoDetailViewSet):
@@ -876,16 +880,19 @@ class TheaterCardViewSet(ReturnNoDetailViewSet):
 class TheaterCardOrderViewSet(SerializerSelector, viewsets.ModelViewSet):
     queryset = TheaterCardOrder.objects.all()
     serializer_class = TheaterCardOrderSerializer
-    serializer_class_create = TheaterCardOrderCreateSerializer
+    # serializer_class_create = TheaterCardOrderCreateSerializer
     permission_classes = [IsPermittedUser]
     http_method_names = ['get', 'post']
     pagination_class = StandardResultsSetPagination
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-    #
-    # def list(self, request, *args, **kwargs):
-    #     qs = self.queryset.filter(user=request.user)
-    #     page = self.paginate_queryset(qs)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+
+    def create(self, request, *args, **kwargs):
+        if not hasattr(request, 'current_action'):
+            request.current_action = 'create'
+        s = TheaterCardOrderCreateSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        obj = s.create(s.validated_data)
+        return Response(data=dict(order_no=obj.order_no, receipt_id=obj.receipt.payno))
 
 
 class TheaterCardChangeRecordViewSet(ReturnNoDetailViewSet):
