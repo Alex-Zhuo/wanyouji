@@ -26,7 +26,7 @@ class UseNoAbstract(models.Model):
 
 
 class ReceiptAbstract(DateDetailAbstract):
-    payno = models.CharField(u'商户订单号', max_length=100, default=randomstrwithdatetime)
+    payno = models.CharField(u'商户订单号', max_length=100, default=randomstrwithdatetime, db_index=True)
     amount = models.DecimalField(u'实付金额', max_digits=13, decimal_places=2, default=0.0)
     STATUS_FINISHED = 1
     STATUS_PROCCESSING = 0
