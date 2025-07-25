@@ -594,12 +594,12 @@ class ReceiptViewset(BaseReceiptViewset):
     permission_classes = []
     receipt_class = Receipt
 
-    @classmethod
-    def get_pay_url(cls, request, pk):
-        return request.build_absolute_uri('/api/receipts/%s/' % pk)
+    # @classmethod
+    # def get_pay_url(cls, request, pk):
+    #     return request.build_absolute_uri('/api/receipts/%s/' % pk)
 
-    def before_pay(self, request, pk):
-        receipt = get_object_or_404(self.receipt_class, pk=pk)
+    def before_pay(self, request, payno):
+        receipt = get_object_or_404(self.receipt_class, payno=payno)
         now = timezone.now()
         from mp.models import BasicConfig
         bc = BasicConfig.get()
@@ -635,6 +635,7 @@ class ReceiptViewset(BaseReceiptViewset):
     #             receipt.set_paid()
     #         return Response(dict(auto_success=True))
     #     return super(ReceiptViewset, self).pay(request, pk)
+
 
 
 class UserAddressViewSet(SerializerSelector, viewsets.ModelViewSet):

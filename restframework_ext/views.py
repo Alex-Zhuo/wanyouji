@@ -28,7 +28,7 @@ class BaseReceiptViewset(viewsets.ViewSet):
     receipt_class = None
     refund_class = None
 
-    def before_pay(self, request, pk):
+    def before_pay(self, request, payno):
         raise NotImplementedError()
 
     @action(methods=['put', 'get'], permission_classes=[IsPermittedUser], detail=True)
@@ -39,7 +39,7 @@ class BaseReceiptViewset(viewsets.ViewSet):
         with run_with_lock(key, 10) as got:
             if not got:
                 raise CustomAPIException('请不要点击太快，以免重复付款')
-            receipt = get_object_or_404(self.receipt_class, pk=pk)
+            receipt = get_object_or_404(self.receipt_class, payno=pk)
             if receipt.amount == 0:
                 if not receipt.paid:
                     receipt.set_paid()
@@ -58,7 +58,7 @@ class BaseReceiptViewset(viewsets.ViewSet):
 
     @action(methods=['get'], permission_classes=[IsPermittedUser], detail=True)
     def queryreceiptstatus(self, request, pk):
-        receipt = get_object_or_404(self.receipt_class, pk=pk)
+        receipt = get_object_or_404(self.receipt_class, payno=pk)
         if receipt.paid:
             return Response(data=dict(success=True))
         mp_pay_client = receipt.pay_client
