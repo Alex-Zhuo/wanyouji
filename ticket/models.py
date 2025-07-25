@@ -1726,202 +1726,6 @@ class SessionInfo(UseNoAbstract):
     def get_dy_product_name(self):
         return self.title or '{}·{}'.format(self.start_at.strftime("%m月%d日"), self.show.title)
 
-    def goods_push_dou_yin(self):
-        # 用于延期，要兼容新旧，后面可以合推送商品合并
-        show = self.show
-        if not show.show_type.category or not show.show_type.category.category_id:
-            return False, '请先关联抖音类目'
-        else:
-            tf_qs = TicketFile.objects.filter(session=self, is_tiktok=True, product_id__isnull=False).order_by(
-                'origin_price')
-            if not tf_qs:
-                return False, '没有满足条件的票档，请确认是否推送到抖音'
-            if not self.tiktok_store:
-                return False, '请先选择抖音店铺'
-            from douyin import get_dou_yin
-            from mp.models import SystemDouYinMP
-            dy_mp = SystemDouYinMP.get()
-            dy = get_dou_yin()
-            config = get_config()
-            appointment = {"need_appointment": False}
-            # 不可使用日期
-            can_no_use_date = {"enable": False}
-            # 是否留客户资料
-            customer_reserved_info = {"allow": True, "allow_tel": True, "allow_name": True, "require_for_tel": True}
-            # note_type 1是文本 2是图片
-            description_rich_text = None
-            if show.other_notice:
-                description_rich_text = [{"note_type": 1, "content": show.other_notice}]
-            pois = []
-            image_list = []
-            environment_image_list = []
-            detail_image_list = []
-            qs = ShowsDetailImage.objects.filter(show=show)
-            for img in qs:
-                detail_image_list.append({"url": '{}{}'.format(config['template_url'], img.image.url)})
-            qs = VenuesLogoImage.objects.filter(venue=show.venues)
-            for img in qs:
-                environment_image_list.append({"url": '{}{}'.format(config['template_url'], img.image.url)})
-            image_list.append({"url": '{}{}'.format(config['template_url'], show.logo_mobile.url)})
-            FrontCategoryTag = ['团购']
-            Notification = []
-            TagList = ','.join([str(flag) for flag in show.flag.all()])
-            for nt in show.notification.all():
-                Notification.append({"title": nt.title, "content": nt.content})
-            """
-            ONLY_ONE_INFO  = 2   // 仅填写一位游客信息
-            EVERY_ONE_INFO = 1   // 每张门票都要填写用户信息
-            """
-            real_name_info = {"enable": False, "scene": 2}
-            # 可使用时间加7天,取消了。因为要按资质
-            use_date = {"use_date_type": 1, "use_start_date": self.start_at.strftime('%Y-%m-%d'),
-                        "use_end_date": self.end_at.strftime('%Y-%m-%d')}
-            # 1全天2时间段
-            use_time = {"use_time_type": 1}
-            # 主办批文资质ID
-            ticket_agent_qual = ""
-            host_approval_qual = ""
-            if show.host_approval_qual.all():
-                approval_qual_list = list(show.host_approval_qual.all().values_list('qualification_id', flat=True))
-                host_approval_qual = {"QualificationId": approval_qual_list}
-            if show.ticket_agent_qual.all():
-                agent_qual_list = list(show.ticket_agent_qual.all().values_list('qualification_id', flat=True))
-                ticket_agent_qual = {"QualificationId": agent_qual_list}
-            pois.append({"poi_id": self.tiktok_store.supplier_ext_id})
-            app_id = dy_mp.app_id
-            params = {"id": str(show.no), 'session_id': str(self.no)}
-            # out_id = "ss{}_{}".format(show.id, self.id)
-            product_name = self.get_dy_product_name()
-            data = {
-                "product": {
-                    "attr_key_value_map": {
-                        "qualification_identity": str(show.qualification_identity),
-                        "host_approval_qual": json.dumps(host_approval_qual),
-                        # "ticket_agent_qual": json.dumps(ticket_agent_qual) if ticket_agent_qual else "{}",
-                        "appointment": json.dumps(appointment),
-                        "auto_renew": "false",
-                        # "bring_out_meal": "false",
-                        "can_no_use_date": json.dumps(can_no_use_date),
-                        "customer_reserved_info": json.dumps(customer_reserved_info),
-                        "Description": json.dumps([show.content], ensure_ascii=False),
-                        # 详情图
-                        "detail_image_list": json.dumps(detail_image_list),
-                        # "dishes_image_list": "[{\"url\":\"https:xxxxx\"}]",
-                        "EntryType": "2",
-                        # 环境图
-                        "environment_image_list": json.dumps(environment_image_list),
-                        # "free_pack": "false",
-                        "FrontCategoryTag": json.dumps(FrontCategoryTag, ensure_ascii=False),
-                        # 封面图
-                        "image_list": json.dumps(image_list),
-                        "IndustryType": "其他",
-                        "IsConfirmImme": "true",
-                        "Notification": json.dumps(Notification, ensure_ascii=False),
-                        #  是否可以使用包间
-                        # "private_room": "false",
-                        "real_name_info": json.dumps(real_name_info, ensure_ascii=False),
-                        # 推荐语
-                        # "RecommendWord": "",
-                        # "rec_person_num": "99",
-                        # "rec_person_num_max": "999",
-                        # 1-允许退款 2-不可退款 3-有条件退
-                        "RefundPolicy": "2",
-                        "refund_need_merchant_confirm": "true",
-                        # 投放渠道 1-不限制 2-仅直播间可见
-                        "show_channel": "1",
-                        # 排序权重
-                        "SortWeight": str(self.display_order) or "0",
-                        # "superimposed_discounts": "true",
-                        "TagList": TagList,
-                        "use_date": json.dumps(use_date),
-                        "use_time": json.dumps(use_time),
-                        # "account_name": "lh测试商家",
-                        # "poi_list": "[{\"poi_id\": \"123123123123\"}]",
-                        # "product_name": "migrate_openapi_0711_01",
-                        # "sold_start_time": "1646724999",
-                        # "sold_end_time": "1745607528",
-                        # 1营业性演出准予许可证2演出主办方授权书
-                    },
-                    "product_ext": dict(auto_online=self.dy_status != self.STATUS_OFF),
-                    # 5 小程序，不可更新
-                    "out_url": json.dumps({
-                        "app_id": app_id,
-                        "params": json.dumps(params),
-                        "path": tiktok_goods_url
-                    }),
-                    "biz_line": 5,
-                    # 不可更新
-                    "category_id": show.show_type.category.category_id,
-                    # "out_id": "ss{}_{}".format(show.id, self.id),
-                    "pois": pois,
-                    "product_name": product_name,
-                    # 不可更新
-                    "product_type": 1,
-                    "sold_end_time": int(get_timestamp(self.end_at) / 1000),
-                    "sold_start_time": int(get_timestamp(show.sale_time) / 1000),
-                    # "telephone": ["1234-4321"]
-                }
-            }
-            if ticket_agent_qual:
-                data['product']['attr_key_value_map']['ticket_agent_qual'] = json.dumps(ticket_agent_qual)
-            if description_rich_text:
-                data['product']['attr_key_value_map']['description_rich_text'] = json.dumps(description_rich_text,
-                                                                                            ensure_ascii=False)
-            # for tf in tf_qs:
-            # 改成只需要推一个票档
-            # tf = tf_qs.first()
-            if self.product_id:
-                skus = self.get_dy_sku_data_session()
-                data['sku'] = skus
-                data['product']['out_id'] = self.get_session_out_id()
-                try:
-                    ret = dy.goods_dy_create(data)
-                    log.debug(ret)
-                    if ret['error_code'] == 0:
-                        self.push_status = self.PUSH_APPROVE
-                        self.product_id = ret['product_id']
-                        self.save(update_fields=['push_status', 'product_id'])
-                        tf_qs.update(push_status=TicketFile.PUSH_APPROVE, product_id=ret['product_id'])
-                        # tf.push_status = tf.PUSH_APPROVE
-                        # tf.product_id = ret['product_id']
-                        # tf.save(update_fields=['product_id', 'push_status'])
-                    # 推skus
-                    # self.skus_push_dou_yin()
-                except Exception as e:
-                    self.push_status = self.PUSH_FAIL
-                    self.fail_msg = e
-                    self.save(update_fields=['push_status', 'fail_msg'])
-                    from dj_ext.exceptions import AdminException
-                    log.error(e)
-                    tf_qs.update(push_status=TicketFile.PUSH_PUSH_FAIL)
-                    # tf.push_status = tf.PUSH_PUSH_FAIL
-                    # tf.fail_msg = e
-                    # tf.save(update_fields=['fail_msg', 'push_status'])
-                    raise AdminException(e)
-            # else:
-            #     # 后面无用了
-            #     for tf in tf_qs:
-            #         skus = tf.get_dy_sku_data()
-            #         data['sku'] = skus
-            #         data['product']['out_id'] = tf.get_out_id()
-            #         try:
-            #             ret = dy.goods_dy_create(data)
-            #             log.debug(ret)
-            #             if ret['error_code'] == 0:
-            #                 tf.push_status = tf.PUSH_APPROVE
-            #                 tf.product_id = ret['product_id']
-            #                 tf.save(update_fields=['product_id', 'push_status'])
-            #         except Exception as e:
-            #             from dj_ext.exceptions import AdminException
-            #             log.error(e)
-            #             tf.push_status = tf.PUSH_PUSH_FAIL
-            #             tf.fail_msg = e
-            #             tf.save(update_fields=['fail_msg', 'push_status'])
-            #             raise AdminException(e)
-            #     self.push_status = self.PUSH_APPROVE
-            #     self.save(update_fields=['push_status'])
-            return True, ''
-
     def goods_push_dou_yin_new(self):
         # https://bytedance.feishu.cn/docx/doxcnnyH289B98IgcPiLWxpSChc 创建商品
         show = self.show
@@ -1995,6 +1799,13 @@ class SessionInfo(UseNoAbstract):
             sold_start_time = int(get_timestamp(self.dy_sale_time) / 1000) if self.dy_sale_time else int(
                 get_timestamp(show.sale_time) / 1000)
             product_name = self.get_dy_product_name()
+            product_ext = dict(auto_online=self.dy_status != self.STATUS_OFF)
+            config = get_config()
+            is_tiktok_debug = False
+            if config.get('tiktok') and config['tiktok']['debug']:
+                is_tiktok_debug = True
+            if is_tiktok_debug:
+                product_ext['test_extra'] = dict(uids=config['tiktok']['uids'], test_flag=True)
             data = {
                 "product": {
                     "attr_key_value_map": {
@@ -2045,7 +1856,7 @@ class SessionInfo(UseNoAbstract):
                         # "sold_end_time": "1745607528",
                         # 1营业性演出准予许可证2演出主办方授权书
                     },
-                    "product_ext": dict(auto_online=self.dy_status != self.STATUS_OFF),
+                    "product_ext": product_ext,
                     # 5 小程序，不可更新
                     "out_url": json.dumps({
                         "app_id": app_id,
@@ -2070,10 +1881,13 @@ class SessionInfo(UseNoAbstract):
             if description_rich_text:
                 data['product']['attr_key_value_map']['description_rich_text'] = json.dumps(description_rich_text,
                                                                                             ensure_ascii=False)
-            # for tf in tf_qs:
-            # 改成只需要推一个票档
-            # tf = tf_qs.first()
+            if is_tiktok_debug:
+                # 测试商品必须填写
+                data['product']['attr_key_value_map']['trade_url'] = data['product']['out_url']
             skus = self.get_dy_sku_data_session()
+            if is_tiktok_debug:
+                # 测试库存不能大于50
+                skus['stock'] = {"limit_type": 1, "stock_qty": 40}
             data['sku'] = skus
             data['product']['out_id'] = self.get_session_out_id()
             try:
@@ -2150,17 +1964,6 @@ class SessionChangeRecord(models.Model):
 
     def __str__(self):
         return str(self.id)
-
-    @classmethod
-    def push_to_dy(cls, session):
-        try:
-            ret, msg = session.goods_push_dou_yin()
-            if not ret:
-                log.error(msg)
-            return ret, msg
-        except Exception as e:
-            log.error(e)
-            return False, '修改失败，推送抖音失败'
 
     @classmethod
     def create(cls, session, user, new_end_at=None, new_start_at=None):
