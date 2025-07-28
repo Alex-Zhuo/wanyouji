@@ -545,8 +545,7 @@ class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
                 data = pika.hget(redis_show_content_copy_key, str(obj.cate_id))
         # data = None
         if data:
-            data =  json.loads(data)
-            data.pop('show_type_list', None)
+            data = json.loads(data)
         else:
             return ShowContentCategorySerializer(obj.cate).data
 
