@@ -223,7 +223,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
                     'wxa_code_display', 'op']
     list_filter = ['status', 'show_type', 'venues', CityFilter]
     search_fields = ['title']
-    autocomplete_fields = ['show_type', 'venues', 'performer', 'flag']
+    autocomplete_fields = ['cate_second', 'venues', 'performer', 'flag']
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
     inlines = [ShowNotificationInline, ShowsDetailImageInline]
@@ -290,6 +290,8 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
                 # 每次保存都刷新经纬度
                 obj.lat = obj.venues.lat
                 obj.lng = obj.venues.lng
+                obj.cate = obj.cate_second.cate
+                obj.show_type = obj.cate_second.show_type
                 if change:
                     if 'flag' in form.changed_data:
                         form.changed_data.remove('flag')
