@@ -217,6 +217,7 @@ class ShowContentCategory(models.Model):
             if second_cate_list:
                 second_cate_list = json.loads(second_cate_list)
                 i = 0
+                log.error(second_cate_list)
                 for second_cate in second_cate_list:
                     cate_second_id = int(second_cate['id'])
                     c_qs = qs.filter(cate_second_id=cate_second_id)[:2]
