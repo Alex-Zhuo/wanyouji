@@ -222,10 +222,10 @@ class ShowContentCategory(models.Model):
                     c_qs = qs.filter(cate_second_id=cate_second_id)[:2]
                     if c_qs:
                         i += 1
-                        data = ShowIndexSerializer(c_qs, many=True, context=context).data
+                        show_data = ShowIndexSerializer(c_qs, many=True, context=context).data
                         data['shows'].append(
                             dict(second_cate_id=cate_second_id, second_cate_name=second_cate['show_type']['name'],
-                                 data=data))
+                                 data=show_data))
                     if i >= 2:
                         break
         return data
