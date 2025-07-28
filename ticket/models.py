@@ -372,7 +372,7 @@ class ShowContentCategorySecond(models.Model):
         from ticket.serializers import ShowContentCategorySecondSerializer
         from caches import get_pika_redis, redis_show_content_second_key
         with get_pika_redis() as pika:
-            qs = ShowContentCategorySecond.objects.filter(cate=self.cate)
+            qs = ShowContentCategorySecond.objects.filter(cate=self.cate).order_by('display_order')
             show_type_list = ShowContentCategorySecondSerializer(qs, many=True).data
             pika.hset(redis_show_content_second_key, str(self.cate.id), json.dumps(dict(show_type_list=show_type_list)))
 
