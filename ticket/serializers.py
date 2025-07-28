@@ -1238,7 +1238,7 @@ class ShowUserSerializer(serializers.ModelSerializer):
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
-    id_card = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    id_card = serializers.CharField(required=True)
 
     def create(self, validated_data):
         request = self.context.get('request')

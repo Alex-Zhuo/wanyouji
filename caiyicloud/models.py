@@ -986,67 +986,102 @@ class CyOrder(models.Model):
         return seat_data
 
     @classmethod
-    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, biz_id: str,
-                     real_name_list: list = None):
+    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, biz_id: str = None,
+                     real_name_list: list = None, ticket_list: list = None):
         """
-        biz_id 彩艺云获取选座H5座位信息
+        ticket_list 传入的票价列表
+        biz_id 彩艺云获取选座H5座位信息(有座)
         """
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
-        seat_info = cls.get_cy_seat_info(biz_id)
-        if not seat_info:
-            raise CustomAPIException('下单失败，参数错误')
+        cy_session = session.cy_session
+        ticket_list = []
+        delivery_method = cy_session.delivery_methods.first()
+        i = 0
+        if biz_id:
+            # 有座下单
+            seat_info = cls.get_cy_seat_info(biz_id)
+            if not seat_info:
+                raise CustomAPIException('下单失败，参数错误')
+            for t_info in seat_info['price_infos']:
+                seats = []
+                for seat in t_info['seat_infos']:
+                    seat_data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
+                                photo_url=None)
+                    if session.one_id_one_ticket and real_name_list:
+                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                               cellphone=real_name_list[i]['mobile'],
+                                               name=real_name_list[i]['name'], type=1)
+                        i += 1
+                    seats.append(seat_data)
+                ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
+                                        delivery_method=delivery_method.code,
+                                        ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
+                                        qty=t_info['count'],
+                                        seats=seats))
+        else:
+            for ticket in ticket_list:
+                seats = []
+                multiply = int(ticket['multiply'])
+                ticket_obj = ticket.get('level')
+                if not ticket_obj:
+                    raise CustomAPIException('下单失败，请重新选择')
+                if not hasattr(ticket_obj, 'cy_tf'):
+                    raise CustomAPIException('下单失败,彩艺票价未配置')
+                cy_tf = ticket_obj.cy_tf
+                cy_session = cy_tf.cy_session
+                # 无座下单
+                seat_group_id = None
+                if cy_tf.category != 1:
+                    seat_group_id = 2
+
+                # todo
+                if cy_tf.ticket_pack_list.all():
+                    seat_data = dict(seat_group_id=seat_group_id, photo_url=None)
+                    if session.one_id_one_ticket and real_name_list:
+                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                    cellphone=real_name_list[i]['mobile'],
+                                                    name=real_name_list[i]['name'], type=1)
+                        i += 1
+                    seats.append(seat_data)
+                ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
+                                        delivery_method=delivery_method.code,
+                                        ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
+                                        qty=multiply,
+                                        seats=seats))
         # 快递和营销活动不做
         express_amount = 0
         address_info = None
         promotion_list = None
         id_info = None
-        cy_session = session.cy_session
         if not session.one_id_one_ticket and session.is_name_buy and real_name_list:
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
-        ticket_list = []
-        delivery_method = cy_session.delivery_methods.first()
-        i = 0
-        for t_info in seat_info['price_infos']:
-            seats = []
-            for seat in t_info['seat_infos']:
-                data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
-                            photo_url=None)
-                if session.one_id_one_ticket and real_name_list:
-                    data['id_info'] = dict(number=real_name_list[i]['id_card'], cellphone=real_name_list[i]['mobile'],
-                                           name=real_name_list[i]['name'], type=1)
-                    i += 1
-            ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
-                                    delivery_method=delivery_method.code,
-                                    ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
-                                    qty=t_info['count'],
-                                    seats=seats))
-            try:
-                response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                                 original_total_amount=ticket_order.amount,
-                                                 actual_total_amount=ticket_order.actual_amount,
-                                                 buyer_cellphone=ticket_order.mobile,
-                                                 ticket_list=ticket_list, id_info=id_info,
-                                                 promotion_list=promotion_list,
-                                                 address_info=address_info,
-                                                 express_amount=express_amount
-                                                 )
-            except Exception as e:
-                raise CustomAPIException('下单失败，请稍后再试。。。')
-            from caiyicloud.error_codes import is_success
-            if not is_success(response_data["code"]):
-                raise CustomAPIException(response_data['msg'])
-            else:
-                auto_cancel_order_time = datetime.strptime(response_data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
-                cy_order = cls.objects.create(ticket_order=ticket_order, cy_session=cy_session,
-                                              cy_order_no=response_data['order_no'],
-                                              buyer_cellphone=ticket_order.mobile,
-                                              auto_cancel_order_time=auto_cancel_order_time,
-                                              delivery_method=delivery_method,
-                                              ticket_list_snapshot=json.dumps(ticket_list))
-            cy_order.delete_redis_cache(biz_id)
-            return cy_order
+        try:
+            response_data = cy.orders_create(external_order_no=ticket_order.order_no,
+                                             original_total_amount=ticket_order.amount,
+                                             actual_total_amount=ticket_order.actual_amount,
+                                             buyer_cellphone=ticket_order.mobile,
+                                             ticket_list=ticket_list, id_info=id_info,
+                                             promotion_list=promotion_list,
+                                             address_info=address_info,
+                                             express_amount=express_amount
+                                             )
+        except Exception as e:
+            raise CustomAPIException('下单失败，请稍后再试。。。')
+        from caiyicloud.error_codes import is_success
+        if not is_success(response_data["code"]):
+            raise CustomAPIException(response_data['msg'])
+        else:
+            auto_cancel_order_time = datetime.strptime(response_data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
+            cy_order = cls.objects.create(ticket_order=ticket_order, cy_session=cy_session,
+                                          cy_order_no=response_data['order_no'],
+                                          buyer_cellphone=ticket_order.mobile,
+                                          auto_cancel_order_time=auto_cancel_order_time,
+                                          delivery_method=delivery_method,
+                                          ticket_list_snapshot=json.dumps(ticket_list))
+        cy_order.delete_redis_cache(biz_id)
+        return cy_order
 
     def cancel_order(self):
         cy = caiyi_cloud()

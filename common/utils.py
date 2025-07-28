@@ -468,7 +468,7 @@ def show_content(content):
 
 
 def s_id_card(id_card):
-    return '{}***{}***'.format(id_card[:3], id_card[6:10])
+    return '{}***{}'.format(id_card[:3], id_card[-4:])
 
 
 def md5_content(content: str):

@@ -2378,11 +2378,11 @@ class ShowUser(models.Model):
     user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
     name = models.CharField('姓名', max_length=30)
     mobile = models.CharField('手机号', max_length=20, null=True)
-    id_card = models.CharField('身份证号', max_length=20, null=True, blank=True, db_index=True)
+    id_card = models.CharField('身份证号', max_length=20, null=True, db_index=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '常用联系人'
+        verbose_name_plural = verbose_name = '常用观演人'
         unique_together = ['user', 'name', 'mobile']
         ordering = ['-pk']
 
@@ -3724,9 +3724,10 @@ class TicketOrder(models.Model):
                     inst.change_pika_mz_seat(False)
                     inst.set_pika_buy(False)
             qs.update(order_no=None, is_buy=False, buy_desc=None)
-        if self.id_card:
-            # 减去已买的
-            TicketOrder.get_or_set_real_name_buy_num(self.session.id, self.id_card, -self.multiply, is_get=False)
+        if hasattr(self, 'real_name_order'):
+            for real_user in self.real_name_order.all():
+                # 减去已买的
+                TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply, is_get=False)
 
     def cancel_code(self):
         TicketUserCode.objects.filter(order_id=self.id).update(status=TicketUserCode.STATUS_CANCEL, msg='退款作废')
