@@ -36,7 +36,8 @@ class CyFirstCategoryAdmin(AllOnlyViewAdmin):
 
 
 class CyCategoryAdmin(AllOnlyViewAdmin):
-    list_display = ['code', 'name']
+    list_display = ['first_cate', 'code', 'name']
+    list_filter = ['first_cate']
 
 
 class CyVenueAdmin(AllOnlyViewAdmin):
