@@ -1655,7 +1655,11 @@ class ShowIndexSerializer(serializers.ModelSerializer):
 
 
 class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
+    cate_id = serializers.SerializerMethodField()
     data = serializers.SerializerMethodField()
+
+    def get_cate_id(self, obj):
+        return obj.pk
 
     def get_data(self, obj):
         data = obj.get_index_data()
@@ -1664,4 +1668,4 @@ class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowContentCategory
-        fields = ['id', 'title', 'data']
+        fields = ['cate_id', 'title', 'data']
