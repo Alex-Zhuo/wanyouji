@@ -245,7 +245,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         if cate_id:
             queryset = queryset.filter(cate_id=int(cate_id))
         if second_cate_id:
-            queryset = queryset.filter(second_cate_id=int(second_cate_id))
+            queryset = queryset.filter(cate_second_id=int(second_cate_id))
         order_desc = None
         if price:
             order_desc = 'price' if price == '1' else '-price'
