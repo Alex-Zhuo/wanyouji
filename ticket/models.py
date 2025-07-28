@@ -203,7 +203,6 @@ class ShowContentCategory(models.Model):
         return self.title
 
     def show_content_copy_to_pika(self):
-        from ticket.serializers import ShowContentCategorySecondSerializer
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
             pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(dict(id=self.id, title=self.title)))
@@ -211,7 +210,8 @@ class ShowContentCategory(models.Model):
     def get_index_data(self):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
         data = dict(recent_num=qs.count())
-        qs.order_by('')
+        qs = qs.order_by('cate_second__display_order','display_order')[:2]
+        data['shows'] = qs
         return data
 
 

@@ -1648,11 +1648,18 @@ class ShowAiSerializer(serializers.ModelSerializer):
         fields = ['no', 'logo_mobile', 'title', 'price', 'venues']
 
 
+class ShowIndexSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShowProject
+        fields = ['no', 'logo_mobile']
+
+
 class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
     data = serializers.SerializerMethodField()
 
     def get_data(self, obj):
-        return obj.get_index_data()
+        data = obj.get_index_data()
+        data['shows'] = ShowIndexSerializer(data['shows'], many=True).data
 
     class Meta:
         model = ShowContentCategory
