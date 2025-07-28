@@ -85,6 +85,12 @@ class ShowTypeAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
         return []
 
 
+class ShowContentCategorySecondAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
+    list_display = ['cate', 'show_type', 'display_order']
+    list_editable = ['display_order']
+    search_fields = ['show_type__name']
+
+
 class VenuesLogoImageInline(admin.StackedInline):
     model = VenuesLogoImage
     extra = 0
@@ -2581,6 +2587,7 @@ class TicketGiveRecordAdmin(OnlyViewAdmin):
 # admin.site.register(ShowTopCategory, ShowTopCategoryAdmin)
 admin.site.register(ShowContentCategory, ShowContentCategoryAdmin)
 admin.site.register(ShowType, ShowTypeAdmin)
+admin.site.register(ShowContentCategorySecond, ShowContentCategorySecondAdmin)
 admin.site.register(Venues, VenuesAdmin)
 admin.site.register(PerformerFlag, PerformerFlagAdmin)
 admin.site.register(ShowPerformer, ShowPerformerAdmin)
@@ -2612,6 +2619,7 @@ admin.site.register(TicketGiveRecord, TicketGiveRecordAdmin)
 # technology_admin.register(ShowTopCategory, ShowTopCategoryAdmin)
 technology_admin.register(ShowContentCategory, ShowContentCategoryAdmin)
 technology_admin.register(ShowType, ShowTypeAdmin)
+technology_admin.register(ShowContentCategorySecond, ShowContentCategorySecondAdmin)
 technology_admin.register(Venues, VenuesAdmin)
 technology_admin.register(PerformerFlag, PerformerFlagAdmin)
 technology_admin.register(ShowPerformer, ShowPerformerAdmin)
