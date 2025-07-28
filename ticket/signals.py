@@ -5,7 +5,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from ticket.models import TicketOrderRefund, SessionInfo, ShowType, ShowContentCategory, Venues, ShowProject, \
-    TicketFile, ShowsDetailImage, TicketOrder, ShowCollectRecord
+    TicketFile, ShowsDetailImage, TicketOrder, ShowCollectRecord, ShowContentCategorySecond
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,13 @@ def show_content_category_change(sender, **kwargs):
     created, instance, update_fields = map(kwargs.get, ('created', 'instance', 'update_fields'))
     # if created or update_fields:
     instance.show_content_copy_to_pika()
+
+
+@receiver(post_save, sender=ShowContentCategorySecond)
+def show_content_second_category_change(sender, **kwargs):
+    created, instance, update_fields = map(kwargs.get, ('created', 'instance', 'update_fields'))
+    # if created or update_fields:
+    instance.show_content_second_copy_to_pika()
 
 
 @receiver(post_save, sender=Venues)

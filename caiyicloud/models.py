@@ -13,7 +13,7 @@ from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
 from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder, \
-    TicketUserCode
+    TicketUserCode, ShowContentCategory, ShowContentCategorySecond
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -42,6 +42,7 @@ def init_all():
     CyIdTypes.init_record()
     CyCheckInMethods.init_record()
     CyDeliveryMethods.init_record()
+    CyFirstCategory.init_record()
 
 
 class ChoicesCommon(models.Model):
@@ -79,20 +80,40 @@ class CaiYiCloudApp(models.Model):
         return cls.objects.first()
 
 
+class CyFirstCategory(ChoicesCommon):
+    INIT_DATA = [
+        (1, '演出'),
+        (2, '赛事'),
+        (3, '活动'),
+        (4, '展览'),
+    ]
+
+    @classmethod
+    def get_first_cate(cls, code: int):
+        return cls.objects.filter(code=code).first()
+
+    class Meta:
+        verbose_name_plural = verbose_name = '节目大类'
+
+
 class CyCategory(ChoicesCommon):
+    first_cate = models.ForeignKey(CyFirstCategory, verbose_name='节目大类', null=True, on_delete=models.PROTECT)
+
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
 
     INIT_DATA = list(EVENT_CATEGORIES.items())
 
     @classmethod
-    def get_show_type(cls, code: str, name: str):
+    def get_show_second_cate(cls, cate_code: int, code: str, name: str):
         need = False
         show_type = None
+        first_cate = CyFirstCategory.get_first_cate(cate_code)
         inst, create = cls.objects.get_or_create(code=code)
-        if create:
+        if create or not first_cate:
             inst.name = name
-            inst.save(update_fields=['name'])
+            inst.first_cate = first_cate
+            inst.save(update_fields=['name', 'first_cate'])
             need = True
         else:
             show_type = ShowType.objects.filter(cy_cate=inst).first()
@@ -103,7 +124,13 @@ class CyCategory(ChoicesCommon):
             show_type.cy_cate = inst
             show_type.save(update_fields=['cy_cate'])
             show_type.show_type_copy_to_pika()
-        return inst, show_type
+        cc, create = ShowContentCategory.objects.get_or_create(title=first_cate.name)
+        if create:
+            cc.show_content_copy_to_pika()
+        show_second_cate, create = ShowContentCategorySecond.objects.get_or_create(cate=cc, show_type=show_type)
+        if create:
+            show_second_cate.show_content_second_copy_to_pika()
+        return inst, show_second_cate
 
 
 class CyVenue(models.Model):
@@ -252,7 +279,10 @@ class CyShowEvent(models.Model):
         if not cy.is_init:
             return
         event_detail = cy.event_detail(event_id)
-        cy_show_type, show_type = CyCategory.get_show_type(event_detail['type'], event_detail['type_desc'])
+        cy_show_type, show_second_cate = CyCategory.get_show_second_cate(event_detail['category'], event_detail['type'],
+                                                                         event_detail['type_desc'])
+        show_type = show_second_cate.show_type
+        cate = show_second_cate.cate
         venue = CyVenue.init_venue(event_detail['venue_id'])
         notice = ''
         if event_detail.get('watching_notices'):
@@ -266,7 +296,8 @@ class CyShowEvent(models.Model):
         logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
         # 保存网络图片
         logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
-        show_data = dict(title=event_detail['name'], show_type=show_type, venues=venue, lat=venue.lat,
+        show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
+                         venues=venue, lat=venue.lat,
                          lng=venue.lng,
                          city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
                          notice=notice, status=cls.get_show_status(event_detail['state']),
@@ -1133,7 +1164,7 @@ class CyTicketCode(models.Model):
         return inst
 
     @classmethod
-    def order_create(cls, ticket_list: List[Dict], ticket_order_id:int):
+    def order_create(cls, ticket_list: List[Dict], ticket_order_id: int):
         code_qs = TicketUserCode.objects.filter(order_id=ticket_order_id)
         i = 0
         for code in code_qs:

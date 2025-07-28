@@ -495,12 +495,18 @@ class SessionExpressFeeSerializer(serializers.Serializer):
         fields = ['session_id', 'express_address_id']
 
 
-class ShowTypeSerializer(serializers.ModelSerializer):
+class ShowTypeBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShowType
+        fields = ['name', 'slug']
+
+
+class ShowTypeSerializer(ShowTypeBasicSerializer):
     source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
 
     class Meta:
         model = ShowType
-        fields = ['name', 'source_type', 'source_type_display', 'slug']
+        fields = ['source_type', 'source_type_display']
 
 
 class ShowContentCategorySerializer(serializers.ModelSerializer):
@@ -510,9 +516,11 @@ class ShowContentCategorySerializer(serializers.ModelSerializer):
 
 
 class ShowContentCategorySecondSerializer(serializers.ModelSerializer):
+    show_type = ShowTypeBasicSerializer()
+
     class Meta:
         model = ShowContentCategorySecond
-        fields = ['show_type']
+        fields = ['id', 'show_type']
 
 
 class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
@@ -693,7 +701,7 @@ class ShowSessionCacheSerializer(PKtoNoSerializer):
                                                  'status', 'create_at', 'is_price', 'push_status', 'has_seat',
                                                  'is_sale_off', 'one_id_one_ticket',
                                                  'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
-                                                 'name_buy_num','source_type']
+                                                 'name_buy_num', 'source_type']
 
 
 class ShowSessionInfoSerializer(PKtoNoSerializer):
@@ -1638,3 +1646,14 @@ class ShowAiSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowProject
         fields = ['no', 'logo_mobile', 'title', 'price', 'venues']
+
+
+class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
+    data = serializers.SerializerMethodField()
+
+    def get_data(self, obj):
+        return obj.get_index_data()
+
+    class Meta:
+        model = ShowContentCategory
+        fields = ['id', 'title', 'data']

@@ -196,7 +196,7 @@ class ShowContentCategory(models.Model):
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序,首页展示前5项')
 
     class Meta:
-        verbose_name_plural = verbose_name = '内容分类'
+        verbose_name_plural = verbose_name = '节目大类'
         ordering = ['display_order']
 
     def __str__(self):
@@ -206,10 +206,13 @@ class ShowContentCategory(models.Model):
         from ticket.serializers import ShowContentCategorySecondSerializer
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
-            qs = ShowContentCategorySecond.objects.filter(cate=self)
-            show_type_list = ShowContentCategorySecondSerializer(qs, many=True).data
-            pika.hset(redis_show_content_copy_key, str(self.id),
-                      json.dumps(dict(id=self.id, title=self.title, show_type_list=json.dumps(show_type_list))))
+            pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(dict(id=self.id, title=self.title)))
+
+    def get_index_data(self):
+        qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
+        data = dict(recent_num=qs.count())
+        qs.order_by('')
+        return data
 
 
 class PerformerFlag(models.Model):
@@ -353,17 +356,25 @@ class ShowType(models.Model):
 
 
 class ShowContentCategorySecond(models.Model):
-    cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.CASCADE)
+    cate = models.ForeignKey(ShowContentCategory, verbose_name='节目大类', on_delete=models.CASCADE)
     show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序')
 
     class Meta:
-        verbose_name_plural = verbose_name = '内容分类'
+        verbose_name_plural = verbose_name = '二级分类'
         unique_together = ['cate', 'show_type']
         ordering = ['display_order']
 
     def __str__(self):
-        return str(self.display_order)
+        return f'{str(self.cate)}->{str(self.show_type)}'
+
+    def show_content_second_copy_to_pika(self):
+        from ticket.serializers import ShowContentCategorySecondSerializer
+        from caches import get_pika_redis, redis_show_content_second_key
+        with get_pika_redis() as pika:
+            qs = ShowContentCategorySecond.objects.filter(cate=self.cate)
+            show_type_list = ShowContentCategorySecondSerializer(qs, many=True).data
+            pika.hset(redis_show_content_second_key, str(self.cate.id), json.dumps(dict(show_type_list=show_type_list)))
 
 
 class Venues(UseNoAbstract):
@@ -529,9 +540,10 @@ class TikTokQualRecord(models.Model):
 
 class ShowProject(UseNoAbstract):
     title = models.CharField('节目名称', max_length=100, help_text='100个字内')
-    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE)
+    cate_second = models.ForeignKey(ShowContentCategorySecond, verbose_name='分类', on_delete=models.CASCADE, null=True)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
-                             blank=True)
+                             editable=False)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE, editable=False)
     venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
     lat = models.FloatField('纬度', default=0, help_text='场馆纬度')
     lng = models.FloatField('经度', default=0, help_text='场馆经度')

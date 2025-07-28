@@ -13,7 +13,7 @@ from restframework_ext.pagination import StandardResultsSetPagination, DefaultNo
 from ticket.models import Seat, Venues, TicketColor, ShowProject, ShowCollectRecord, SessionSeat, TicketOrder, \
     SessionInfo, TicketFile, PerformerFocusRecord, ShowPerformer, ShowType, ShowUser, TicketUserCode, tiktok_goods_url, \
     tiktok_order_detail_url, TicketOrderRefund, ShowComment, ShowCommentImage, TicketBooking, TicketGiveRecord, \
-    TicketGiveDetail
+    TicketGiveDetail, ShowContentCategory
 from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCreateSerializer, ShowProjectSerializer, \
     ShowProjectDetailSerializer, ShowCollectRecordSerializer, SessionSeatSerializer, TicketOrderSerializer, \
     SessionInfoSerializer, SessionInfoDetailSerializer, TicketFileCreateSerializer, \
@@ -29,7 +29,7 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
     TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, \
     TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer, \
-    VenuesCustomerDetailSerializer
+    VenuesCustomerDetailSerializer, ShowContentCategoryHomeSerializer
 from restframework_ext.exceptions import CustomAPIException
 from django.utils import timezone
 from django.db.models import Max, Min
@@ -50,6 +50,7 @@ from django.utils.decorators import method_decorator
 from ticket.serializers import get_origin
 from caches import get_prefix
 from ticket.order_serializer import ticket_order_dispatch
+
 log = logging.getLogger(__name__)
 
 PREFIX = get_prefix()
@@ -273,6 +274,13 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         except Exception as e:
             log.error(e)
             raise CustomAPIException('场馆地址未更新，请联系管理员！')
+
+    @method_decorator(cache_page(90, key_prefix=PREFIX))
+    @action(methods=['get'], detail=False)
+    def home_page(self, request):
+        qs = ShowContentCategory.objects.all()[:5]
+        data = ShowContentCategoryHomeSerializer(qs, many=True, context={'request': request}).data
+        return Response(data)
 
     @action(methods=['get'], detail=False)
     def get_calendar(self, request):
