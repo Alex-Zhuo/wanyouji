@@ -1660,6 +1660,7 @@ class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
     def get_data(self, obj):
         data = obj.get_index_data()
         data['shows'] = ShowIndexSerializer(data['shows'], many=True).data
+        return data
 
     class Meta:
         model = ShowContentCategory
