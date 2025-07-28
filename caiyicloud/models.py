@@ -837,6 +837,7 @@ class CyTicketType(models.Model):
             ticket_types_list = cy.ticket_types([cy_session_id])
             ticket_stock_list = cy.ticket_stock([cy_session_id])
             ticket_stock_dict = dict()
+            show_price = 0
             for ticket_stock in ticket_stock_list:
                 ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
             for ticket_type in ticket_types_list:
@@ -860,6 +861,8 @@ class CyTicketType(models.Model):
                 desc = f"{ticket_type['name']}({ticket_type['comment']})" if ticket_type['comment'] else ticket_type[
                     'name']
                 status = True if ticket_type['enabled'] == 1 and ticket_type['sold_out_state'] == 1 else False
+                if show_price == 0 or price < show_price:
+                    show_price = price
                 tf_data = dict(session=cy_session.c_session, origin_price=price, price=price, stock=stock,
                                color_code=ticket_type['color'],
                                desc=desc, status=status)
@@ -886,10 +889,10 @@ class CyTicketType(models.Model):
                 # 改缓存
                 tf.redis_ticket_level_cache()
             show = cy_session.event.show
-            tf = TicketFile.objects.filter(status=True, session__show_id=show.id).order_by('price').first()
-            show.price = tf.price
-            show.save(update_fields=['price'])
-            show.shows_detail_copy_to_pika()
+            if show.price <= 0 or show.price > show_price:
+                show.price = show_price
+                show.save(update_fields=['price'])
+                show.shows_detail_copy_to_pika()
 
     @classmethod
     def get_seat_info(cls, biz_id):
