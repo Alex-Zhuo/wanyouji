@@ -224,10 +224,10 @@ class ShowNotificationInline(admin.TabularInline):
 
 
 class ShowProjectAdmin(RemoveDeleteModelAdmin):
-    list_display = ['id', 'no', 'title', 'show_type', 'venues', 'sale_time', 'status', 'time_info', 'display_order',
+    list_display = ['id', 'no', 'title', 'cate_second', 'venues', 'sale_time', 'status', 'time_info', 'display_order',
                     'tiktok_code_display',
                     'wxa_code_display', 'op']
-    list_filter = ['status', 'show_type', 'venues', CityFilter]
+    list_filter = ['status', 'cate_second', 'venues', CityFilter]
     search_fields = ['title']
     autocomplete_fields = ['cate_second', 'venues', 'performer', 'flag']
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']

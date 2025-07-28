@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib import messages
 
 from caiyicloud.models import CaiYiCloudApp, CyCategory, CyVenue, CyShowEvent, CyDeliveryMethods, CyCheckInMethods, \
-    CyIdTypes, CySession, CyTicketType
+    CyIdTypes, CySession, CyTicketType, CyFirstCategory
 from dj import technology_admin
 from dj_ext.permissions import TechnologyModelAdmin, OnlyViewAdmin, RemoveDeleteModelAdmin, OnlyReadTabularInline
 from dj_ext.exceptions import AdminException
@@ -29,6 +29,10 @@ class CaiYiCloudAppAdmin(TechnologyModelAdmin):
         if obj:
             return self.change_view(request, str(obj.id))
         return self.add_view(request, extra_context={'show_save_and_add_another': False})
+
+
+class CyFirstCategoryAdmin(AllOnlyViewAdmin):
+    list_display = ['code', 'name']
 
 
 class CyCategoryAdmin(AllOnlyViewAdmin):
@@ -83,6 +87,7 @@ class CySessionAdmin(AllOnlyViewAdmin):
 
 
 admin.site.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
+admin.site.register(CyFirstCategory, CyFirstCategoryAdmin)
 admin.site.register(CyCategory, CyCategoryAdmin)
 admin.site.register(CyVenue, CyVenueAdmin)
 admin.site.register(CyShowEvent, CyShowEventAdmin)
@@ -92,6 +97,7 @@ admin.site.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 admin.site.register(CySession, CySessionAdmin)
 
 technology_admin.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
+technology_admin.register(CyFirstCategory, CyFirstCategoryAdmin)
 technology_admin.register(CyCategory, CyCategoryAdmin)
 technology_admin.register(CyVenue, CyVenueAdmin)
 technology_admin.register(CyShowEvent, CyShowEventAdmin)
