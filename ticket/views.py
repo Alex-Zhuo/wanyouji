@@ -266,17 +266,13 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.error(queryset.count())
         if is_schedule:
             queryset = queryset.order_by('-show_type_id')
-        try:
-            page = self.paginate_queryset(queryset)
-            ret = self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
-            # log.debug('结束加载')
-            # from django.db import connection
-            # q = connection.queries
-            # log.error(q)
-            return ret
-        except Exception as e:
-            log.error(e)
-            raise CustomAPIException('场馆地址未更新，请联系管理员！')
+        page = self.paginate_queryset(queryset)
+        ret = self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+        # log.debug('结束加载')
+        # from django.db import connection
+        # q = connection.queries
+        # log.error(q)
+        return ret
 
     @method_decorator(cache_page(30, key_prefix=PREFIX))
     @action(methods=['get'], detail=False)
