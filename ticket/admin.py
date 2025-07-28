@@ -227,7 +227,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
     inlines = [ShowNotificationInline, ShowsDetailImageInline]
-    readonly_fields = ['session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
+    readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
 
