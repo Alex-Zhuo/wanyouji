@@ -110,7 +110,7 @@ class CyCategory(ChoicesCommon):
         show_type = None
         first_cate = CyFirstCategory.get_first_cate(cate_code)
         inst, create = cls.objects.get_or_create(code=code)
-        if create or not first_cate:
+        if create or not inst.first_cate:
             inst.name = name
             inst.first_cate = first_cate
             inst.save(update_fields=['name', 'first_cate'])
