@@ -885,6 +885,11 @@ class CyTicketType(models.Model):
                         cy_ticket.ticket_pack_list.set(pack_list)
                 # 改缓存
                 tf.redis_ticket_level_cache()
+            show = cy_session.event.show
+            tf = TicketFile.objects.filter(status=True, session__show_id=show.id).order_by('price').first()
+            show.price = tf.price
+            show.save(update_fields=['price'])
+            show.shows_detail_copy_to_pika()
 
     @classmethod
     def get_seat_info(cls, biz_id):
