@@ -210,6 +210,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         queryset = self.queryset
         title = request.GET.get('title') or None
         cate_id = request.GET.get('cate_id') or None
+        second_cate_id = request.GET.get('second_cate_id') or None
         start_at = request.GET.get('start_at') or None
         price = request.GET.get('price') or None
         show_at = request.GET.get('show_at') or None
@@ -243,6 +244,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             queryset = queryset.filter(city_id=int(city))
         if cate_id:
             queryset = queryset.filter(cate_id=int(cate_id))
+        if second_cate_id:
+            queryset = queryset.filter(second_cate_id=int(second_cate_id))
         order_desc = None
         if price:
             order_desc = 'price' if price == '1' else '-price'
