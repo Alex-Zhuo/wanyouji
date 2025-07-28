@@ -275,7 +275,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             log.error(e)
             raise CustomAPIException('场馆地址未更新，请联系管理员！')
 
-    # @method_decorator(cache_page(90, key_prefix=PREFIX))
+    @method_decorator(cache_page(30, key_prefix=PREFIX))
     @action(methods=['get'], detail=False)
     def home_page(self, request):
         qs = ShowContentCategory.objects.all()[:5]

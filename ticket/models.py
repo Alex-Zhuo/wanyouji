@@ -207,11 +207,27 @@ class ShowContentCategory(models.Model):
         with get_pika_redis() as pika:
             pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(dict(id=self.id, title=self.title)))
 
-    def get_index_data(self):
+    def get_index_data(self, context):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
-        data = dict(recent_num=qs.count())
-        qs = qs.order_by('cate_second__display_order','display_order')[:2]
-        data['shows'] = qs
+        data = dict(recent_num=qs.count(), shows=[])
+        from caches import get_pika_redis, redis_show_content_second_key
+        from ticket.serializers import ShowIndexSerializer
+        with get_pika_redis() as pika:
+            second_cate_list = pika.hget(redis_show_content_second_key, str(self.id))
+            if second_cate_list:
+                second_cate_list = json.loads(second_cate_list)
+                i = 0
+                for second_cate in second_cate_list:
+                    cate_second_id = int(second_cate['id'])
+                    c_qs = qs.filter(cate_second_id=cate_second_id)[:2]
+                    if c_qs:
+                        i += 1
+                        data = ShowIndexSerializer(c_qs, many=True, context=context).data
+                        data['shows'].append(
+                            dict(second_cate_id=cate_second_id, second_cate_name=second_cate['show_type']['name'],
+                                 data=data))
+                    if i >= 2:
+                        break
         return data
 
 
