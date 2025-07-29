@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'coupon',
     'home',
     'caiyicloud',
+    'ai_agent',
     # 'group_activity'
 ]
 
@@ -308,6 +309,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'caiyicloud': {
+            'handlers': ['console', 'fatal'],
+            'level': 'DEBUG',
+        },
+        'ai_agent': {
             'handlers': ['console', 'fatal'],
             'level': 'DEBUG',
         },

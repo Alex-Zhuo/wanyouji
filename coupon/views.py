@@ -15,18 +15,24 @@ from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
 
 
-class CouponViewSet(SerializerSelector, viewsets.ModelViewSet):
+class CouponViewSet(viewsets.ModelViewSet):
     queryset = Coupon.objects.filter(status=Coupon.STATUS_ON)
     permission_classes = [IsPermittedUser]
     serializer_class = CouponSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
 
+    @action(methods=['post'], detail=False)
+    def receive(self, request):
+        s = UserCouponRecordCreateSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        s.create(s.validated_data)
+        return Response()
 
-class UserCouponRecordViewSet(SerializerSelector, viewsets.ModelViewSet):
+
+class UserCouponRecordViewSet(viewsets.ModelViewSet):
     queryset = UserCouponRecord.objects.all()
     serializer_class = UserCouponRecordSerializer
-    serializer_class_create = UserCouponRecordCreateSerializer
     permission_classes = [IsPermittedUser]
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
     http_method_names = ['get', 'post']

@@ -69,17 +69,17 @@ class UserCouponRecordSerializer(serializers.ModelSerializer):
 
 
 class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
-    coupon_no = serializers.CharField(required=True)
+    no = serializers.CharField(required=True)
 
     class Meta:
         model = UserCouponRecord
-        fields = ['coupon_no']
+        fields = ['no']
 
     @atomic
     def create(self, validated_data):
         user = self.context.get('request').user
         validated_data['user'] = user
-        coupon = Coupon.objects.get(no=validated_data['coupon_no'])
+        coupon = Coupon.objects.get(no=validated_data['no'])
         # if coupon.stock <= 0:
         #     raise CustomAPIException('数量不足')
         if coupon.status == Coupon.STATUS_OFF:
