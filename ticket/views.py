@@ -13,7 +13,7 @@ from restframework_ext.pagination import StandardResultsSetPagination, DefaultNo
 from ticket.models import Seat, Venues, TicketColor, ShowProject, ShowCollectRecord, SessionSeat, TicketOrder, \
     SessionInfo, TicketFile, PerformerFocusRecord, ShowPerformer, ShowType, ShowUser, TicketUserCode, tiktok_goods_url, \
     tiktok_order_detail_url, TicketOrderRefund, ShowComment, ShowCommentImage, TicketBooking, TicketGiveRecord, \
-    TicketGiveDetail, ShowContentCategory
+    TicketGiveDetail, ShowContentCategory, ShowContentCategorySecond
 from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCreateSerializer, ShowProjectSerializer, \
     ShowProjectDetailSerializer, ShowCollectRecordSerializer, SessionSeatSerializer, TicketOrderSerializer, \
     SessionInfoSerializer, SessionInfoDetailSerializer, TicketFileCreateSerializer, \
@@ -29,7 +29,7 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
     TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, \
     TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer, \
-    VenuesCustomerDetailSerializer, ShowContentCategoryHomeSerializer
+    VenuesCustomerDetailSerializer, ShowContentCategoryHomeSerializer, ShowContentCategorySecondSerializer
 from restframework_ext.exceptions import CustomAPIException
 from django.utils import timezone
 from django.db.models import Max, Min
@@ -377,8 +377,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
 
     @action(methods=['get'], detail=False)
     def get_type(self, request):
-        qs = ShowType.objects.filter(is_use=True)
-        data = ShowTypeSerializer(qs, many=True).data
+        qs = ShowContentCategorySecond.objects.filter(is_use=True)
+        data = ShowContentCategorySecondSerializer(qs, many=True).data
         return Response(data)
 
     @action(methods=['get'], detail=True)

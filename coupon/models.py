@@ -21,7 +21,7 @@ class Coupon(UseNoAbstract):
     off_use = models.BooleanField('下架后是否可继续使用', default=True)
     user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
     require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
-    shows = models.ManyToManyField(ShowProject, verbose_name='可使用的演出项目', related_name='shows', blank=True)
+    shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
     limit_show_types = models.ManyToManyField(ShowType, verbose_name='可使用演出类型', related_name='show_types', blank=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     update_at = models.DateTimeField('更新时间', auto_now=True)

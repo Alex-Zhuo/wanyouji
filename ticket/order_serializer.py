@@ -9,7 +9,9 @@ from decimal import Decimal
 from ticket.serializers import get_origin
 from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, TheaterCard, TheaterCardChangeRecord, \
     UserAddress
-
+from datetime import datetime
+from django.utils import timezone
+import json
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
 
@@ -24,7 +26,52 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     express_address_id = serializers.IntegerField(required=False, label='地址ID', min_value=1)
     express_fee = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     show_user_ids = serializers.ListField(required=False)
-    coupon_nos = serializers.ListField(required=False)
+    coupon_no = serializers.CharField(required=False)
+
+    # def handle_coupon(self, coupon_no: str, actual_amount):
+    #     if coupon_no:
+    #         from coupon.models import UserCouponRecord, Coupon
+    #         try:
+    #             coupon_record = UserCouponRecord.objects.get(no=coupon_no, user=self.context.get('request').user)
+    #         except UserCouponRecord.DoesNotExist:
+    #             raise CustomAPIException(detail=u'优惠券信息有误')
+    #         try:
+    #             snapshot = json.loads(coupon_record.snapshot)
+    #             coupon = coupon_record.coupon
+    #             if actual_amount < coupon_record.require_amount:
+    #                 raise CustomAPIException(detail=u'未达到优惠券使用条件')
+    #             if coupon_record.used:
+    #                 raise CustomAPIException(detail=u'此优惠券已经被使用')
+    #             if coupon_record.expire_time < timezone.now().date():
+    #                 raise CustomAPIException(detail=u'此优惠券已经过期')
+    #             if not coupon.check_can_use():
+    #                 raise CustomAPIException(detail=u'此优惠券暂不能使用')
+    #             # if coupon.start_time > timezone.now().date():
+    #             #     raise CustomAPIException(detail=u'此优惠券还不能使用')
+    #             limit_show_types_ids = snapshot['show_types_ids']
+    #             limit_shows_nos = snapshot['shows_nos']
+    #             if limit_show_types_ids:
+    #                 from ticket.models import ShowProject
+    #                 try:
+    #                     show = ShowProject.objects.get(no=show_no)
+    #                 except ShowProject.DoesNotExist:
+    #                     raise CustomAPIException('找不到演出')
+    #                 if show.show_type.id not in limit_show_types_list:
+    #                     continue
+    #             limit_shows_list = list(coupon.shows.all().values_list('session_no', flat=True))
+    #             if limit_shows_list and show_no not in limit_shows_list:
+    #                 continue
+    #                     raise CustomAPIException(detail=u'当前商品不能使用此优惠券')
+    #         except Coupon.DoesNotExist:
+    #             raise CustomAPIException(detail=u'优惠券信息有误')
+    #
+    #         if coupon.type == Coupon.TYPE_EXPRESS_FEE:
+    #             amounts['express_fee'] = 0 if amounts['express_fee'] <= coupon.amount else amounts[
+    #                                                                                            'express_fee'] - coupon.amount
+    #         else:
+    #             amounts['actual_amount'] = 0 if amounts['actual_amount'] <= coupon.amount else amounts[
+    #                                                                                                'actual_amount'] - coupon.amount
+    #         return query_set, amounts
 
     def validate_express_address_id(self, value):
         if value:
@@ -283,7 +330,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id', 'mobile',
-                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids','coupon_nos']
+                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids', 'coupon_nos']
         read_only_fields = ['receipt']
 
 
@@ -517,7 +564,8 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         # 彩艺云下单
         from caiyicloud.models import CyOrder
         real_name_list = list(show_users.values('id_card', 'name')) if show_users else None
-        cy_order = CyOrder.order_create(ticket_order=inst, session=session, real_name_list=real_name_list, ticket_list=ticket_list)
+        cy_order = CyOrder.order_create(ticket_order=inst, session=session, real_name_list=real_name_list,
+                                        ticket_list=ticket_list)
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
