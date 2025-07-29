@@ -16,7 +16,7 @@ class DefaultQuestions(models.Model):
 
 class HistoryChat(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.CASCADE)
-    update_at = models.DateTimeField('最新提问时间')
+    update_at = models.DateTimeField('最新提问时间', null=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '对话历史记录'
@@ -24,13 +24,17 @@ class HistoryChat(models.Model):
     def __str__(self):
         return self.user.get_full_name()
 
+    @classmethod
+    def get_inst(cls, user):
+        inst, _ = cls.objects.get_or_create(user=user)
+        return inst
+
 
 class HistoryChatDetail(models.Model):
-    user = models.ForeignKey(HistoryChat, verbose_name='对话历史记录', on_delete=models.CASCADE)
+    hc = models.ForeignKey(HistoryChat, verbose_name='对话历史记录', on_delete=models.CASCADE)
     question = models.TextField('提问', max_length=2000)
     answer = models.TextField('回答')
-    create_at = models.DateTimeField('提问时间', auto_now_add=True)
-    answer_at = models.DateTimeField('提问时间', null=True, blank=True)
+    create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '对话历史明细'
