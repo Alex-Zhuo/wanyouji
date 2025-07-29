@@ -1,8 +1,8 @@
 # coding: utf-8
-from activity.views import ActivitiesViewSet, UserApplyRecordViewSet
 from rest_framework.routers import DefaultRouter
+
+from ai_agent.views import DefaultQuestionsViewSet
 
 router = DefaultRouter()
 
-router.register('acts', ActivitiesViewSet)
-router.register('apply', UserApplyRecordViewSet)
+router.register('questions', DefaultQuestionsViewSet)
