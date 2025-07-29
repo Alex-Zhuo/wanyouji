@@ -806,7 +806,7 @@ class ShowProject(UseNoAbstract):
             tp_qs = TicketPurchaseNotice.objects.filter(show=self)
             from ticket.serializers import TicketWatchingNoticeSerializer, TicketPurchaseNoticeSerializer
             show_cache['watching_notice'] = TicketWatchingNoticeSerializer(tw_qs, many=True).data
-            show_cache['purchase_notice'] = TicketPurchaseNoticeSerializer(tw_qs, many=True).data
+            show_cache['purchase_notice'] = TicketPurchaseNoticeSerializer(tp_qs, many=True).data
             redis.hset(redis_shows_copy_key, str(self.id), json.dumps(show_cache))
 
     @classmethod
