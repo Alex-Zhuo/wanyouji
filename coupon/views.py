@@ -22,7 +22,7 @@ class CouponViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False, http_method_names=['post'])
     def receive(self, request):
         s = UserCouponRecordCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
