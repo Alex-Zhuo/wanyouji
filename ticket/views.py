@@ -204,7 +204,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             # log.debug('end_retrieve')
             return Response(data)
 
-    @method_decorator(cache_page(30, key_prefix=PREFIX))
+    # @method_decorator(cache_page(30, key_prefix=PREFIX))
     def list(self, request, *args, **kwargs):
         # log.debug('开始加载项目')
         queryset = self.queryset
