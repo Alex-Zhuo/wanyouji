@@ -238,7 +238,7 @@ class TicketFileCacheSerializer(serializers.ModelSerializer):
 
     def get_color(self, obj):
         if obj.color:
-            data = TicketColorBaseSerializer(obj.color, context=self.context)
+            data = TicketColorBaseSerializer(obj.color, context=self.context).data
         else:
             data = dict(name=None, code=obj.color_code)
         return data
