@@ -316,7 +316,10 @@ class CyShowEvent(models.Model):
         else:
             cy_show = cy_show_qs.first()
             show = cy_show.show
-            ShowProject.objects.filter(id=show.id).update(**show_data)
+            for key, v in show_data.items():
+                setattr(show, key, v)
+            show.save(update_fields=list(show_data.keys()))
+            # ShowProject.objects.filter(id=show.id).update(**show_data)
             cy_show_qs.update(**cls_data)
         show.shows_detail_copy_to_pika()
         return cy_show
@@ -639,8 +642,12 @@ class CySession(models.Model):
         else:
             cy_session = cy_session_qs.first()
             session = cy_session.c_session
-            SessionInfo.objects.filter(id=session.id).update(**session_data)
+            # SessionInfo.objects.filter(id=session.id).update(**session_data)
             cy_session_qs.update(**cls_data)
+            for key, v in session_data.items():
+                setattr(session, key, v)
+            session.save(update_fields=list(session_data.keys()))
+
         # 修改多选
         id_types_list = api_data.get('id_types', [])
         if id_types_list:
@@ -884,8 +891,11 @@ class CyTicketType(models.Model):
                     tf = cy_ticket.ticket_file
                     if not tf.color:
                         tf_data['color_id'] = color_ids[color_index]
-                    TicketFile.objects.filter(id=tf.id).update(**tf_data)
                     cy_ticket_qs.update(**cls_data)
+                    # TicketFile.objects.filter(id=tf.id).update(**tf_data)
+                    for key, v in tf_data.items():
+                        setattr(tf, key, v)
+                    tf.save(update_fields=list(tf_data.keys()))
                 # 添加套票组成
                 ticket_pack_list = ticket_type.get('ticket_pack_list') or []
                 if ticket_pack_list:
