@@ -1666,7 +1666,7 @@ class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowContentCategory
-        fields = ['cate_id', 'title', 'data']
+        fields = ['cate_id', 'title', 'en_title', 'data']
 
 
 class TicketWatchingNoticeSerializer(serializers.ModelSerializer):

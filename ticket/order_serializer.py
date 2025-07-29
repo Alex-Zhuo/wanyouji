@@ -24,6 +24,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     express_address_id = serializers.IntegerField(required=False, label='地址ID', min_value=1)
     express_fee = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     show_user_ids = serializers.ListField(required=False)
+    coupon_nos = serializers.ListField(required=False)
 
     def validate_express_address_id(self, value):
         if value:
@@ -282,7 +283,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id', 'mobile',
-                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids']
+                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids','coupon_nos']
         read_only_fields = ['receipt']
 
 
