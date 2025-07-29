@@ -811,7 +811,8 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     # actions = [set_on_session, set_off_session, dy_set_on_session, dy_set_off_session, push_to_tiktok, 'change_end_at',
     #            'copy_session', refresh_from_tiktok, pull_maizuo, 'change_sale_time', set_delete, cancel_delete,
     #            set_sale_off, close_comment]
-    actions = [set_on_session, set_off_session, 'change_end_at','copy_session', 'change_sale_time', set_delete, cancel_delete,
+    actions = [set_on_session, set_off_session, 'change_end_at', 'copy_session', 'change_sale_time', set_delete,
+               cancel_delete,
                set_sale_off, close_comment]
     # autocomplete_fields = ['show', 'tiktok_store', 'main_session']
     autocomplete_fields = ['show', 'main_session']
@@ -2610,9 +2611,9 @@ admin.site.register(ShowUser, ShowUserAdmin)
 # admin.site.register(TiktokUser, TiktokUserAdmin)
 # admin.site.register(LiveRoomCps, LiveRoomCpsAdmin)
 # admin.site.register(ShortVideoCps, ShortVideoCpsAdmin)
-admin.site.register(MaiZuoTask, MaiZuoTaskAdmin)
+# admin.site.register(MaiZuoTask, MaiZuoTaskAdmin)
 admin.site.register(DownLoadTask, DownLoadTaskAdmin)
-admin.site.register(MaiZuoLoginLog, MaiZuoLoginLogAdmin)
+# admin.site.register(MaiZuoLoginLog, MaiZuoLoginLogAdmin)
 admin.site.register(TicketOrderExpress, TicketOrderExpressAdmin)
 admin.site.register(TicketGiveRecord, TicketGiveRecordAdmin)
 
@@ -2642,8 +2643,8 @@ technology_admin.register(ShowUser, ShowUserAdmin)
 # technology_admin.register(TiktokUser, TiktokUserAdmin)
 # technology_admin.register(LiveRoomCps, LiveRoomCpsAdmin)
 # technology_admin.register(ShortVideoCps, ShortVideoCpsAdmin)
-technology_admin.register(MaiZuoTask, MaiZuoTaskAdmin)
+# technology_admin.register(MaiZuoTask, MaiZuoTaskAdmin)
 technology_admin.register(DownLoadTask, DownLoadTaskAdmin)
-technology_admin.register(MaiZuoLoginLog, MaiZuoLoginLogAdmin)
+# technology_admin.register(MaiZuoLoginLog, MaiZuoLoginLogAdmin)
 technology_admin.register(TicketOrderExpress, TicketOrderExpressAdmin)
 technology_admin.register(TicketGiveRecord, TicketGiveRecordAdmin)
