@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from restframework_ext.models import UseNoAbstract
-from ticket.models import ShowProject, ShowType, TicketOrder
+from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond
 from caches import get_pika_redis, get_redis_name
 import uuid
 
@@ -22,7 +22,8 @@ class Coupon(UseNoAbstract):
     user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
     require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
-    limit_show_types = models.ManyToManyField(ShowType, verbose_name='可使用演出类型', related_name='show_types', blank=True)
+    limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
+                                              related_name='show_types_second', blank=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     update_at = models.DateTimeField('更新时间', auto_now=True)
 
@@ -107,11 +108,11 @@ class UserCouponRecord(UseNoAbstract):
         for show in coupon.shows.all():
             shows_ids.append(show.no)
             shows_names.append(show.name)
-        for f in coupon.limit_show_types.all():
+        for f in coupon.limit_show_types_second.all():
             show_types_ids.append(f.id)
             show_types_names.append(f.name)
         data = dict(name=coupon.name, no=coupon.no, amount=float(coupon.amount),
                     user_obtain_limit=coupon.user_obtain_limit,
-                    shows_nos=shows_ids, shows_names=shows_names, show_types_ids=show_types_ids,
+                    shows_nos=shows_ids, shows_names=shows_names, show_types_second_ids=show_types_ids,
                     show_types_names=show_types_names, user_tips=coupon.user_tips)
         return json.dumps(data)

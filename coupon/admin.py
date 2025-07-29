@@ -8,8 +8,8 @@ from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin
 class CouponAdmin(RemoveDeleteModelAdmin):
     list_display = ['no', 'name', 'amount', 'expire_time', 'status', 'user_obtain_limit', 'require_amount',
                     'create_at', 'update_at']
-    list_filter = ['expire_time', 'limit_show_types', 'status']
-    autocomplete_fields = ['shows', 'limit_show_types']
+    list_filter = ['expire_time', 'limit_show_types_second', 'status']
+    autocomplete_fields = ['shows', 'limit_show_types_second']
     readonly_fields = ['no']
 
 

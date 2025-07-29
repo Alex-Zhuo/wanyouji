@@ -330,7 +330,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id', 'mobile',
-                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids', 'coupon_nos']
+                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids', 'coupon_no']
         read_only_fields = ['receipt']
 
 
