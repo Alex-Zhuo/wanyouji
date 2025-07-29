@@ -506,7 +506,7 @@ class ShowTypeSerializer(ShowTypeBasicSerializer):
 
     class Meta:
         model = ShowType
-        fields = ['source_type', 'source_type_display']
+        fields = ShowTypeBasicSerializer.Meta.fields + ['source_type', 'source_type_display']
 
 
 class ShowContentCategorySerializer(serializers.ModelSerializer):

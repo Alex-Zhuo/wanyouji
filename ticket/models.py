@@ -193,6 +193,7 @@ class ShowThirdCategory(ShowCategoryAbstract):
 
 class ShowContentCategory(models.Model):
     title = models.CharField(max_length=20, verbose_name='分类名称')
+    color_code = models.CharField('色号', help_text='16进制色号', max_length=15, null=True)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序,首页展示前5项')
 
     class Meta:
@@ -205,7 +206,8 @@ class ShowContentCategory(models.Model):
     def show_content_copy_to_pika(self):
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
-            pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(dict(id=self.id, title=self.title)))
+            pika.hset(redis_show_content_copy_key, str(self.id),
+                      json.dumps(dict(id=self.id, title=self.title, color_code=self.color_code)))
 
     def get_index_data(self, context):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
@@ -3727,7 +3729,8 @@ class TicketOrder(models.Model):
         if hasattr(self, 'real_name_order'):
             for real_user in self.real_name_order.all():
                 # 减去已买的
-                TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply, is_get=False)
+                TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply,
+                                                         is_get=False)
 
     def cancel_code(self):
         TicketUserCode.objects.filter(order_id=self.id).update(status=TicketUserCode.STATUS_CANCEL, msg='退款作废')
