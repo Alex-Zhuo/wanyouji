@@ -377,7 +377,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
 
     @action(methods=['get'], detail=False)
     def get_type(self, request):
-        qs = ShowContentCategorySecond.objects.filter(is_use=True)
+        qs = ShowContentCategorySecond.objects.all()
         data = ShowContentCategorySecondSerializer(qs, many=True).data
         return Response(data)
 
