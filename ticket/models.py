@@ -655,12 +655,13 @@ class ShowProject(UseNoAbstract):
                                                    logo_mobile=logo_mobile_path, session_end_at=end_at)
             session, _ = SessionInfo.objects.get_or_create(show=project, start_at=sale_time,
                                                            end_at=end_at, has_seat=2, status=1)
-            colors = [['蓝色', '#5B9BD5'], ['浅绿', '#e2efda'], ['绿色', '#54BF31'], ['黄色', '#D5DB28'], ['紫色', '#9000FF'],
-                      ['粉色', '#E863C2'], ['红色', '#F80B0B'], ['黄色', '#FFFF00'], ['粉色', '#F96AAD'], ['橙色', '#EE6E06']]
             i = 0
+            qs = TicketColor.objects.all()
+            if not qs:
+                TicketColor.init_record()
+            color_ids = list(qs.values_list('id', flat=True))
             for price in show['prices']:
-                color, _ = TicketColor.objects.get_or_create(name=colors[i][0], code=colors[i][1])
-                level = TicketFile.objects.get_or_create(session=session, title=project.title, color=color,
+                level = TicketFile.objects.get_or_create(session=session, title=project.title, color_id=color_ids[i],
                                                          origin_price=Decimal(price), price=Decimal(price), stock=100)
                 i += 1
                 level.redis_stock()

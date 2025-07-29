@@ -906,6 +906,8 @@ class CyTicketType(models.Model):
                         pack_list.append(pack)
                     if pack_list:
                         cy_ticket.ticket_pack_list.set(pack_list)
+                # 改库存
+                tf.level.redis_stock()
                 # 改缓存
                 tf.redis_ticket_level_cache()
                 color_index += 1
@@ -914,6 +916,7 @@ class CyTicketType(models.Model):
                 show.price = show_price
                 show.save(update_fields=['price'])
                 show.shows_detail_copy_to_pika()
+
 
     @classmethod
     def get_seat_info(cls, biz_id):
