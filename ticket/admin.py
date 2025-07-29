@@ -236,8 +236,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
-
-    # exclude = ['dy_pay_config']
+    exclude = ['cate', 'show_type']
 
     def tiktok_code_display(self, obj):
         request = get_request()

@@ -512,7 +512,7 @@ class ShowTypeSerializer(ShowTypeBasicSerializer):
 class ShowContentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowContentCategory
-        fields = ['id', 'title']
+        fields = ['id', 'title', 'en_title']
 
 
 class ShowContentCategorySecondSerializer(serializers.ModelSerializer):

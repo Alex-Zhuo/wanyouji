@@ -193,6 +193,7 @@ class ShowThirdCategory(ShowCategoryAbstract):
 
 class ShowContentCategory(models.Model):
     title = models.CharField(max_length=20, verbose_name='分类名称')
+    en_title = models.CharField(max_length=50, verbose_name='分类英文名称', null=True)
     color_code = models.CharField('色号', help_text='16进制色号', max_length=15, null=True)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序,首页展示前5项')
 
@@ -207,11 +208,12 @@ class ShowContentCategory(models.Model):
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
             pika.hset(redis_show_content_copy_key, str(self.id),
-                      json.dumps(dict(id=self.id, title=self.title, color_code=self.color_code)))
+                      json.dumps(
+                          dict(id=self.id, title=self.title, color_code=self.color_code, en_title=self.en_title)))
 
     def get_index_data(self, context):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
-        data = dict(recent_num=qs.count(), shows=[], color_code=self.color_code)
+        data = dict(recent_num=qs.count(), shows=[], color_code=self.color_code, en_title=self.en_title)
         from caches import get_pika_redis, redis_show_content_second_key
         from ticket.serializers import ShowIndexSerializer
         with get_pika_redis() as pika:
@@ -559,9 +561,8 @@ class TikTokQualRecord(models.Model):
 class ShowProject(UseNoAbstract):
     title = models.CharField('节目名称', max_length=100, help_text='100个字内')
     cate_second = models.ForeignKey(ShowContentCategorySecond, verbose_name='分类', on_delete=models.CASCADE, null=True)
-    cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True,
-                             editable=False)
-    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE, editable=False)
+    cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE, null=True)
     venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
     lat = models.FloatField('纬度', default=0, help_text='场馆纬度')
     lng = models.FloatField('经度', default=0, help_text='场馆经度')
