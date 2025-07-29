@@ -211,7 +211,7 @@ class ShowContentCategory(models.Model):
 
     def get_index_data(self, context):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
-        data = dict(recent_num=qs.count(), shows=[])
+        data = dict(recent_num=qs.count(), shows=[], color_code=self.color_code)
         from caches import get_pika_redis, redis_show_content_second_key
         from ticket.serializers import ShowIndexSerializer
         with get_pika_redis() as pika:
