@@ -13,7 +13,7 @@ from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
 from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder, \
-    TicketUserCode, ShowContentCategory, ShowContentCategorySecond
+    TicketUserCode, ShowContentCategory, ShowContentCategorySecond, TicketColor
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -838,8 +838,13 @@ class CyTicketType(models.Model):
             ticket_stock_list = cy.ticket_stock([cy_session_id])
             ticket_stock_dict = dict()
             show_price = 0
+            qs = TicketColor.objects.all()
+            if not qs:
+                TicketColor.init_record()
+            color_ids = list(qs.values_list('id', flat=True))
             for ticket_stock in ticket_stock_list:
                 ticket_stock_dict[ticket_stock['ticket_type_id']] = ticket_stock
+            color_index = 0
             for ticket_type in ticket_types_list:
                 stock = 0
                 if ticket_stock_dict.get(ticket_type['id']):
@@ -867,13 +872,18 @@ class CyTicketType(models.Model):
                                color_code=ticket_type['color'],
                                desc=desc, status=status)
                 cy_ticket_qs = cls.objects.filter(cy_no=ticket_type['id'])
+                if color_index >= len(color_ids):
+                    color_index = 0
                 if not cy_ticket_qs:
+                    tf_data['color_id'] = color_ids[color_index]
                     tf = TicketFile.objects.create(**tf_data)
                     cls_data['ticket_file'] = tf
                     cy_ticket = cls.objects.create(**cls_data)
                 else:
                     cy_ticket = cy_ticket_qs.first()
                     tf = cy_ticket.ticket_file
+                    if not tf.color:
+                        tf_data['color_id'] = color_ids[color_index]
                     TicketFile.objects.filter(id=tf.id).update(**tf_data)
                     cy_ticket_qs.update(**cls_data)
                 # 添加套票组成
@@ -1008,11 +1018,11 @@ class CyOrder(models.Model):
                 seats = []
                 for seat in t_info['seat_infos']:
                     seat_data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
-                                photo_url=None)
+                                     photo_url=None)
                     if session.one_id_one_ticket and real_name_list:
                         seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                               cellphone=real_name_list[i]['mobile'],
-                                               name=real_name_list[i]['name'], type=1)
+                                                    cellphone=real_name_list[i]['mobile'],
+                                                    name=real_name_list[i]['name'], type=1)
                         i += 1
                     seats.append(seat_data)
                 ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],

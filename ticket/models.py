@@ -2044,6 +2044,25 @@ class TicketColor(models.Model):
     def __str__(self):
         return self.name
 
+    INIT_DATA = [
+        ('#19D9E7', '绿色'),
+        ('#FFAE00', '橙色'),
+        ('#EE6E06', '橙色'),
+        ('#F96AAD', '粉色'),
+        ('#FFFF00', '黄色'),
+        ('#5B9BD5', '蓝色'),
+        ('#e2efda', '浅绿'),
+        ('#54BF31', '绿色'),
+        ('#D5DB28', '黄色'),
+        ('#E863C2', '粉色'),
+        ('#F80B0B', '红色'),
+    ]
+
+    @classmethod
+    def init_record(cls):
+        for v in cls.INIT_DATA:
+            cls.objects.get_or_create(code=v[0], name=v[1])
+
 
 class TicketFile(models.Model):
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE, related_name='session_level')
