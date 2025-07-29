@@ -6088,7 +6088,7 @@ class TicketPurchaseNotice(TicketNoticeAbstract):
         verbose_name_plural = verbose_name = '购票须知'
 
 
-class TicketWatchingNotices(TicketNoticeAbstract):
+class TicketWatchingNotice(TicketNoticeAbstract):
 
     def __str__(self):
         return self.title

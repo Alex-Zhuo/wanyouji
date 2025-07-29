@@ -14,7 +14,7 @@ from ticket.models import TicketOrder, ShowProject, ShowType, Venues, TicketColo
     LiveRoomCpsItem, CommonPlanCps, CpsDirectional, VenuesLayers, ShowComment, ShowCommentImage, TicketBooking, \
     TicketBookingItem, MaiZuoTask, TicketOrderChangePrice, DownLoadTask, SessionChangeSaleTimeRecord, \
     ShowContentCategory, ShowPerformerBanner, MaiZuoLoginLog, TicketOrderExpress, TicketGiveRecord, TicketGiveDetail, \
-    TicketOrderRealName, ShowContentCategorySecond
+    TicketOrderRealName, ShowContentCategorySecond, TicketPurchaseNotice, TicketWatchingNotice
 import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -213,6 +213,16 @@ class ShowNotificationInline(admin.TabularInline):
     extra = 0
 
 
+class TicketPurchaseNoticeInline(admin.TabularInline):
+    model = TicketPurchaseNotice
+    extra = 0
+
+
+class TicketWatchingNoticeInline(admin.TabularInline):
+    model = TicketWatchingNotice
+    extra = 0
+
+
 # class KsGoodsImageInline(admin.TabularInline):
 #     model = KsGoodsImage
 #     extra = 0
@@ -232,7 +242,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     autocomplete_fields = ['cate_second', 'venues', 'performer', 'flag']
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
-    inlines = [ShowNotificationInline, ShowsDetailImageInline]
+    inlines = [TicketPurchaseNoticeInline, TicketWatchingNoticeInline, ShowsDetailImageInline]
     readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
