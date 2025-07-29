@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from coupon.models import Coupon, UserCouponRecord
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
     UserCouponRecordAvailableSerializer
+from home.views import ReturnNoDetailViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.mixins import SerializerSelector
 from restframework_ext.pagination import StandardResultsSetPagination
@@ -15,7 +16,7 @@ from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
 
 
-class CouponViewSet(viewsets.ModelViewSet):
+class CouponViewSet(ReturnNoDetailViewSet):
     queryset = Coupon.objects.filter(status=Coupon.STATUS_ON)
     permission_classes = [IsPermittedUser]
     serializer_class = CouponSerializer
@@ -30,7 +31,7 @@ class CouponViewSet(viewsets.ModelViewSet):
         return Response()
 
 
-class UserCouponRecordViewSet(viewsets.ModelViewSet):
+class UserCouponRecordViewSet(ReturnNoDetailViewSet):
     queryset = UserCouponRecord.objects.all()
     serializer_class = UserCouponRecordSerializer
     permission_classes = [IsPermittedUser]
