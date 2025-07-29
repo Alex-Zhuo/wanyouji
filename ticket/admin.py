@@ -807,9 +807,11 @@ close_comment.short_description = '关闭评论'
 
 
 class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
-    list_display = ['id', 'info', 'dy_info', 'has_seat', 'order_limit_num', 'create_at', 'op']
-    actions = [set_on_session, set_off_session, dy_set_on_session, dy_set_off_session, push_to_tiktok, 'change_end_at',
-               'copy_session', refresh_from_tiktok, pull_maizuo, 'change_sale_time', set_delete, cancel_delete,
+    list_display = ['id', 'info', 'has_seat', 'order_limit_num', 'create_at', 'op']
+    # actions = [set_on_session, set_off_session, dy_set_on_session, dy_set_off_session, push_to_tiktok, 'change_end_at',
+    #            'copy_session', refresh_from_tiktok, pull_maizuo, 'change_sale_time', set_delete, cancel_delete,
+    #            set_sale_off, close_comment]
+    actions = [set_on_session, set_off_session, 'change_end_at','copy_session', 'change_sale_time', set_delete, cancel_delete,
                set_sale_off, close_comment]
     # autocomplete_fields = ['show', 'tiktok_store', 'main_session']
     autocomplete_fields = ['show', 'main_session']
@@ -845,9 +847,9 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
         html += '<p>演出结束时间：{}</p>'.format(obj.end_at.strftime('%Y-%m-%d %H:%M') if obj.end_at else '')
         html += '<p>场次备注：{}</p>'.format(obj.desc or '')
         html += '<p>状态：{}</p>'.format(obj.get_status_display())
-        html += '<p>抖音状态：{}</p>'.format(obj.get_dy_status_display())
-        if obj.is_ks_session:
-            html += '<p>快手状态：{}</p>'.format(obj.ks_session.get_status_display())
+        # html += '<p>抖音状态：{}</p>'.format(obj.get_dy_status_display())
+        # if obj.is_ks_session:
+        #     html += '<p>快手状态：{}</p>'.format(obj.ks_session.get_status_display())
         html += '<p>是否关闭评论：{}</p>'.format('是' if obj.close_comment else '否')
         html += ' </div>'
         return mark_safe(html)
@@ -883,13 +885,13 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
         else:
             html += '<button type="button" class="el-button el-button--warning el-button--small item_set_off_session" ' \
                     'style="margin-top:8px" alt={}>下架</button><br>'.format(obj.id)
-        if obj.push_status == obj.PUSH_SUCCESS and obj.status == obj.STATUS_ON:
-            if obj.dy_status == obj.STATUS_OFF:
-                html += '<button type="button" class="el-button el-button--success el-button--small item_dy_set_on_session" ' \
-                        'style="margin-top:8px" alt={}>抖音上架</button><br>'.format(obj.id)
-            else:
-                html += '<button type="button" class="el-button el-button--warning el-button--small item_dy_set_off_session" ' \
-                        'style="margin-top:8px" alt={}>抖音下架</button><br>'.format(obj.id)
+        # if obj.push_status == obj.PUSH_SUCCESS and obj.status == obj.STATUS_ON:
+        #     if obj.dy_status == obj.STATUS_OFF:
+        #         html += '<button type="button" class="el-button el-button--success el-button--small item_dy_set_on_session" ' \
+        #                 'style="margin-top:8px" alt={}>抖音上架</button><br>'.format(obj.id)
+        #     else:
+        #         html += '<button type="button" class="el-button el-button--warning el-button--small item_dy_set_off_session" ' \
+        #                 'style="margin-top:8px" alt={}>抖音下架</button><br>'.format(obj.id)
         start_at = obj.start_at.strftime('%Y-%m-%dT%H:%M') if obj.start_at else ''
         end_at = obj.end_at.strftime('%Y-%m-%dT%H:%M') if obj.end_at else ''
         html += '<button type="button" class="el-button el-button--primary el-button--small item_copy_session" ' \
@@ -899,16 +901,16 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                                                                                                            obj.has_seat)
         html += '<button type="button" class="el-button el-button--success el-button--small item_change_end_at" ' \
                 'style="margin-top:8px" alt={}>推迟/延后</button><br>'.format(obj.id)
-        if obj.tiktok_store:
-            html += '<button type="button" class="el-button el-button--success el-button--small item_change_sale_time" ' \
-                    'style="margin-top:8px" alt={}>修改抖音开售时间</button><br>'.format(obj.id)
-        html += '<button type="button" class="el-button el-button--warning el-button--small item_push_to_tiktok" ' \
-                'style="margin-top:8px" alt={}>推送商品到抖音</button><br>'.format(obj.id)
-        if obj.has_seat == obj.SEAT_HAS and obj.pull_mz_status not in [obj.PULL_SUCCESS, obj.PULL_APPROVE]:
-            to = TicketOrder.objects.filter(session_id=obj.id)
-            if not to:
-                html += '<button type="button" class="el-button el-button--primary el-button--small item_pull_maizuo" ' \
-                        'style="margin-top:8px" alt={}>初始化麦座座位</button><br>'.format(obj.id)
+        # if obj.tiktok_store:
+        #     html += '<button type="button" class="el-button el-button--success el-button--small item_change_sale_time" ' \
+        #             'style="margin-top:8px" alt={}>修改抖音开售时间</button><br>'.format(obj.id)
+        # html += '<button type="button" class="el-button el-button--warning el-button--small item_push_to_tiktok" ' \
+        #         'style="margin-top:8px" alt={}>推送商品到抖音</button><br>'.format(obj.id)
+        # if obj.has_seat == obj.SEAT_HAS and obj.pull_mz_status not in [obj.PULL_SUCCESS, obj.PULL_APPROVE]:
+        #     to = TicketOrder.objects.filter(session_id=obj.id)
+        #     if not to:
+        #         html += '<button type="button" class="el-button el-button--primary el-button--small item_pull_maizuo" ' \
+        #                 'style="margin-top:8px" alt={}>初始化麦座座位</button><br>'.format(obj.id)
         # if obj.is_ks_session:
         #     name_data = ['快手', 'ks']
         #     if obj.ks_session.push_status in [KsGoodsConfig.PUSH_SUCCESS, KsGoodsConfig.PUSH_AUTH_FAIL,
