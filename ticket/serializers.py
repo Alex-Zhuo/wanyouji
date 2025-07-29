@@ -517,14 +517,14 @@ class ShowContentCategorySerializer(serializers.ModelSerializer):
 
 class ShowContentCategorySecondSerializer(serializers.ModelSerializer):
     show_type = ShowTypeBasicSerializer()
-    name = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField()
 
-    def get_name(self, obj):
+    def get_title(self, obj):
         return str(obj)
 
     class Meta:
         model = ShowContentCategorySecond
-        fields = ['id', 'show_type', 'name']
+        fields = ['id', 'show_type', 'title']
 
 
 class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
