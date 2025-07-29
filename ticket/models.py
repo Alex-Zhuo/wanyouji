@@ -324,7 +324,7 @@ class ShowType(models.Model):
     category = models.ForeignKey(ShowTopCategory, verbose_name='抖音类目', related_name='cate', null=True, blank=True,
                                  on_delete=models.SET_NULL, editable=False)
     cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
-                                   blank=True, on_delete=models.SET_NULL)
+                                   blank=True, on_delete=models.SET_NULL, help_text='彩艺云用才选')
     is_use = models.BooleanField('是否启用', default=True)
     slug = models.CharField('标识', null=True, blank=True, max_length=15)
 

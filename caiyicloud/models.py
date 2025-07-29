@@ -13,7 +13,8 @@ from typing import List, Dict
 from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
 from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder, \
-    TicketUserCode, ShowContentCategory, ShowContentCategorySecond, TicketColor
+    TicketUserCode, ShowContentCategory, ShowContentCategorySecond, TicketColor, TicketWatchingNotice, \
+    TicketPurchaseNotice
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -284,15 +285,6 @@ class CyShowEvent(models.Model):
         show_type = show_second_cate.show_type
         cate = show_second_cate.cate
         venue = CyVenue.init_venue(event_detail['venue_id'])
-        notice = ''
-        if event_detail.get('watching_notices'):
-            notice += '观演须知:\n'
-            for nt in event_detail['watching_notices']:
-                notice += f"{nt['title']}:\n{nt['content']}\n"
-        if event_detail.get('purchase_notices'):
-            notice += '购买须知:\n'
-            for nt in event_detail['purchase_notices']:
-                notice += f"{nt['title']}:\n{nt['content']}\n"
         logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
         # 保存网络图片
         logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
@@ -300,7 +292,7 @@ class CyShowEvent(models.Model):
                          venues=venue, lat=venue.lat,
                          lng=venue.lng,
                          city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
-                         notice=notice, status=cls.get_show_status(event_detail['state']),
+                         status=cls.get_show_status(event_detail['state']),
                          logo_mobile=logo_mobile_path)
         cy_show_qs = cls.objects.filter(event_id=event_id)
         snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
@@ -321,6 +313,12 @@ class CyShowEvent(models.Model):
             show.save(update_fields=list(show_data.keys()))
             # ShowProject.objects.filter(id=show.id).update(**show_data)
             cy_show_qs.update(**cls_data)
+        if event_detail.get('watching_notices'):
+            for nt in event_detail['watching_notices']:
+                TicketWatchingNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
+        if event_detail.get('purchase_notices'):
+            for nt in event_detail['purchase_notices']:
+                TicketPurchaseNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
         show.shows_detail_copy_to_pika()
         return cy_show
     # except Exception as e:
@@ -916,7 +914,6 @@ class CyTicketType(models.Model):
                 show.price = show_price
                 show.save(update_fields=['price'])
                 show.shows_detail_copy_to_pika()
-
 
     @classmethod
     def get_seat_info(cls, biz_id):

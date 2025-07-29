@@ -37,6 +37,7 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
     permission_classes = [IsPermittedUser]
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
     http_method_names = ['get', 'post']
+    filter_fields = ['status']
 
     @action(methods=['post'], detail=False)
     def get_available(self, request):
