@@ -70,9 +70,6 @@ class UserCouponRecord(UseNoAbstract):
 
     def save_common(self):
         fields = ['snapshot']
-        if not self.no:
-            self.no = uuid.uuid4().hex
-            fields.append('no')
         self.snapshot = self.get_snapshot()
         self.save(update_fields=fields)
 
