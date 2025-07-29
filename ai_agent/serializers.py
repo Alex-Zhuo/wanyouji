@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import logging
 from rest_framework import serializers
 
-from ai_agent.models import DefaultQuestions
+from ai_agent.models import DefaultQuestions, HistoryChatDetail
 
 log = logging.getLogger(__name__)
 
@@ -13,3 +13,9 @@ class DefaultQuestionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DefaultQuestions
         fields = ['title']
+
+
+class HistoryChatDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HistoryChatDetail
+        fields = ['question', 'answer', 'create_at', 'answer_at']

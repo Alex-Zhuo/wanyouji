@@ -105,13 +105,13 @@ class UserCouponRecord(UseNoAbstract):
         show_types_ids = []
         show_types_names = []
         for show in coupon.shows.all():
-            shows_ids.append(show.id)
+            shows_ids.append(show.no)
             shows_names.append(show.name)
         for f in coupon.limit_show_types.all():
             show_types_ids.append(f.id)
             show_types_names.append(f.name)
         data = dict(name=coupon.name, no=coupon.no, amount=float(coupon.amount),
                     user_obtain_limit=coupon.user_obtain_limit,
-                    shows_ids=shows_ids, shows_names=shows_names, show_types_ids=show_types_ids,
-                    show_types_names=show_types_names)
+                    shows_nos=shows_ids, shows_names=shows_names, show_types_ids=show_types_ids,
+                    show_types_names=show_types_names, user_tips=coupon.user_tips)
         return json.dumps(data)
