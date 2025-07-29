@@ -30,6 +30,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     coupon_no = serializers.CharField(required=False)
 
     def handle_coupon(self, show, coupon_no: str, actual_amount):
+        coupon_record = None
         if coupon_no:
             from coupon.models import UserCouponRecord, Coupon
             try:
@@ -56,7 +57,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                 raise CustomAPIException(detail=u'优惠券信息有误')
             coupon_amount = snapshot['amount']
             actual_amount = 0 if actual_amount <= coupon_amount else actual_amount - coupon_amount
-        return actual_amount
+        return actual_amount, coupon_record
 
     def validate_express_address_id(self, value):
         if value:
@@ -174,10 +175,10 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             log.debug('b,{},{}'.format(amount, actual_amount))
             raise CustomAPIException('金额错误')
 
-    def check_can_use_theater_card(self, multiply, pay_type, show_type, user):
+    def check_can_use_theater_card(self, multiply, pay_type, show_type, user, is_coupon=False):
         user_card = None
         user_buy_inst = None
-        if pay_type == Receipt.PAY_CARD_JC:
+        if not is_coupon and pay_type == Receipt.PAY_CARD_JC:
             if show_type == ShowType.dkxj():
                 # 剧场类型而且是用余额支付，才算剧场折扣
                 user_card = TheaterCardUserRecord.get_inst(user)
@@ -327,6 +328,8 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         is_tiktok, is_ks, is_xhs = get_origin(request)
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
+        is_coupon = True if validated_data.get('coupon_no') else False
+
         self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
         if session.has_seat == SessionInfo.SEAT_NO:
             raise CustomAPIException('下单错误，无需选择座位')
@@ -355,15 +358,19 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user)
+        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+                                                                      is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, session_seat_list, discount_type = SessionSeat.get_order_amount(
             user, session,
             ticket_list,
-            pay_type, is_tiktok, express_fee)
+            pay_type, is_tiktok, express_fee, is_coupon=is_coupon)
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
                                                express_fee)
+        if is_coupon:
+            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+                                                              actual_amount=actual_amount)
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data['discount_type'] = discount_type
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
@@ -413,6 +420,7 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         is_tiktok, is_ks, is_xhs = get_origin(request)
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
+        is_coupon = True if validated_data.get('coupon_no') else False
         # 这里验证了邮费
         self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
         if session.has_seat == SessionInfo.SEAT_HAS:
@@ -433,12 +441,13 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user)
+        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+                                                                      is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
             user,
             ticket_list, pay_type, session,
-            is_tiktok, express_fee)
+            is_tiktok, express_fee, is_coupon=is_coupon)
         # if real_multiply != validated_data['multiply']:
         #     raise CustomAPIException('选座数量错误，请重新选座')
         # 加上邮费
@@ -497,6 +506,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         is_tiktok, is_ks, is_xhs = get_origin(request)
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
+        is_coupon = True if validated_data.get('coupon_no') else False
         # 这里验证了邮费
         self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
         if session.has_seat == SessionInfo.SEAT_HAS:
@@ -517,12 +527,13 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user)
+        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+                                                                      is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
             user,
             ticket_list, pay_type, session,
-            is_tiktok, express_fee)
+            is_tiktok, express_fee, is_coupon=is_coupon)
         # 加上邮费
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,

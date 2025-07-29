@@ -223,7 +223,7 @@ class ShowContentCategory(models.Model):
                 i = 0
                 for second_cate in second_cate_list['show_type_list']:
                     cate_second_id = int(second_cate['id'])
-                    c_qs = qs.filter(cate_second_id=cate_second_id)[:2]
+                    c_qs = qs.filter(cate_second_id=cate_second_id)[:8]
                     if c_qs:
                         i += 1
                         show_data = ShowIndexSerializer(c_qs, many=True, context=context).data
@@ -2341,7 +2341,8 @@ class TicketFile(models.Model):
         return data
 
     @classmethod
-    def get_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, session, is_tiktok=False, express_fee=0):
+    def get_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, session, is_tiktok=False, express_fee=0,
+                                 is_coupon=False):
         total_multiply = 0
         amount = 0
         actual_amount = 0
@@ -2858,7 +2859,8 @@ class SessionSeat(models.Model):
         return ticket_ids
 
     @classmethod
-    def get_order_amount(cls, user, session, ticket_list: list, pay_type, is_tiktok=False, express_fee=0):
+    def get_order_amount(cls, user, session, ticket_list: list, pay_type, is_tiktok=False, express_fee=0,
+                         is_coupon=False):
         from caches import get_redis, seat_lock, session_seat_key
         redis = get_redis()
         multiply = 0
@@ -2867,28 +2869,30 @@ class SessionSeat(models.Model):
         ticket = dict()
         discount_type = TicketOrder.DISCOUNT_DEFAULT
         session_seat_list = []
-        tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
-        if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
-            old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
-            old_card_detail = old_card_qs.first()
-            if old_card_detail:
-                card_amount = 0
-                for data in ticket_list:
-                    inst = data.get('seat')
-                    if inst:
-                        ticket_level = inst.ticket_level
-                        price, _ = ticket_level.get_price(old_card_detail.card, tc_card, pay_type, 1, True)
-                        card_amount += price
-                    else:
-                        raise CustomAPIException('下单失败，请重新选择')
-                if old_card_detail.amount > card_amount + express_fee:
-                    use_old_card = True
-                    card = old_card_detail.card
-            log.debug(use_old_card)
-        if not card:
-            card = TheaterCard.get_inst()
+        tc_card = None
+        if not is_coupon:
+            tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
+            if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
+                old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
+                old_card_detail = old_card_qs.first()
+                if old_card_detail:
+                    card_amount = 0
+                    for data in ticket_list:
+                        inst = data.get('seat')
+                        if inst:
+                            ticket_level = inst.ticket_level
+                            price, _ = ticket_level.get_price(old_card_detail.card, tc_card, pay_type, 1, True)
+                            card_amount += price
+                        else:
+                            raise CustomAPIException('下单失败，请重新选择')
+                    if old_card_detail.amount > card_amount + express_fee:
+                        use_old_card = True
+                        card = old_card_detail.card
+                log.debug(use_old_card)
+            if not card:
+                card = TheaterCard.get_inst()
         for data in ticket_list:
             kk = session_seat_key.format(data['level_id'], data['seat_id'])
             if redis.setnx(kk, 1):
@@ -2931,7 +2935,7 @@ class SessionSeat(models.Model):
                     raise CustomAPIException('座位{}已被占用，请重新选座'.format(str(inst)))
             else:
                 raise CustomAPIException('座位选择错误，请重新选座，')
-        if pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if not is_coupon and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * account.get_discount()

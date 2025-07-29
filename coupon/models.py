@@ -127,3 +127,9 @@ class UserCouponRecord(UseNoAbstract):
         if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
             can_use = True
         return can_use
+
+    def set_use(self, order):
+        self.order = order
+        self.status = self.STATUS_USE
+        self.used_time = timezone.now()
+        self.save(update_fields=['used_time'])
