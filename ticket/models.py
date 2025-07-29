@@ -599,7 +599,7 @@ class ShowProject(UseNoAbstract):
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
     content = models.TextField('节目介绍', null=True)
-    notice = models.TextField('购票须知')
+    notice = models.TextField('购票须知', null=True, editable=False)
     other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
     STATUS_ON = 1
     STATUS_OFF = 0
