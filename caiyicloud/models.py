@@ -898,6 +898,7 @@ class CyTicketType(models.Model):
                         cy_ticket.ticket_pack_list.set(pack_list)
                 # 改缓存
                 tf.redis_ticket_level_cache()
+                color_index += 1
             show = cy_session.event.show
             if show.price <= 0 or show.price > show_price:
                 show.price = show_price

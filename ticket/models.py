@@ -2056,6 +2056,7 @@ class TicketColor(models.Model):
         ('#D5DB28', '黄色'),
         ('#E863C2', '粉色'),
         ('#F80B0B', '红色'),
+        ('#2E8B57', '深绿色'),
     ]
 
     @classmethod
