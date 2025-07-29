@@ -207,9 +207,9 @@ class ShowContentCategory(models.Model):
     def show_content_copy_to_pika(self):
         from caches import get_pika_redis, redis_show_content_copy_key
         with get_pika_redis() as pika:
-            pika.hset(redis_show_content_copy_key, str(self.id),
-                      json.dumps(
-                          dict(id=self.id, title=self.title, color_code=self.color_code, en_title=self.en_title)))
+            from ticket.serializers import ShowContentCategorySerializer
+            data = ShowContentCategorySerializer(self).data
+            pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(data))
 
     def get_index_data(self, context):
         qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
