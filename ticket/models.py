@@ -778,7 +778,7 @@ class ShowProject(UseNoAbstract):
             config = get_config()
             domain = config.get('template_url')
             show_dict = model_to_dict(self)
-            pop_list = ['no', 'title', 'lat', 'lng', 'content', 'notice', 'display_order', 'is_test', 'status', 'cate',
+            pop_list = ['no', 'title', 'lat', 'lng', 'content', 'display_order', 'is_test', 'status', 'cate',
                         'venues', 'show_type', 'is_recommend', 'dy_show_date']
             show_cache = dict()
             for key in pop_list:
@@ -802,6 +802,11 @@ class ShowProject(UseNoAbstract):
             show_cache['sale_time_timestamp'] = get_timestamp(self.sale_time) if self.sale_time else None
             if hasattr(self, 'cy_show'):
                 show_cache['cy_no'] = self.cy_show.event_id
+            tw_qs = TicketWatchingNotice.objects.filter(show=self)
+            tp_qs = TicketPurchaseNotice.objects.filter(show=self)
+            from ticket.serializers import TicketWatchingNoticeSerializer, TicketPurchaseNoticeSerializer
+            show_cache['watching_notice'] = TicketWatchingNoticeSerializer(tw_qs, many=True).data
+            show_cache['purchase_notice'] = TicketPurchaseNoticeSerializer(tw_qs, many=True).data
             redis.hset(redis_shows_copy_key, str(self.id), json.dumps(show_cache))
 
     @classmethod

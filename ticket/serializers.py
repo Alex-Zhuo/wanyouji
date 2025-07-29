@@ -9,7 +9,7 @@ from ticket.models import Venues, Seat, TicketColor, ShowProject, ShowCollectRec
     SessionSeat, TicketOrder, TicketUserCode, ShowPerformer, PerformerFlag, PerformerFocusRecord, VenuesLogoImage, \
     ShowType, ShowsDetailImage, VenuesDetailImage, ShowUser, SessionChangeRecord, VenuesLayers, ShowComment, \
     ShowCommentImage, TicketBooking, TicketOrderChangePrice, ShowContentCategory, ShowPerformerBanner, TicketGiveRecord, \
-    TicketGiveDetail, TicketOrderRealName, ShowContentCategorySecond
+    TicketGiveDetail, TicketOrderRealName, ShowContentCategorySecond, TicketWatchingNotice, TicketPurchaseNotice
 import json
 from mall.models import Receipt, UserAddress
 from django.utils import timezone
@@ -512,7 +512,7 @@ class ShowTypeSerializer(ShowTypeBasicSerializer):
 class ShowContentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowContentCategory
-        fields = [ 'title', 'en_title']
+        fields = ['title', 'en_title']
 
 
 class ShowContentCategorySecondSerializer(serializers.ModelSerializer):
@@ -1667,3 +1667,15 @@ class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowContentCategory
         fields = ['cate_id', 'title', 'data']
+
+
+class TicketWatchingNoticeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketWatchingNotice
+        fields = ['title', 'content']
+
+
+class TicketPurchaseNoticeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketPurchaseNotice
+        fields = ['title', 'content']
