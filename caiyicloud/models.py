@@ -907,7 +907,7 @@ class CyTicketType(models.Model):
                     if pack_list:
                         cy_ticket.ticket_pack_list.set(pack_list)
                 # 改库存
-                tf.level.redis_stock()
+                tf.redis_stock()
                 # 改缓存
                 tf.redis_ticket_level_cache()
                 color_index += 1
