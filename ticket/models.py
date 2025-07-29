@@ -6063,3 +6063,35 @@ class TicketGiveDetail(models.Model):
 
     def __str__(self):
         return str(self.ticket_code.session_seat)
+
+
+class TicketNoticeAbstract(models.Model):
+    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.CASCADE, related_name='+')
+    title = models.CharField('标题', max_length=200)
+    content = models.TextField('内容', max_length=2000)
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        abstract = True
+        ordering = ['display_order']
+
+
+class TicketPurchaseNotice(TicketNoticeAbstract):
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name_plural = verbose_name = '购票须知'
+
+
+class TicketWatchingNotices(TicketNoticeAbstract):
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name_plural = verbose_name = '观演须知'
