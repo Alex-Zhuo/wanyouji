@@ -6,7 +6,7 @@ from django.conf import settings
 from restframework_ext.models import UseNoAbstract
 from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond
 from caches import get_pika_redis, get_redis_name
-import uuid
+import json
 
 
 class Coupon(UseNoAbstract):
@@ -23,7 +23,7 @@ class Coupon(UseNoAbstract):
     require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
     limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
-                                              related_name='show_types_second', blank=True)
+                                                     related_name='show_types_second', blank=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     update_at = models.DateTimeField('更新时间', auto_now=True)
 
@@ -116,3 +116,14 @@ class UserCouponRecord(UseNoAbstract):
                     shows_nos=shows_ids, shows_names=shows_names, show_types_second_ids=show_types_ids,
                     show_types_names=show_types_names, user_tips=coupon.user_tips)
         return json.dumps(data)
+
+    def check_can_show_use(self, show: ShowProject):
+        snapshot = json.loads(self.snapshot)
+        limit_show_types_second_ids = snapshot['show_types_second_ids']
+        limit_shows_nos = snapshot['shows_nos']
+        can_use = False
+        if not (limit_show_types_second_ids and show.cate_second.id not in limit_show_types_second_ids):
+            can_use = True
+        if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
+            can_use = True
+        return can_use

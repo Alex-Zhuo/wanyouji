@@ -1523,7 +1523,7 @@ class SessionInfo(UseNoAbstract):
         session_id = session_dict.pop('id')
         session_dict.pop('no', None)
         session_dict['show_id'] = session_dict.pop('show')
-        session_dict['tiktok_store_id'] = session_dict.pop('tiktok_store')
+        # session_dict['tiktok_store_id'] = session_dict.pop('tiktok_store')
         session_dict['express_template_id'] = session_dict.pop('express_template')
         session_dict['product_id'] = None
         session_dict['fail_msg'] = None

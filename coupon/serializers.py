@@ -113,17 +113,12 @@ class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
             coupon = record.coupon
             if not coupon.check_can_use():
                 continue
-            limit_show_types_list = list(coupon.limit_show_types.all().values_list('id', flat=True))
-            if limit_show_types_list:
-                from ticket.models import ShowProject
-                try:
-                    show = ShowProject.objects.get(no=show_no)
-                except ShowProject.DoesNotExist:
-                    raise CustomAPIException('找不到演出')
-                if show.show_type.id not in limit_show_types_list:
-                    continue
-            limit_shows_list = list(coupon.shows.all().values_list('session_no', flat=True))
-            if limit_shows_list and show_no not in limit_shows_list:
-                continue
-            res.append(record)
+            from ticket.models import ShowProject
+            try:
+                show = ShowProject.objects.get(no=show_no)
+            except ShowProject.DoesNotExist:
+                raise CustomAPIException('找不到演出')
+            can_use = record.check_can_show_use(show)
+            if can_use:
+                res.append(record)
         return res
