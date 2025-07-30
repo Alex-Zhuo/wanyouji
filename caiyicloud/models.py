@@ -1025,8 +1025,8 @@ class CyOrder(models.Model):
         if session.is_real_name_buy and not real_name_list:
             raise CustomAPIException('请选择实名认证观影人')
         cy_session = session.cy_session
-        ticket_list = []
         delivery_method = cy_session.delivery_methods.first()
+        cy_ticket_list  = []
         i = 0
         if biz_id:
             # 有座下单
@@ -1043,7 +1043,7 @@ class CyOrder(models.Model):
                                                 name=real_name_list[i]['name'], type=1)
                     i += 1
                     seats.append(seat_data)
-                ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
+                cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
                                         delivery_method=delivery_method.code,
                                         ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
                                         qty=t_info['count'],
@@ -1077,7 +1077,7 @@ class CyOrder(models.Model):
                             seat_data['id_info'] = id_info
                             seats.append(seat_data)
                             i += 1
-                ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
+                cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
                                         delivery_method=delivery_method.code,
                                         ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
                                         qty=multiply,
@@ -1094,7 +1094,7 @@ class CyOrder(models.Model):
                                              original_total_amount=ticket_order.amount,
                                              actual_total_amount=ticket_order.actual_amount,
                                              buyer_cellphone=ticket_order.mobile,
-                                             ticket_list=ticket_list, id_info=id_info,
+                                             ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
                                              address_info=address_info,
                                              express_amount=express_amount
