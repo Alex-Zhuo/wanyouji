@@ -55,7 +55,7 @@ class DouYinImagesInline(admin.StackedInline):
 
 class BasicConfigAdmin(RemoveDeleteModelAdmin):
     readonly_fields = ['sms_url']
-    inlines = [DouYinImagesInline]
+    # cinlines = [DouYinImagesInline]
 
     def changelist_view(self, request, extra_context=None):
         obj = BasicConfig.get()

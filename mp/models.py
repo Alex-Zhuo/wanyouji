@@ -236,8 +236,8 @@ class BasicConfig(models.Model):
     venue_mobile = models.CharField('场馆客服电话', max_length=20, null=True, blank=True)
     custom_work_at = models.CharField('客服服务时间', max_length=50, null=True, blank=True)
     platform_mobile = models.CharField('平台客服电话', max_length=20, null=True, blank=True)
-    maizuo_mobile = models.CharField('麦座同步失败通知手机', max_length=20, null=True, blank=True)
-    tiktok_kf = models.CharField('抖音客服ID', max_length=100, null=True, blank=True)
+    maizuo_mobile = models.CharField('麦座同步失败通知手机', max_length=20, null=True, blank=True, editable=False)
+    tiktok_kf = models.CharField('抖音客服ID', max_length=100, null=True, blank=True, editable=False)
     service_agreement = models.FileField('服务协议', upload_to=f'{FILE_FIELD_PREFIX}/basic', help_text='只能上传pdf或word',
                                          null=True, blank=True,
                                          validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
