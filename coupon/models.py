@@ -70,6 +70,10 @@ class UserCouponRecord(UseNoAbstract):
     def __str__(self):
         return '{}:{}'.format(self.user, self.coupon)
 
+    @property
+    def can_use(self):
+        return self.status == self.STATUS_USE and self.expire_time < timezone.now()
+
     def save_common(self):
         fields = ['snapshot']
         self.snapshot = self.get_snapshot()
