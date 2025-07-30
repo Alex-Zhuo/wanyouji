@@ -250,8 +250,8 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             show_users = None
             if validated_data.get('show_user_ids'):
                 show_users = validated_data['show_user_ids']
-            if not show_users:
-                raise CustomAPIException('请选择常用观演人')
+            if session.is_real_name_buy and not show_users:
+                raise CustomAPIException('请选择正确的实名常用观演人')
             real_name_num = 0
             if session.one_id_one_ticket:
                 for show_user in show_users:
