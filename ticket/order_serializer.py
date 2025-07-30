@@ -15,6 +15,7 @@ import json
 from caches import redis_ticket_level_cache, get_pika_redis
 from django.core.cache import cache
 from caches import cache_order_seat_key
+
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
 
@@ -247,7 +248,10 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                 TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, order.multiply, is_get=False)
         order.change_scroll_list()
 
-    def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None):
+    def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
+                           pack_multiply=0):
+        if pack_multiply ==0:
+            pack_multiply = real_multiply
         from common.utils import s_id_card
         if user.flag != user.FLAG_BUY:
             show_users = None
@@ -262,18 +266,18 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                     if buy_num >= 1:
                         raise CustomAPIException('下单失败，身份证{}已经购买过该场次'.format(s_id_card(show_user.id_card)))
                     real_name_num += 1
-                if real_name_num < real_multiply:
-                    raise CustomAPIException(f'选择的常用观演人不足{real_multiply}个')
+                if real_name_num < pack_multiply:
+                    raise CustomAPIException(f'选择的常用观演人不足{pack_multiply}个')
             elif session.is_name_buy:
                 show_user = show_users.first()
                 if not show_user.id_card:
                     raise CustomAPIException('常用联系人请先实名认证')
                 if session.name_buy_num > 0:
                     buy_num = TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, 0)
-                    if buy_num + real_multiply > session.name_buy_num:
+                    if buy_num + pack_multiply > session.name_buy_num:
                         raise CustomAPIException('选座数量错误，该身份证最多还能买{}张票'.format(session.name_buy_num - buy_num))
             else:
-                if session.order_limit_num > 0 and real_multiply > session.order_limit_num:
+                if session.order_limit_num > 0 and pack_multiply > session.order_limit_num:
                     raise CustomAPIException('选座数量错误，大于该场次的限购数量')
         agent = user.get_new_parent()
         if agent:
@@ -542,6 +546,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if not ticket_list:
             raise CustomAPIException('下单错误，请重新选择下单')
         multiply = 0
+        # 彩艺云购票实际数量，套票
         pack_multiply = 0
         for level_data in ticket_list:
             key = cache_order_seat_key.format(level_data['level_id'], session.id)
@@ -563,10 +568,10 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                 level_cache = pika.hget(level_name, level_key)
                 if level_cache.get('cy'):
                     # 1是基础票
-                    if level_cache['cy']['category'] in [2, 3]:
+                    if int(level_cache['cy']['category']) in [2, 3]:
                         level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
                         for pack in level_cache['cy']['ticket_pack_list']:
-                            pack_multiply += pack['qty']
+                            pack_multiply += int(pack['qty'])
                     else:
                         pack_multiply += p_multiply
                 else:
@@ -594,7 +599,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
-                                                 user_buy_inst)
+                                                 user_buy_inst, pack_multiply)
         validated_data['receipt'] = self.create_receipt(validated_data)
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)
