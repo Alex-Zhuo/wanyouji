@@ -449,7 +449,7 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             if not level_inst:
                 level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
                 cache.set(key, level_inst, 60 * 10)
-            else:
+            if not level_inst:
                 raise CustomAPIException('下单错误，票档错误')
             if level_inst:
                 level_data['level'] = level_inst
@@ -554,7 +554,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             if not level_inst:
                 level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
                 cache.set(key, level_inst, 60 * 10)
-            else:
+            if not level_inst:
                 raise CustomAPIException('下单错误，票档错误')
             if level_inst:
                 level_data['level'] = level_inst
