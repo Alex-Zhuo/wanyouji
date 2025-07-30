@@ -72,7 +72,7 @@ class UserCouponRecord(UseNoAbstract):
 
     @property
     def can_use(self):
-        return self.status == self.STATUS_USE and self.expire_time > timezone.now()
+        return self.status == self.STATUS_DEFAULT and self.expire_time > timezone.now()
 
     def save_common(self):
         fields = ['snapshot']
