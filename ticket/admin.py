@@ -239,7 +239,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
                     'wxa_code_display', 'op']
     list_filter = ['status', 'cate_second', 'venues', CityFilter]
     search_fields = ['title']
-    autocomplete_fields = ['cate_second', 'venues', 'performer', 'flag']
+    autocomplete_fields = ['cate_second', 'venues', 'flag']
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
     inlines = [TicketPurchaseNoticeInline, TicketWatchingNoticeInline, ShowsDetailImageInline]

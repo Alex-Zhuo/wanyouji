@@ -564,7 +564,7 @@ class ShowProject(UseNoAbstract):
     lng = models.FloatField('经度', default=0, help_text='场馆经度')
     city_id = models.IntegerField('城市ID', editable=False, default=0)
     flag = models.ManyToManyField(ShowFlag, verbose_name='标签', blank=True)
-    performer = models.ManyToManyField(ShowPerformer, verbose_name='演员', blank=True)
+    performer = models.ManyToManyField(ShowPerformer, verbose_name='演员', blank=True, editable=False)
     logo_mobile = models.ImageField(u'宣传海报', upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/shows',
                                     validators=[file_size, validate_image_file_extension], null=True, blank=True)
     sale_time = models.DateTimeField('开售时间')
