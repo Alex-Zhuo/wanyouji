@@ -344,10 +344,6 @@ class ShowType(models.Model):
         return cls.objects.get(slug='dkxj')
 
     @classmethod
-    def tkx(cls):
-        return cls.objects.get(slug='tkx')
-
-    @classmethod
     def dou_yin_cate(cls):
         data = dict()
         data['top'] = dict(name='休闲娱乐', category_id='4000000')
