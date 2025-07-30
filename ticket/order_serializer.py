@@ -103,6 +103,11 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     def before_create(self, session, is_ks, validated_data, is_xhs=False):
         user = validated_data['user']
+        from caches import run_with_lock
+        user_key = 'user_key_{}'.format(user.id)
+        with run_with_lock(user_key, 5) as got:
+            if not got:
+                raise CustomAPIException('请勿重复下单')
         q_session = None
         if is_ks:
             if not session.is_ks_session:
@@ -119,11 +124,6 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             if user.flag != user.FLAG_BUY and not validated_data.get('id_card'):
                 raise CustomAPIException('下单失败,请先完成实名验证')
         # 验证邮费
-        from caches import run_with_lock
-        user_key = 'user_key_{}'.format(user.id)
-        with run_with_lock(user_key, 5) as got:
-            if not got:
-                raise CustomAPIException('请勿重复下单')
         if session.is_paper:
             addr = validated_data.get('express_address_id')
             template = session.express_template
@@ -359,8 +359,11 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
-                                                                      is_coupon=is_coupon)
+        user_tc_card = None
+        user_buy_inst = None
+        # if not is_coupon:
+        #     user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+        #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, session_seat_list, discount_type = SessionSeat.get_order_amount(
             user, session,
@@ -369,6 +372,7 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
                                                express_fee)
+        coupon_record = None
         if is_coupon:
             actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
                                                               actual_amount=actual_amount)
@@ -380,6 +384,8 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         validated_data['order_type'] = TicketOrder.TY_HAS_SEAT
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
+        if coupon_record:
+            coupon_record.set_use(inst)
         dd = []
         for session_seat in session_seat_list:
             # 写入订单号
@@ -396,14 +402,14 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
-        if inst.pay_type == Receipt.PAY_TikTok_LP:
-            prepare_order = inst.tiktok_client_prepare_order_new(session_seat_list)
-        elif inst.pay_type == Receipt.PAY_KS:
-            from kuaishou_wxa.models import KsOrderSettleRecord
-            ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
-        elif inst.pay_type == Receipt.PAY_XHS:
-            from xiaohongshu.models import XhsOrder
-            xhs_order_info = XhsOrder.push_order(inst, session_seat_list=session_seat_list)
+        # if inst.pay_type == Receipt.PAY_TikTok_LP:
+        #     prepare_order = inst.tiktok_client_prepare_order_new(session_seat_list)
+        # elif inst.pay_type == Receipt.PAY_KS:
+        #     from kuaishou_wxa.models import KsOrderSettleRecord
+        #     ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
+        # elif inst.pay_type == Receipt.PAY_XHS:
+        #     from xiaohongshu.models import XhsOrder
+        #     xhs_order_info = XhsOrder.push_order(inst, session_seat_list=session_seat_list)
         pay_end_at = inst.get_end_at()
         self.after_create(inst, show_type, show_users)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
@@ -442,8 +448,11 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
-                                                                      is_coupon=is_coupon)
+        user_tc_card = None
+        user_buy_inst = None
+        # if not is_coupon:
+        #     user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+        #                                                                   is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
             user,
@@ -455,6 +464,10 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
                                                express_fee)
+        coupon_record = None
+        if is_coupon:
+            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+                                                              actual_amount=actual_amount)
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
@@ -463,6 +476,8 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
+        if coupon_record:
+            coupon_record.set_use(inst)
         dd = []
         seat_dict = dict()
         for ll in level_list:
@@ -477,14 +492,14 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
-        if inst.pay_type == Receipt.PAY_TikTok_LP:
-            prepare_order = inst.tiktok_client_prepare_order_new(seat_dict=seat_dict)
-        elif inst.pay_type == Receipt.PAY_KS:
-            from kuaishou_wxa.models import KsOrderSettleRecord
-            ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
-        elif inst.pay_type == Receipt.PAY_XHS:
-            from xiaohongshu.models import XhsOrder
-            xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
+        # if inst.pay_type == Receipt.PAY_TikTok_LP:
+        #     prepare_order = inst.tiktok_client_prepare_order_new(seat_dict=seat_dict)
+        # elif inst.pay_type == Receipt.PAY_KS:
+        #     from kuaishou_wxa.models import KsOrderSettleRecord
+        #     ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
+        # elif inst.pay_type == Receipt.PAY_XHS:
+        #     from xiaohongshu.models import XhsOrder
+        #     xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
         pay_end_at = inst.get_end_at()
         self.change_stock_end(ticket_list)
         try:
@@ -528,8 +543,10 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if multiply != validated_data['multiply']:
             raise CustomAPIException('选座数量错误，请重新选座')
         show_type = session.show.show_type
-        user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
-                                                                      is_coupon=is_coupon)
+        user_tc_card = None
+        user_buy_inst = None
+        # user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
+        #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
         real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
             user,
@@ -539,6 +556,10 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
                                                express_fee)
+        coupon_record = None
+        if is_coupon:
+            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+                                                              actual_amount=actual_amount)
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
@@ -547,6 +568,8 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
+        if coupon_record:
+            coupon_record.set_use(inst)
         dd = []
         seat_dict = dict()
         for ll in level_list:
@@ -566,16 +589,15 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
-        if inst.pay_type == Receipt.PAY_TikTok_LP:
-            prepare_order = inst.tiktok_client_prepare_order_new(seat_dict=seat_dict)
-        elif inst.pay_type == Receipt.PAY_KS:
-            from kuaishou_wxa.models import KsOrderSettleRecord
-            ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
-        elif inst.pay_type == Receipt.PAY_XHS:
-            from xiaohongshu.models import XhsOrder
-            xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
+        # if inst.pay_type == Receipt.PAY_TikTok_LP:
+        #     prepare_order = inst.tiktok_client_prepare_order_new(seat_dict=seat_dict)
+        # elif inst.pay_type == Receipt.PAY_KS:
+        #     from kuaishou_wxa.models import KsOrderSettleRecord
+        #     ks_order_info = KsOrderSettleRecord.ks_create_order(inst)
+        # elif inst.pay_type == Receipt.PAY_XHS:
+        #     from xiaohongshu.models import XhsOrder
+        #     xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
         pay_end_at = inst.get_end_at()
-        # self.change_stock_end(ticket_list)
         try:
             self.after_create(inst, show_type, show_users)
         except Exception as e:

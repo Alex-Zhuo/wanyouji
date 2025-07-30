@@ -2347,25 +2347,26 @@ class TicketFile(models.Model):
         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
-        if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
-            old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
-            old_card_detail = old_card_qs.first()
-            if old_card_detail:
-                card_amount = 0
-                for data in ticket_list:
-                    multiply = int(data['multiply'])
-                    inst = data.get('level')
-                    if inst:
-                        price, _ = inst.get_price(card, tc_card, pay_type, multiply, use_old_card)
-                        card_amount += price
-                    else:
-                        raise CustomAPIException('下单失败，请重新选择')
-                if old_card_detail.amount > card_amount + express_fee:
-                    use_old_card = True
-                    card = old_card_detail.card
-                log.debug(use_old_card)
-        if not card:
-            card = TheaterCard.get_inst()
+        # if not is_coupon:
+        #     if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
+        #         old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
+        #         old_card_detail = old_card_qs.first()
+        #         if old_card_detail:
+        #             card_amount = 0
+        #             for data in ticket_list:
+        #                 multiply = int(data['multiply'])
+        #                 inst = data.get('level')
+        #                 if inst:
+        #                     price, _ = inst.get_price(card, tc_card, pay_type, multiply, use_old_card)
+        #                     card_amount += price
+        #                 else:
+        #                     raise CustomAPIException('下单失败，请重新选择')
+        #             if old_card_detail.amount > card_amount + express_fee:
+        #                 use_old_card = True
+        #                 card = old_card_detail.card
+        #             log.debug(use_old_card)
+        #     if not card:
+        #         card = TheaterCard.get_inst()
         for data in ticket_list:
             multiply = int(data['multiply'])
             # inst = cls.objects.filter(id=data['level_id'], session=session).first()
@@ -2390,7 +2391,7 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if not is_coupon and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
@@ -2867,27 +2868,27 @@ class SessionSeat(models.Model):
         card = None
         use_old_card = False
         tc_card = None
-        if not is_coupon:
-            tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
-            if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
-                old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
-                old_card_detail = old_card_qs.first()
-                if old_card_detail:
-                    card_amount = 0
-                    for data in ticket_list:
-                        inst = data.get('seat')
-                        if inst:
-                            ticket_level = inst.ticket_level
-                            price, _ = ticket_level.get_price(old_card_detail.card, tc_card, pay_type, 1, True)
-                            card_amount += price
-                        else:
-                            raise CustomAPIException('下单失败，请重新选择')
-                    if old_card_detail.amount > card_amount + express_fee:
-                        use_old_card = True
-                        card = old_card_detail.card
-                log.debug(use_old_card)
-            if not card:
-                card = TheaterCard.get_inst()
+        # if not is_coupon:
+        #     if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
+        #         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
+        #         old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
+        #         old_card_detail = old_card_qs.first()
+        #         if old_card_detail:
+        #             card_amount = 0
+        #             for data in ticket_list:
+        #                 inst = data.get('seat')
+        #                 if inst:
+        #                     ticket_level = inst.ticket_level
+        #                     price, _ = ticket_level.get_price(old_card_detail.card, tc_card, pay_type, 1, True)
+        #                     card_amount += price
+        #                 else:
+        #                     raise CustomAPIException('下单失败，请重新选择')
+        #             if old_card_detail.amount > card_amount + express_fee:
+        #                 use_old_card = True
+        #                 card = old_card_detail.card
+        #         log.debug(use_old_card)
+        #     if not card:
+        #         card = TheaterCard.get_inst()
         for data in ticket_list:
             kk = session_seat_key.format(data['level_id'], data['seat_id'])
             if redis.setnx(kk, 1):
