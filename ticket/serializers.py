@@ -1079,9 +1079,13 @@ class TicketOrderSerializer(serializers.ModelSerializer):
     show_express_address = serializers.SerializerMethodField()
     express_status_display = serializers.ReadOnlyField(source='get_express_status_display')
     id = serializers.SerializerMethodField()
+    receipt = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.order_no
+
+    def get_receipt(self, obj):
+        return obj.receipt.payno if obj.receipt else None
 
     def get_show_express_address(self, obj):
         return obj.show_express_address
