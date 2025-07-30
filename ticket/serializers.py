@@ -1250,6 +1250,14 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     id_card = serializers.CharField(required=True)
 
+    def validate_mobile(self, value):
+        import re
+        REG_MOBILE = r'^\d{11}$'
+        R_MOBILE = re.compile(REG_MOBILE)
+        if not R_MOBILE.match(value):
+            raise CustomAPIException('手机号格式不对')
+        return value
+
     def create(self, validated_data):
         request = self.context.get('request')
         id_card = validated_data.get('id_card', None)

@@ -33,6 +33,14 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     coupon_no = serializers.CharField(required=False)
     channel_type = serializers.IntegerField(required=True)
 
+    def validate_mobile(self, value):
+        import re
+        REG_MOBILE = r'^\d{11}$'
+        R_MOBILE = re.compile(REG_MOBILE)
+        if not R_MOBILE.match(value):
+            raise CustomAPIException('手机号格式不对')
+        return value
+
     def handle_coupon(self, show, coupon_no: str, actual_amount):
         coupon_record = None
         if coupon_no:
