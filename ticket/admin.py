@@ -1520,7 +1520,8 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     #            check_refund_order, export_ticket_express, cancel_lock_seats, query_dy_status, re_push_delivery]
     list_filter = (
         'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue',
-        'order_type', 'channel_type', 'wx_pay_config', AgentFilter, 'is_paper', 'express_status', 'deliver_at')
+        'order_type', 'channel_type', 'discount_type', 'wx_pay_config', AgentFilter, 'is_paper', 'express_status',
+        'deliver_at')
     actions = [export_ticket_order, export_ticket_order_old, 'set_refund', export_ticket_express, cancel_lock_seats]
     search_fields = ['=order_no', '=mobile', '=transaction_id']
     autocomplete_fields = ['user']
@@ -1529,10 +1530,13 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                'need_refund_mz', 'ks_report', 'card_jc_amount', 'snapshot', 'u_user_id', 'u_agent_id',
                'discount_amount', 'status_before_refund', 'item_order_info_list']
     readonly_fields = [f.name for f in TicketOrder._meta.fields if
-                       f.name not in ['tiktok_order_id', 'ks_order_no', 'source_type', 'tiktok_nickname', 'tiktok_douyinid',
-               'tiktok_commission_amount', 'plan_id', 'tiktok_refund_type', 'dy_pay_config', 'auto_check',
-               'need_refund_mz', 'ks_report', 'card_jc_amount', 'snapshot', 'u_user_id', 'u_agent_id',
-               'discount_amount', 'status_before_refund', 'item_order_info_list']]
+                       f.name not in ['tiktok_order_id', 'ks_order_no', 'source_type', 'tiktok_nickname',
+                                      'tiktok_douyinid',
+                                      'tiktok_commission_amount', 'plan_id', 'tiktok_refund_type', 'dy_pay_config',
+                                      'auto_check',
+                                      'need_refund_mz', 'ks_report', 'card_jc_amount', 'snapshot', 'u_user_id',
+                                      'u_agent_id',
+                                      'discount_amount', 'status_before_refund', 'item_order_info_list']]
     inlines = [TicketOrderRealNameInline, TicketUserCodeInline, TicketOrderChangePriceInline, TicketOrderInline]
     list_per_page = 10
 

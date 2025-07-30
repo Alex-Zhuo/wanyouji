@@ -2963,10 +2963,11 @@ class TicketOrder(models.Model):
     card_jc_amount = models.DecimalField('剧场会员卡支付数额', max_digits=9, decimal_places=2, default=0)
     DISCOUNT_DEFAULT = 0
     DISCOUNT_YEAR = 1
-    DISCOUNT_THEATER = 2
+    DISCOUNT_COUPON = 2
+    DISCOUNT_OTHER = 3
     DISCOUNT_CHOICES = (
-        (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_THEATER, '剧场会员卡'))
-    discount_type = models.IntegerField(u'优惠会员卡类型', choices=DISCOUNT_CHOICES, default=DISCOUNT_DEFAULT)
+        (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_OTHER, '其他渠道'))
+    discount_type = models.IntegerField(u'优惠类型', choices=DISCOUNT_CHOICES, default=DISCOUNT_DEFAULT)
     refund_amount = models.DecimalField('已退款金额', max_digits=9, decimal_places=2, default=0)
     TY_HAS_SEAT = 1
     TY_NO_SEAT = 2
@@ -3717,7 +3718,8 @@ class TicketOrder(models.Model):
                 TheaterCardChangeRecord.add_record(user=self.user,
                                                    source_type=TheaterCardChangeRecord.SOURCE_TYPE_CANCEL,
                                                    amount=self.card_jc_amount, ticket_order=self)
-            # 其他渠道取消，不调也无错误。会自动取消
+
+            # 其他渠道取消，不调也可以。会自动取消
             # if hasattr(self, 'cy_order'):
             #     self.cy_order.cancel_order()
         return True, ''
