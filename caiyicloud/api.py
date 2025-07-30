@@ -16,6 +16,7 @@ from typing import List, Dict
 from requests import Response
 import uuid
 from decimal import Decimal
+
 logger = logging.getLogger(__name__)
 
 deubg = True
@@ -485,6 +486,17 @@ class CaiYiCloud(CaiYiCloudAbstract):
         if refund_tickets:
             data['refund_tickets'] = refund_tickets
         ret = self._post('api/order/v1/refund/apply', params=params, data=data, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
+    def promotions_list(self, page: int = 1, page_size: int = 50):
+        """
+        查询商户所有的营销活动列表
+        """
+        headers = self.headers()
+        headers['sign'] = self.get_sign(headers)
+        params = dict(supplier_id=self.supplier_id, page=page, page_size=page_size)
+        ret = self._get('api/event/v1/events', params=params, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
