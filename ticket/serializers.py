@@ -1249,7 +1249,8 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
         id_card = validated_data.get('id_card', None)
         if id_card:
             # 是否已经验证过了，验证过的不需要再验证
-            has_auth = ShowUser.objects.filter(id_card=id_card, name=validated_data['name']).first()
+            has_auth = True
+            # has_auth = ShowUser.objects.filter(id_card=id_card, name=validated_data['name']).first()
             if not has_auth:
                 auth_st = ShowUser.auth_cert_no(validated_data['name'], validated_data['id_card'])
                 if not auth_st:
@@ -1261,8 +1262,7 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
                 inst.id_card = id_card
                 inst.save(update_fields=['name', 'id_card'])
             else:
-                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'],
-                                               mobile=validated_data['mobile'], id_card=id_card)
+                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], id_card=id_card)
         except Exception as e:
             raise CustomAPIException('不能重复添加常用联系人')
         return inst

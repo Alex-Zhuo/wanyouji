@@ -1323,7 +1323,6 @@ class ShowUserViewSet(SerializerSelector, DetailPKtoNoViewSet):
     http_method_names = ['get', 'post']
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
 
-
     @action(methods=['get', 'post'], detail=True)
     def delete_user(self, request, pk):
         qs = self.get_object()
