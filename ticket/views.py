@@ -1314,7 +1314,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         return Response(ret)
 
 
-class ShowUserViewSet(SerializerSelector, ReturnNoDetailViewSet):
+class ShowUserViewSet(SerializerSelector, DetailPKtoNoViewSet):
     queryset = ShowUser.objects.all()
     serializer_class = ShowUserSerializer
     serializer_class_post = ShowUserCreateSerializer

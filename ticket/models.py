@@ -2400,16 +2400,15 @@ class TicketFile(models.Model):
         return total_multiply, amount, quantize(actual_amount, 2), level_list, discount_type
 
 
-class ShowUser(models.Model):
+class ShowUser(UseNoAbstract):
     user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
     name = models.CharField('姓名', max_length=30)
-    mobile = models.CharField('手机号', max_length=20, null=True)
     id_card = models.CharField('身份证号', max_length=20, null=True, db_index=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '常用观演人'
-        unique_together = ['user', 'name', 'mobile']
+        unique_together = ['user', 'name', 'id_card']
         ordering = ['-pk']
 
     def __str__(self):

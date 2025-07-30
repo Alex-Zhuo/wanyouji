@@ -1229,7 +1229,7 @@ class TicketOrderMarginCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ['receipt']
 
 
-class ShowUserSerializer(serializers.ModelSerializer):
+class ShowUserSerializer(PKtoNoSerializer):
     id_card = serializers.SerializerMethodField()
 
     def get_id_card(self, obj):
@@ -1237,7 +1237,7 @@ class ShowUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowUser
-        fields = ['id', 'name', 'mobile', 'id_card', 'create_at']
+        fields = PKtoNoSerializer.Meta.fields + ['name', 'id_card', 'create_at']
 
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
@@ -1258,9 +1258,8 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
             if validated_data.get('id'):
                 inst = ShowUser.objects.filter(id=validated_data['id']).first()
                 inst.name = validated_data['name']
-                inst.mobile = validated_data['mobile']
                 inst.id_card = id_card
-                inst.save(update_fields=['name', 'mobile', 'id_card'])
+                inst.save(update_fields=['name', 'id_card'])
             else:
                 inst = ShowUser.objects.create(user=request.user, name=validated_data['name'],
                                                mobile=validated_data['mobile'], id_card=id_card)
@@ -1270,7 +1269,7 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShowUser
-        fields = ['id', 'name', 'mobile', 'id_card']
+        fields = ['id', 'name', 'id_card']
 
 
 class PerformerFocusRecordSerializer(serializers.ModelSerializer):

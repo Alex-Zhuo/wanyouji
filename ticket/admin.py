@@ -2131,15 +2131,10 @@ class ShowCollectRecordAdmin(OnlyViewAdmin):
 
 
 class ShowUserAdmin(OnlyViewAdmin):
-    list_display = ['user', 's_name', 's_mobile', 's_id_card', 'create_at']
+    list_display = ['user', 's_name', 's_id_card', 'create_at']
     list_filter = ['create_at']
-    search_fields = ['name', 'mobile']
+    search_fields = ['name']
     autocomplete_fields = ['user']
-
-    def s_mobile(self, obj):
-        return s_mobile(obj.mobile)
-
-    s_mobile.short_description = '手机号'
 
     def s_name(self, obj):
         return s_name(obj.name)
