@@ -68,7 +68,8 @@ class CaiYiCloudApp(models.Model):
     name = models.CharField('名称', max_length=50)
     app_id = models.CharField('app_id', max_length=50)
     supplier_id = models.CharField('supplierId', max_length=64)
-    private_key = models.TextField('私钥')
+    private_key = models.TextField('api私钥')
+    notify_private_key = models.TextField('回调私钥', null=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '彩艺云配置'

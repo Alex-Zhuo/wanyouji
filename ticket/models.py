@@ -5995,6 +5995,8 @@ class TicketGiveRecord(UseNoAbstract):
     @classmethod
     def create_record(cls, user, give_mobile: str, ticket_code_qs):
         order = ticket_code_qs.first().order
+        if order.session.is_real_name_buy:
+            raise CustomAPIException('实名的场次不可使用赠送票功能')
         inst = cls.objects.create(user=user, order=order, give_mobile=give_mobile, mobile=user.mobile,
                                   session=order.session)
         tg = []

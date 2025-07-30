@@ -120,6 +120,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
             self.app_id = caiyi.app_id
             self.supplier_id = caiyi.supplier_id
             self.private_key = caiyi.private_key
+            self.notify_private_key = caiyi.notify_private_key
 
     def get_redis_key(self, key):
         config = get_config()
