@@ -235,7 +235,6 @@ class TicketWatchingNoticeInline(admin.TabularInline):
 
 class ShowProjectAdmin(RemoveDeleteModelAdmin):
     list_display = ['id', 'no', 'title', 'cate_second', 'venues', 'sale_time', 'status', 'time_info', 'display_order',
-                    'tiktok_code_display',
                     'wxa_code_display', 'op']
     list_filter = ['status', 'cate_second', 'venues', CityFilter]
     search_fields = ['title']
@@ -243,18 +242,18 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
     inlines = [TicketPurchaseNoticeInline, TicketWatchingNoticeInline, ShowsDetailImageInline]
-    readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'tiktok_code', 'wxa_code', 'no']
+    readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
     exclude = ['cate', 'show_type']
 
-    def tiktok_code_display(self, obj):
-        request = get_request()
-        code = obj.get_tiktok_code()
-        return mark_safe(
-            '<img src="{}" width="100px" height="auto">'.format(request.build_absolute_uri(code))) if code else None
-
-    tiktok_code_display.short_description = '抖音分享二维码'
+    # def tiktok_code_display(self, obj):
+    #     request = get_request()
+    #     code = obj.get_tiktok_code()
+    #     return mark_safe(
+    #         '<img src="{}" width="100px" height="auto">'.format(request.build_absolute_uri(code))) if code else None
+    #
+    # tiktok_code_display.short_description = '抖音分享二维码'
 
     def wxa_code_display(self, obj):
         request = get_request()
