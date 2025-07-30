@@ -1323,19 +1323,6 @@ class ShowUserViewSet(SerializerSelector, DetailPKtoNoViewSet):
     http_method_names = ['get', 'post']
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
 
-    # def list(self, request, *args, **kwargs):
-    #     qs = self.queryset.filter(user=request.user)
-    #     # version = request.META.get('HTTP_VERSION')
-    #     # if version and version < '1.6.0' and not qs:
-    #     #     from mall.models import UserAddress
-    #     #     address = UserAddress.objects.filter(user_id=request.user.id).first()
-    #     #     if address:
-    #     #         data = {"count": 1, "next": None, "previous": None, "results": [
-    #     #             {"id": 99999999, "name": address.receive_name, "mobile": address.phone, "id_card": None,
-    #     #              "create_at": "2024-09-01T19:42:39.125393", "user": request.user.id}]}
-    #     #         return Response(data)
-    #     page = self.paginate_queryset(qs)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
 
     @action(methods=['get', 'post'], detail=True)
     def delete_user(self, request, pk):
