@@ -431,7 +431,8 @@ class SessionInfoSerializer(PKtoNoSerializer):
     class Meta:
         model = SessionInfo
         fields = PKtoNoSerializer.Meta.fields + ['show', 'start_at', 'end_at', 'tiktok_store', 'valid_start_time',
-                                                 'desc', 'order_limit_num',
+                                                 'desc', 'order_limit_num', 'is_real_name_buy', 'is_name_buy',
+                                                 'one_id_one_ticket',
                                                  'status', 'create_at', 'is_price', 'push_status', 'can_buy', 'change',
                                                  'is_sale_off', 'is_dy_code',
                                                  'dc_expires_in']
