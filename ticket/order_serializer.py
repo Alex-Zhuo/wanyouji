@@ -12,7 +12,9 @@ from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, Thea
 from datetime import datetime
 from django.utils import timezone
 import json
-
+from caches import redis_ticket_level_cache, get_pika_redis
+from django.core.cache import cache
+from caches import cache_order_seat_key
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
 
@@ -341,8 +343,6 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         if not ticket_list:
             raise CustomAPIException('下单错误，请重新选择座位')
         multiply = 0
-        from caches import cache_order_seat_key
-        from django.core.cache import cache
         for seat_data in ticket_list:
             key = cache_order_seat_key.format(seat_data['level_id'], seat_data['seat_id'])
             # t_seat = None
@@ -440,13 +440,21 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             raise CustomAPIException('下单错误，请重新选择下单')
         multiply = 0
         for level_data in ticket_list:
-            level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
+            key = cache_order_seat_key.format(level_data['level_id'], session.id)
+            level_inst = cache.get(key)
+            if not level_inst:
+                level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
+                cache.set(key, level_inst, 60 * 10)
+            else:
+                raise CustomAPIException('下单错误，票档错误')
             if level_inst:
                 level_data['level'] = level_inst
                 p_multiply = int(level_data['multiply'])
                 multiply += p_multiply
+            else:
+                raise CustomAPIException('下单错误，票档没找到')
         if multiply != validated_data['multiply']:
-            raise CustomAPIException('选座数量错误，请重新选座')
+            raise CustomAPIException('购票数量错误，请重新选择')
         show_type = session.show.show_type
         user_tc_card = None
         user_buy_inst = None
@@ -534,14 +542,37 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         if not ticket_list:
             raise CustomAPIException('下单错误，请重新选择下单')
         multiply = 0
+        pack_multiply = 0
         for level_data in ticket_list:
-            level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
+            key = cache_order_seat_key.format(level_data['level_id'], session.id)
+            level_inst = cache.get(key)
+            if not level_inst:
+                level_inst = TicketFile.objects.filter(id=level_data['level_id'], session_id=session.id).first()
+                cache.set(key, level_inst, 60 * 10)
+            else:
+                raise CustomAPIException('下单错误，票档错误')
             if level_inst:
                 level_data['level'] = level_inst
                 p_multiply = int(level_data['multiply'])
                 multiply += p_multiply
+            else:
+                raise CustomAPIException('下单错误，票档没找到')
+            level_name = redis_ticket_level_cache.format(session.no)
+            level_key = str(level_inst.id)
+            with get_pika_redis() as pika:
+                level_cache = pika.hget(level_name, level_key)
+                if level_cache.get('cy'):
+                    # 1是基础票
+                    if level_cache['cy']['category'] in [2, 3]:
+                        level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
+                        for pack in level_cache['cy']['ticket_pack_list']:
+                            pack_multiply += pack['qty']
+                    else:
+                        pack_multiply += p_multiply
+                else:
+                    raise CustomAPIException('下单错误，票档错误..')
         if multiply != validated_data['multiply']:
-            raise CustomAPIException('选座数量错误，请重新选座')
+            raise CustomAPIException('购票数量错误，请重新选择')
         show_type = session.show.show_type
         user_tc_card = None
         user_buy_inst = None
