@@ -70,7 +70,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         if value:
             request = self.context.get('request')
             user = request.user
-            qs = ShowUser.objects.filter(user=user, pk__in=value)
+            qs = ShowUser.objects.filter(user=user, no__in=value)
             if not qs:
                 raise CustomAPIException('请选择正确的实名常用观演人')
             return qs
