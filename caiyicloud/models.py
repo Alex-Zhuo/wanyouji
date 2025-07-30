@@ -738,6 +738,7 @@ class CyTicketType(models.Model):
     std_id = models.CharField(max_length=64, verbose_name="中心票价id")
     name = models.CharField(max_length=50, verbose_name="票价名称")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="票价", help_text='单位：元')
+    stock = models.PositiveIntegerField('库存数量', default=0)
     comment = models.CharField(max_length=50, blank=True, null=True, verbose_name="票价说明")
     color = models.CharField(max_length=20, verbose_name="颜色", null=True, blank=True)
     # 状态字段
@@ -852,8 +853,11 @@ class CyTicketType(models.Model):
             color_index = 0
             for ticket_type in ticket_types_list:
                 stock = 0
-                if ticket_stock_dict.get(ticket_type['id']):
-                    stock = int(ticket_stock_dict.get(ticket_type['id'])['inventory'])
+                if ticket_type['category'] == 3:
+                    stock = 999
+                else:
+                    if ticket_stock_dict.get(ticket_type['id']):
+                        stock = int(ticket_stock_dict.get(ticket_type['id'])['inventory'])
                 price = Decimal(ticket_type['price'])
                 cls_data = dict(
                     cy_session=cy_session,
@@ -867,6 +871,7 @@ class CyTicketType(models.Model):
                     sold_out_state=ticket_type['sold_out_state'],
                     category=ticket_type['category'],
                     seq=ticket_type['seq'],
+                    stock=stock,
                 )
                 desc = f"{ticket_type['name']}({ticket_type['comment']})" if ticket_type['comment'] else ticket_type[
                     'name']
