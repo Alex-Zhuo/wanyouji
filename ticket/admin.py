@@ -449,8 +449,7 @@ class ShowCommentAdmin(AjaxAdmin, OnlyViewAdmin):
 class TicketFileInline(RemoveDeleteTabularInline):
     model = TicketFile
     extra = 0
-    readonly_fields = ['out_id', 'title', 'color', 'origin_price', 'price', 'stock', 'sales', 'desc', 'push_status',
-                       'product_id', 'plan_id', 'fail_msg']
+    readonly_fields = ['out_id', 'title', 'color', 'origin_price', 'price', 'stock', 'sales', 'desc']
 
     def has_add_permission(self, request, obj):
         return False
