@@ -38,7 +38,7 @@ class UserAccountLevel(models.Model):
     share_ratio = models.DecimalField('分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     team_ratio = models.DecimalField('团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
+    theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',editable=False)
 
     class Meta:
         verbose_name_plural = verbose_name = '代理等级'
@@ -584,7 +584,7 @@ class UserCommissionChangeRecord(ChangeAddAbstract):
     SOURCE_TYPE_THEATER_CARD = 5
     SOURCE_TYPE_CHOICES = (
         (SOURCE_TYPE_SHARE_AWARD, '分销奖'), (SOURCE_TYPE_GROUP, '团队奖'), (SOURCE_TYPE_REFUND, '退款扣除'),
-        (SOURCE_TYPE_CARD, '会员卡销售'), (SOURCE_TYPE_THEATER_CARD, '剧场会员卡销售'))
+        (SOURCE_TYPE_CARD, '会员卡销售'))
     source_type = models.IntegerField(choices=SOURCE_TYPE_CHOICES, verbose_name='类型', default=SOURCE_TYPE_SHARE_AWARD)
     STATUS_UNSETTLE = 0
     STATUS_CAN_WITHDRAW = 1

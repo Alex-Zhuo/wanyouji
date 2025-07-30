@@ -81,6 +81,9 @@ class MediaType(models.Model):
     class Meta:
         verbose_name_plural = verbose_name = '视频资源类型'
 
+    def __str__(self):
+        return self.name
+
 
 class OpenScreenMedia(models.Model):
     image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/media/video',

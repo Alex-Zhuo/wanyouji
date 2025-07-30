@@ -28,6 +28,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     express_fee = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     show_user_ids = serializers.ListField(required=False)
     coupon_no = serializers.CharField(required=False)
+    channel_type = serializers.IntegerField(required=True)
 
     def handle_coupon(self, show, coupon_no: str, actual_amount):
         coupon_record = None
@@ -316,7 +317,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketOrder
         fields = ['receipt', 'pay_type', 'multiply', 'amount', 'actual_amount', 'session_id', 'mobile',
-                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids', 'coupon_no']
+                  'ticket_list', 'express_fee', 'express_address_id', 'show_user_ids', 'coupon_no', 'channel_type']
         read_only_fields = ['receipt']
 
 
@@ -587,14 +588,14 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         fields = TicketOrderCreateCommonSerializer.Meta.fields
 
 
-def ticket_order_dispatch(order_type: int, source_type: int):
+def ticket_order_dispatch(order_type: int, channel_type: int):
     # 补差订单走另外的接口
-    if source_type == TicketOrder.SR_DEFAULT:
+    if channel_type == TicketOrder.SR_DEFAULT:
         if order_type == TicketOrder.TY_HAS_SEAT:
             return TicketOrderCreateSerializer
         elif order_type == TicketOrder.TY_NO_SEAT:
             return TicketOrderOnSeatCreateSerializer
-    elif source_type == TicketOrder.SR_CY:
+    elif channel_type == TicketOrder.SR_CY:
         if order_type == TicketOrder.TY_HAS_SEAT:
             return CyTicketOrderOnSeatCreateSerializer
         elif order_type == TicketOrder.TY_NO_SEAT:
