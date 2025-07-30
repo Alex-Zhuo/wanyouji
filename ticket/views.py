@@ -909,7 +909,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             else:
                 log.warning(f" can't the queue")
                 raise CustomAPIException('手慢了，当前抢票人数较多，请稍后重试')
-        return Response(data=dict(receipt_id=order.receipt.id, prepare_order=prepare_order, pay_end_at=pay_end_at,
+        return Response(data=dict(receipt_id=order.receipt.payno, prepare_order=prepare_order, pay_end_at=pay_end_at,
                                   order_id=order.order_no, ks_order_info=ks_order_info, xhs_order_info=xhs_order_info))
 
     @action(methods=['post'], detail=False)
@@ -937,7 +937,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 log.warning(f" can't the queue")
                 raise CustomAPIException('手慢了，当前抢票人数较多，请稍后重试')
         return Response(
-            data=dict(receipt_id=order.receipt.id, prepare_order=prepare_order, pay_end_at=pay_end_at,
+            data=dict(receipt_id=order.receipt.payno, prepare_order=prepare_order, pay_end_at=pay_end_at,
                       order_id=order.order_no, ks_order_info=ks_order_info, xhs_order_info=xhs_order_info))
 
     @action(methods=['post'], detail=False)
