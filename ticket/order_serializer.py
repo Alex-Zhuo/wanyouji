@@ -579,8 +579,9 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                 level_cache = pika.hget(level_name, level_key)
                 if level_cache.get('cy'):
                     # 1是基础票
+                    # level_data['ticket_pack_list'] = []
                     if int(level_cache['cy']['category']) in [2, 3]:
-                        level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
+                        # level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
                         for pack in level_cache['cy']['ticket_pack_list']:
                             pack_multiply += int(pack['qty'])
                     else:
@@ -667,9 +668,9 @@ def ticket_order_dispatch(order_type: int, channel_type: int):
             return TicketOrderOnSeatCreateSerializer
     elif channel_type == TicketOrder.SR_CY:
         if order_type == TicketOrder.TY_HAS_SEAT:
-            return CyTicketOrderOnSeatCreateSerializer
+            pass
         elif order_type == TicketOrder.TY_NO_SEAT:
-            return
+            return CyTicketOrderOnSeatCreateSerializer
     else:
         return
         # raise CustomAPIException('下单失败，订单类型错误')

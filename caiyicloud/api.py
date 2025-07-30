@@ -370,6 +370,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
             "buyer_cellphone": buyer_cellphone,  # 购票人手机号
             "ticket_list": ticket_list
         }
+        logger.error(data)
         if id_info:
             data['id_info'] = id_info
         if promotion_list:

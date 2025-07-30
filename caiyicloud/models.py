@@ -1022,6 +1022,8 @@ class CyOrder(models.Model):
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
+        if session.is_real_name_buy and not real_name_list:
+            raise CustomAPIException('请选择实名认证观影人')
         cy_session = session.cy_session
         ticket_list = []
         delivery_method = cy_session.delivery_methods.first()
@@ -1036,11 +1038,10 @@ class CyOrder(models.Model):
                 for seat in t_info['seat_infos']:
                     seat_data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
                                      photo_url=None)
-                    if session.one_id_one_ticket and real_name_list:
-                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                                    cellphone=real_name_list[i]['mobile'],
-                                                    name=real_name_list[i]['name'], type=1)
-                        i += 1
+                    seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                cellphone=real_name_list[i]['mobile'],
+                                                name=real_name_list[i]['name'], type=1)
+                    i += 1
                     seats.append(seat_data)
                 ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
                                         delivery_method=delivery_method.code,
@@ -1057,27 +1058,31 @@ class CyOrder(models.Model):
                 if not hasattr(ticket_obj, 'cy_tf'):
                     raise CustomAPIException('下单失败,彩艺票价未配置')
                 cy_tf = ticket_obj.cy_tf
-                cy_session = cy_tf.cy_session
-                # 无座下单
-                seat_group_id = None
-                if cy_tf.category != 1:
-                    seat_group_id = 2
-
-                # todo
-                if cy_tf.ticket_pack_list.all():
-                    seat_data = dict(seat_group_id=seat_group_id, photo_url=None)
-                    if session.one_id_one_ticket and real_name_list:
-                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                                    cellphone=real_name_list[i]['mobile'],
-                                                    name=real_name_list[i]['name'], type=1)
-                        i += 1
-                    seats.append(seat_data)
+                if session.one_id_one_ticket or cy_tf.is_package_ticket:
+                    seat_data = dict(photo_url=None)
+                    id_info = dict(number=real_name_list[i]['id_card'], cellphone=real_name_list[i]['mobile'],
+                                   name=real_name_list[i]['name'], type=1)
+                    if cy_tf.is_package_ticket:
+                        # 套票
+                        for pack in cy_tf.ticket_pack_list.all():
+                            seat_data['seat_group_id'] = pack.cy_no
+                            if session.one_id_one_ticket:
+                                for j in list(range(0, pack.qty)):
+                                    # 随机填入实名人信息
+                                    seat_data['id_info'] = id_info
+                                    seats.append(seat_data)
+                                    i += 1
+                    else:
+                        if session.one_id_one_ticket:
+                            seat_data['id_info'] = id_info
+                            seats.append(seat_data)
+                            i += 1
                 ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
                                         delivery_method=delivery_method.code,
                                         ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
                                         qty=multiply,
                                         seats=seats))
-        # 快递和营销活动不做
+        # 快递不做
         express_amount = 0
         address_info = None
         promotion_list = None
@@ -1107,7 +1112,8 @@ class CyOrder(models.Model):
                                           auto_cancel_order_time=auto_cancel_order_time,
                                           delivery_method=delivery_method,
                                           ticket_list_snapshot=json.dumps(ticket_list))
-        cy_order.delete_redis_cache(biz_id)
+        if biz_id:
+            cy_order.delete_redis_cache(biz_id)
         return cy_order
 
     def cancel_order(self):

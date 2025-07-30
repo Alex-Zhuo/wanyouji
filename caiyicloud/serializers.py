@@ -13,4 +13,4 @@ log = logging.getLogger(__name__)
 class CyTicketPackSerializer(serializers.ModelSerializer):
     class Meta:
         model = CyTicketPack
-        fields = ['ticket_type_id', 'price', 'qty']
+        fields = ['cy_no', 'ticket_type_id', 'price', 'qty']
