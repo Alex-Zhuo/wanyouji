@@ -48,7 +48,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                     raise CustomAPIException(detail=u'未达到优惠券使用条件')
                 if coupon_record.status == UserCouponRecord.STATUS_USE:
                     raise CustomAPIException(detail=u'此优惠券已经被使用')
-                if coupon_record.expire_time <= timezone.now():
+                if coupon_record.status == UserCouponRecord.STATUS_EXPIRE or coupon_record.expire_time <= timezone.now():
                     raise CustomAPIException(detail=u'此优惠券已过期')
                 if not coupon.check_can_use():
                     raise CustomAPIException(detail=u'此优惠券暂不能使用')
