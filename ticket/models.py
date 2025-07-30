@@ -3725,7 +3725,8 @@ class TicketOrder(models.Model):
                 TheaterCardChangeRecord.add_record(user=self.user,
                                                    source_type=TheaterCardChangeRecord.SOURCE_TYPE_CANCEL,
                                                    amount=self.card_jc_amount, ticket_order=self)
-
+            if hasattr(self, 'coupon_order'):
+                self.coupon_order.cancel_use()
             # 其他渠道取消，不调也可以。会自动取消
             # if hasattr(self, 'cy_order'):
             #     self.cy_order.cancel_order()
@@ -5095,6 +5096,8 @@ class TicketOrderRefund(models.Model):
                 amount = order.amount - order.actual_amount
                 if amount > 0:
                     user_card.add_discount_total(-amount)
+            if hasattr(order, 'coupon_order'):
+                order.coupon_order.cancel_use()
 
     @atomic
     def set_confirm(self, op_user=None):

@@ -60,7 +60,8 @@ class UserCouponRecord(UseNoAbstract):
     require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
     used_time = models.DateTimeField('使用时间', null=True, blank=True)
     create_at = models.DateTimeField('领取时间', auto_now_add=True)
-    order = models.ForeignKey(TicketOrder, verbose_name='使用订单', null=True, blank=True, on_delete=models.SET_NULL)
+    order = models.OneToOneField(TicketOrder, verbose_name='使用订单', null=True, blank=True, on_delete=models.SET_NULL,
+                                 related_name='coupon_order')
     snapshot = models.TextField('优惠券快照', null=True, blank=True, help_text='领取时保存的快照', editable=False)
 
     class Meta:
@@ -132,4 +133,10 @@ class UserCouponRecord(UseNoAbstract):
         self.order = order
         self.status = self.STATUS_USE
         self.used_time = timezone.now()
-        self.save(update_fields=['used_time'])
+        self.save(update_fields=['used_time', 'order', 'status'])
+
+    def cancel_use(self):
+        self.order = None
+        self.status = self.STATUS_DEFAULT if self.expire_time < timezone.now() else self.STATUS_EXPIRE
+        self.used_time = None
+        self.save(update_fields=['used_time', 'order', 'status'])
