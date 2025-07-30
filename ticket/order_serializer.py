@@ -378,7 +378,8 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
                                                express_fee)
         coupon_record = None
         if is_coupon:
-            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+            actual_amount, coupon_record = self.handle_coupon(show=session.show,
+                                                              coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data['discount_type'] = discount_type
@@ -478,7 +479,8 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                                                express_fee)
         coupon_record = None
         if is_coupon:
-            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+            actual_amount, coupon_record = self.handle_coupon(show=session.show,
+                                                              coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
@@ -594,7 +596,8 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                                                express_fee)
         coupon_record = None
         if is_coupon:
-            actual_amount, coupon_record = self.handle_coupon(show=session.show, coupon_no=validated_data['coupon_no'],
+            actual_amount, coupon_record = self.handle_coupon(show=session.show,
+                                                              coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)

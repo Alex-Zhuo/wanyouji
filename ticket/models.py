@@ -2350,7 +2350,7 @@ class TicketFile(models.Model):
         amount = 0
         actual_amount = 0
         level_list = []
-        discount_type = TicketOrder.DISCOUNT_DEFAULT
+        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon  else TicketOrder.DISCOUNT_COUPON
         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
@@ -2870,7 +2870,7 @@ class SessionSeat(models.Model):
         amount = 0
         actual_amount = 0
         ticket = dict()
-        discount_type = TicketOrder.DISCOUNT_DEFAULT
+        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon  else TicketOrder.DISCOUNT_COUPON
         session_seat_list = []
         card = None
         use_old_card = False
