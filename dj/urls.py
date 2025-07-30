@@ -16,6 +16,8 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from rest_framework import routers
+
+from caiyicloud.views import CaiYiViewSet
 from dj import technology_admin
 # from group_activity.views import ActReceiptViewSet
 from kuaishou_wxa.views import KShouWxaViewSet
@@ -57,6 +59,7 @@ router.register(r'mpclient', MpClientView, basename='mpclient')
 # router.register(r'mpviewnew', MpViewNew, basename='mpviewnew')
 # router.register(r'ks', KShouWxaViewSet, basename='ks')
 # router.register(r'xiaohs', XhsWxaViewSet, basename='xhs')
+router.register(r'cy', CaiYiViewSet, basename='caiyi')
 urlpatterns = [
     # url(r'^ueditor/', include('DjangoUeditor.urls')),
     url(r'^{}/'.format(BASE_CONF['admin_url_site_name']), admin.site.urls),
