@@ -496,7 +496,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         headers = self.headers()
         headers['sign'] = self.get_sign(headers)
         params = dict(supplier_id=self.supplier_id, page=page, page_size=page_size)
-        ret = self._get('api/event/v1/events', params=params, headers=headers)
+        ret = self._get('api/marketing/v1/promotions', params=params, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
