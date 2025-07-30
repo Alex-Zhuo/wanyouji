@@ -220,7 +220,7 @@ class XhsGoodsConfig(models.Model):
     session = models.OneToOneField('ticket.SessionInfo', verbose_name='场次', related_name='xhs_session',
                                    on_delete=models.CASCADE)
     xhs_product_id = models.CharField('产品ID', null=True, max_length=10, editable=False)
-    category = models.ForeignKey(XhsShowThirdCategory, verbose_name='演出类型', on_delete=models.CASCADE)
+    category = models.ForeignKey(XhsShowThirdCategory, verbose_name='节目分类', on_delete=models.CASCADE)
     poi_list = models.ManyToManyField(XhsPoi, verbose_name='小红书poi')
     need_push = models.BooleanField('是否需要推送到小红书', default=True)
     STATUS_ON = 1

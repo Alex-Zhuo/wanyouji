@@ -189,7 +189,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                 if user_buy_inst.num + multiply > tc.day_max_num:
                     raise CustomAPIException('每日剧场会员卡优惠可购买{}张票,今日已购买{}'.format(tc.day_max_num, user_buy_inst.num))
             else:
-                raise CustomAPIException('演出类型不支持该支付方式')
+                raise CustomAPIException('节目分类不支持该支付方式')
         return user_card, user_buy_inst
 
     def get_actual_amount(self, is_tiktok, user, amount, multiply, actual_amount, express_amount=0):

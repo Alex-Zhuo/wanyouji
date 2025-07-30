@@ -370,7 +370,7 @@ class KsGoodsConfig(models.Model):
     poi = models.ForeignKey(KsPoiService, verbose_name='poi', help_text='需选择审核成功的记录，不然推商品和销售会失败',
                             on_delete=models.SET_NULL, null=True,
                             limit_choices_to=models.Q(status=KsPoiService.ST_PASS))
-    category = models.ForeignKey(KsShowThirdCategory, verbose_name='演出类型', on_delete=models.CASCADE)
+    category = models.ForeignKey(KsShowThirdCategory, verbose_name='节目分类', on_delete=models.CASCADE)
     full_price = models.DecimalField('原价', max_digits=13, decimal_places=2, default=0)
     sold_count = models.IntegerField('销量', default=0, help_text='给快手设置默认销量')
     promotion_commission_rate = models.IntegerField('分销佣金比例(万分数)', default=0,

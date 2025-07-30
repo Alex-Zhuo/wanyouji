@@ -194,7 +194,7 @@ class SessionFilter(SimpleListFilter):
 class ShowTypeFilter(SimpleListFilter):
     # Human-readable title which will be displayed in the
     # right admin sidebar just above the filter options.
-    title = _(u'以演出类型')
+    title = _(u'以节目分类')
 
     # Parameter for the filter that will be used in the URL query.
     parameter_name = 'show_type__exact'
@@ -254,7 +254,7 @@ class CityFilter(SimpleListFilter):
 class CardShowTypeFilter(SimpleListFilter):
     # Human-readable title which will be displayed in the
     # right admin sidebar just above the filter options.
-    title = _(u'以演出类型')
+    title = _(u'以节目分类')
 
     # Parameter for the filter that will be used in the URL query.
     parameter_name = 'showtype'

@@ -552,7 +552,7 @@ class UserCommissionMonthRecord(models.Model):
     STATUS_INVALID = 3
     STATUS_CHOICES = ((STATUS_UNSETTLE, u'未结算'), (STATUS_CAN_WITHDRAW, '已发放'), (STATUS_INVALID, '无效'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_UNSETTLE, editable=False)
-    show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.SET_NULL, null=True, blank=True)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField('金额', default=0, max_digits=15, decimal_places=2)
     year = models.PositiveIntegerField('年份')
     month = models.PositiveIntegerField('月份')
@@ -601,7 +601,7 @@ class UserCommissionChangeRecord(ChangeAddAbstract):
                                       on_delete=models.SET_NULL)
     account = models.ForeignKey(UserAccount, verbose_name='用户账户', null=True, related_name='com_account',
                                 on_delete=models.SET_NULL)
-    show_type = models.ForeignKey(ShowType, verbose_name='演出类型', on_delete=models.SET_NULL, null=True, blank=True)
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.SET_NULL, null=True, blank=True)
     create_at = models.DateTimeField(u'创建时间', auto_now_add=True, editable=True)
 
     class Meta:

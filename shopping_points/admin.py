@@ -33,7 +33,7 @@ def export_usercommission(modeladmin, request, queryset):
     ws = wb.add_sheet('数据')
     row_index = 1
     _write_row_by_xlwt(ws,
-                       [u'用户', u'状态', u'下单人昵称', u'下单人手机号', u'金额', u'演出类型', u'类型', u'创建时间', u'描述'],
+                       [u'用户', u'状态', u'下单人昵称', u'下单人手机号', u'金额', u'节目分类', u'类型', u'创建时间', u'描述'],
                        row_index)
     row_index += 1
     for record in queryset:
