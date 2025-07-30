@@ -1243,7 +1243,7 @@ class ShowUserSerializer(PKtoNoSerializer):
 
     class Meta:
         model = ShowUser
-        fields = PKtoNoSerializer.Meta.fields + ['name', 'id_card', 'create_at']
+        fields = PKtoNoSerializer.Meta.fields + ['name', 'id_card', 'create_at', 'mobile']
 
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
@@ -1265,17 +1265,19 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
             if validated_data.get('id'):
                 inst = ShowUser.objects.filter(id=validated_data['id']).first()
                 inst.name = validated_data['name']
+                inst.mobile = validated_data['mobile']
                 inst.id_card = id_card
-                inst.save(update_fields=['name', 'id_card'])
+                inst.save(update_fields=['name', 'id_card', 'mobile'])
             else:
-                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], id_card=id_card)
+                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], id_card=id_card,
+                                               mobile=validated_data['mobile'])
         except Exception as e:
             raise CustomAPIException('不能重复添加常用联系人')
         return inst
 
     class Meta:
         model = ShowUser
-        fields = ['id', 'name', 'id_card']
+        fields = ['id', 'name', 'id_card', 'mobile']
 
 
 class PerformerFocusRecordSerializer(serializers.ModelSerializer):

@@ -250,6 +250,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
                            pack_multiply=0):
+        # pack_multiply 计算了套票的数量，用于实名验证数量和控制下单数量
         if pack_multiply == 0:
             pack_multiply = real_multiply
         from common.utils import s_id_card
