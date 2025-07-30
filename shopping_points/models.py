@@ -35,10 +35,8 @@ class UserAccountLevel(models.Model):
     name = models.CharField('名称', max_length=32)
     grade = models.IntegerField('Lv', unique=True, help_text='整数, 比如1, 2, 等级顺序从低到高, 越大级别越高')
     slug = models.CharField('识别标识', max_length=10, null=True, help_text='识别序号(请勿修改)')
-    share_ratio = models.DecimalField('剧场分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    team_ratio = models.DecimalField('剧场团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    share_ratio_xy = models.DecimalField('巡演分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    team_ratio_xy = models.DecimalField('巡演团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
+    share_ratio = models.DecimalField('分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
+    team_ratio = models.DecimalField('团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
 

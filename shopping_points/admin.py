@@ -164,7 +164,7 @@ class UserAccountAdmin(ChangeAndViewAdmin):
 
 
 class UserAccountLevelAdmin(RemoveDeleteModelAdmin):
-    list_display = ['name', 'grade', 'share_ratio', 'team_ratio', 'share_ratio_xy', 'team_ratio_xy', 'card_ratio']
+    list_display = ['name', 'grade', 'share_ratio', 'team_ratio', 'card_ratio']
     search_fields = ['name']
 
     def get_readonly_fields(self, request, obj=None):

@@ -3458,10 +3458,7 @@ class TicketOrder(models.Model):
             return is_award
         if parent and lv < 25:
             if parent.account.level:
-                if self.session and self.session.show and self.session.show.show_type == ShowType.xunyan():
-                    ratio = parent.account.level.team_ratio_xy
-                else:
-                    ratio = parent.account.level.team_ratio
+                ratio = parent.account.level.team_ratio
                 if ratio > 0:
                     # 代理分销奖
                     amount = self.award_amount * ratio / 100
@@ -3557,10 +3554,7 @@ class TicketOrder(models.Model):
     def share_award(self):
         is_award = False
         if self.agent and self.agent.account.level:
-            if self.session and self.session.show and self.session.show.show_type == ShowType.xunyan():
-                ratio = self.agent.account.level.share_ratio_xy
-            else:
-                ratio = self.agent.account.level.share_ratio
+            ratio = self.agent.account.level.share_ratio
             if ratio > 0:
                 # 代理分销奖
                 amount = self.award_amount * ratio / 100
