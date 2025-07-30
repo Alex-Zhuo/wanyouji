@@ -1986,7 +1986,7 @@ class TicketBookingAdmin(AjaxAdmin, OnlyViewAdmin):
 class TicketReceiptAdmin(OnlyViewAdmin):
     list_display = ['id', 'payno', 'transaction_id', 'order_no', 'user', 'amount', 'status', 'pay_type']
     search_fields = ['payno', 'transaction_id', '=ticket_order__order_no']
-    list_filter = ['status', 'pay_type']
+    list_filter = ['status']
     readonly_fields = ['biz', 'user']
 
     def order_no(self, obj):
