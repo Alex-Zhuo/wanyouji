@@ -2975,7 +2975,7 @@ class TicketOrder(models.Model):
     SR_DEFAULT = 1
     SR_CY = 2
     SR_CHOICES = ((SR_DEFAULT, U'自建'), (SR_CY, '彩艺云'))
-    source_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
+    channel_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
     STATUS_UNPAID = 1
     STATUS_PAID = 2
     STATUS_CANCELED = 3
@@ -3056,7 +3056,7 @@ class TicketOrder(models.Model):
     need_refund_mz = models.BooleanField('同步卖座是否需要退款', default=False)
     source_order = models.ForeignKey('self', verbose_name='来源订单', null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='sr_order')
-    transaction_id = models.CharField('微信(抖音)支付单号', max_length=32, null=True, blank=True)
+    transaction_id = models.CharField('微信支付单号', max_length=32, null=True, blank=True)
     ks_report = models.IntegerField(u'快手推送核销状态', choices=CHECK_CHOICES, default=CHECK_DEFAULT)
 
     def __str__(self):
