@@ -824,8 +824,9 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                set_sale_off, close_comment]
     # autocomplete_fields = ['show', 'tiktok_store', 'main_session']
     autocomplete_fields = ['show', 'main_session']
-    inlines = [TicketFileInline, SessionChangeRecordInline,
-               SessionChangeSaleTimeRecordInline, SessionPushTiktokTaskInline]
+    # inlines = [TicketFileInline, SessionChangeRecordInline,
+    #            SessionChangeSaleTimeRecordInline, SessionPushTiktokTaskInline]
+    inlines = [TicketFileInline, SessionChangeRecordInline]
     search_fields = ['=show__title', '=session_level__product_id', '=show__id']
     list_filter = ['has_seat', 'status', 'dy_status', 'push_status', 'show', 'tiktok_store', 'start_at', 'is_delete',
                    'pull_mz_status', 'is_paper', 'is_name_buy']
