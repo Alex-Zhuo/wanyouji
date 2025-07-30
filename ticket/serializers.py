@@ -1099,7 +1099,8 @@ class TicketOrderSerializer(serializers.ModelSerializer):
     def get_can_margin(self, obj):
         # 状态为待核销或者已付款，且未结束
         st = obj.status in [TicketOrder.STATUS_FINISH, TicketOrder.STATUS_PAID]
-        return obj.session.show.show_type != ShowType.xunyan() and st and timezone.now() < obj.session.end_at
+        # return obj.session.show.show_type != ShowType.xunyan() and st and timezone.now() < obj.session.end_at
+        return st and timezone.now() < obj.session.end_at
 
     def get_pay_end_at(self, obj):
         return obj.get_end_at()

@@ -335,9 +335,9 @@ class ShowType(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def xunyan(cls):
-        return cls.objects.get(slug='xunyan')
+    # @classmethod
+    # def xunyan(cls):
+    #     return cls.objects.get(slug='xunyan')
 
     @classmethod
     def dkxj(cls):
@@ -4741,13 +4741,13 @@ class TicketUserCode(models.Model):
                 fail = 1
             return dict(status=status, msg=msg, snapshot=snapshot, success=success, fail=fail)
         else:
-            try:
-                session = SessionInfo.objects.get(no=session_id)
-                xunyan = ShowType.xunyan()
-                if session.show.show_type_id == xunyan.id:
-                    raise CustomAPIException('巡演类型，扫码失败')
-            except SessionInfo.DoesNotExist:
-                raise CustomAPIException('不是本场次门票，请核对后重试！')
+            # try:
+            #     session = SessionInfo.objects.get(no=session_id)
+            #     xunyan = ShowType.xunyan()
+            #     if session.show.show_type_id == xunyan.id:
+            #         raise CustomAPIException('巡演类型，扫码失败')
+            # except SessionInfo.DoesNotExist:
+            #     raise CustomAPIException('不是本场次门票，请核对后重试！')
             qs = cls.objects.filter(order_id=inst.order.id, status=cls.STATUS_DEFAULT,
                                     check_at__isnull=True, give_id=0)
             ret = dict(status=False, msg='', snapshot=None, success=0, fail=0)

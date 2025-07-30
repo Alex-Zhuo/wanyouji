@@ -268,40 +268,47 @@ class UserCommissionMonthRecordViewSet(ReadOnlyModelViewSet, ReturnNoDetailViewS
         qs = self.queryset.filter(year=year, month=month)
         page = self.paginate_queryset(qs)
         return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
-
     @action(methods=['get'], detail=False)
     def ranking_list(self, request):
         year = timezone.now().year
         month = timezone.now().month
         qs = self.queryset.filter(year=year, month=month)
-        ty = request.GET.get('ty') or None
-        data = []
-        if ty:
-            ty = int(ty)
-            from ticket.models import ShowType
-            xunyan = ShowType.xunyan()
-            dkxj = ShowType.dkxj()
-            # tkx = ShowType.tkx()
-            if ty == 1:
-                qs = qs.filter(show_type=xunyan)
-                data = UserCommissionMonthRecordRankSerializer(qs, many=True, context={'request': request}).data
-            elif ty == 2:
-                qs = qs.filter(show_type_id=dkxj.id).values('account_id').order_by('account_id').annotate(
-                    total=Sum('amount')).order_by('-total')[:10]
-            else:
-                qs = qs.none()
-        else:
-            qs = qs.values('account_id').order_by('account_id').annotate(total=Sum('amount')).order_by('-total')[:10]
-        if qs and not data:
-            for dd in list(qs):
-                account = UserAccount.objects.get(id=dd['account_id'])
-                user = account.user
-                if user.icon:
-                    avatar = request.build_absolute_uri(user.icon.url)
-                else:
-                    avatar = user.avatar
-                data.append(dict(amount=dd['total'], user_info=dict(name=user.get_full_name(), avatar=avatar)))
+        data = UserCommissionMonthRecordRankSerializer(qs, many=True, context={'request': request}).data
         return Response(data)
+
+    # @action(methods=['get'], detail=False)
+    # def ranking_list(self, request):
+    #     year = timezone.now().year
+    #     month = timezone.now().month
+    #     qs = self.queryset.filter(year=year, month=month)
+    #     ty = request.GET.get('ty') or None
+    #     data = []
+    #     if ty:
+    #         ty = int(ty)
+    #         from ticket.models import ShowType
+    #         xunyan = ShowType.xunyan()
+    #         dkxj = ShowType.dkxj()
+    #         # tkx = ShowType.tkx()
+    #         if ty == 1:
+    #             qs = qs.filter(show_type=xunyan)
+    #             data = UserCommissionMonthRecordRankSerializer(qs, many=True, context={'request': request}).data
+    #         elif ty == 2:
+    #             qs = qs.filter(show_type_id=dkxj.id).values('account_id').order_by('account_id').annotate(
+    #                 total=Sum('amount')).order_by('-total')[:10]
+    #         else:
+    #             qs = qs.none()
+    #     else:
+    #         qs = qs.values('account_id').order_by('account_id').annotate(total=Sum('amount')).order_by('-total')[:10]
+    #     if qs and not data:
+    #         for dd in list(qs):
+    #             account = UserAccount.objects.get(id=dd['account_id'])
+    #             user = account.user
+    #             if user.icon:
+    #                 avatar = request.build_absolute_uri(user.icon.url)
+    #             else:
+    #                 avatar = user.avatar
+    #             data.append(dict(amount=dd['total'], user_info=dict(name=user.get_full_name(), avatar=avatar)))
+    #     return Response(data)
 
 
 class UserPointChangeRecordViewSet(ReadOnlyModelViewSet):
