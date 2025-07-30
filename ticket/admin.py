@@ -1511,14 +1511,18 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     show_full_result_count = False
     list_select_related = ['user', 'agent', 'session', 'venue', 'wx_pay_config', 'dy_pay_config']
 
-    list_display = ['order_no', 'user_info', 'show_info', 'price_info', 'status_info', 'time_info', 'cps_info', 'op']
+    list_display = ['order_no', 'user_info', 'show_info', 'price_info', 'status_info', 'time_info', 'op']
+    # list_filter = (
+    #     'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue', 'pay_type',
+    #     'order_type', 'source_type', 'dy_pay_config', 'wx_pay_config', 'auto_check',
+    #     ShowTypeFilter, AgentFilter, 'need_refund_mz', 'is_paper', 'express_status', 'deliver_at')
+    # actions = [export_ticket_order, export_ticket_order_old, 'set_refund', 'set_theater_refund',
+    #            check_refund_order, export_ticket_express, cancel_lock_seats, query_dy_status, re_push_delivery]
     list_filter = (
-        'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue', 'pay_type',
-        'order_type', 'source_type', 'dy_pay_config', 'wx_pay_config', 'auto_check',
-        ShowTypeFilter, AgentFilter, 'need_refund_mz', 'is_paper', 'express_status', 'deliver_at')
-    actions = [export_ticket_order, export_ticket_order_old, 'set_refund', 'set_theater_refund',
-               check_refund_order, export_ticket_express, cancel_lock_seats, query_dy_status, re_push_delivery]
-    search_fields = ['=order_no', '=tiktok_order_id', '=ks_order_no', '=mobile', '=plan_id', '=transaction_id']
+        'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue',
+        'order_type', 'wx_pay_config', 'auto_check',AgentFilter, 'is_paper', 'express_status', 'deliver_at')
+    actions = [export_ticket_order, export_ticket_order_old, 'set_refund', export_ticket_express, cancel_lock_seats]
+    search_fields = ['=order_no', '=mobile', '=transaction_id']
     autocomplete_fields = ['user']
     readonly_fields = [f.name for f in TicketOrder._meta.fields if
                        f.name not in ['status', 'snapshot', 'u_agent_id', 'discount_amount',
@@ -1533,8 +1537,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         if search_term:
             queryset = o_qs.filter(
-                Q(order_no=search_term) | Q(tiktok_order_id=search_term) | Q(ks_order_no=search_term) | Q(
-                    mobile=search_term) | Q(plan_id=search_term))
+                Q(order_no=search_term) | Q(mobile=search_term) | Q(transaction_id=search_term))
         return queryset, use_distinct
 
     def op(self, obj):
@@ -1563,10 +1566,10 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         html += '<p>实付金额(包含邮费)：{}</p>'.format(obj.actual_amount)
         html += '<p>邮费：{}</p>'.format(obj.express_fee)
         html += '<p>退款金额：{}</p>'.format(obj.refund_amount)
-        if obj.tiktok_order_id:
-            html += '<p>抖音订单号：{}</p>'.format(obj.tiktok_order_id)
-        elif obj.ks_order_no:
-            html += '<p>快手订单号：{}</p>'.format(obj.ks_order_no)
+        # if obj.tiktok_order_id:
+        #     html += '<p>抖音订单号：{}</p>'.format(obj.tiktok_order_id)
+        # elif obj.ks_order_no:
+        #     html += '<p>快手订单号：{}</p>'.format(obj.ks_order_no)
         html += ' </div>'
         return mark_safe(html)
 
@@ -1590,34 +1593,34 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         if obj.is_paper:
             html += '<p>发货状态：{}</p>'.format(obj.get_express_status_display())
         html += '<p>是否订单自动取消后付款：{}</p>'.format('是' if obj.is_cancel_pay else '否')
-        html += '<p>同步卖座是否需要退款：{}</p>'.format('是' if obj.need_refund_mz else '否')
+        # html += '<p>同步卖座是否需要退款：{}</p>'.format('是' if obj.need_refund_mz else '否')
         html += ' </div>'
         return mark_safe(html)
 
     status_info.short_description = u'状态信息'
 
-    def cps_info(self, obj):
-        from mall.models import Receipt
-        if obj.pay_type in [Receipt.PAY_TikTok_LP, Receipt.PAY_KS] and obj.status not in [TicketOrder.STATUS_UNPAID,
-                                                                                          TicketOrder.STATUS_CANCELED]:
-            if obj.source_type == TicketOrder.SOURCE_DEFAULT:
-                return '未同步，请稍后再看'
-            else:
-                html = '<div style="width:200px"><p>带货场景：{}</p>'.format(obj.get_source_type_display())
-                if obj.pay_type == Receipt.PAY_TikTok_LP:
-                    html += '<p>达人抖音号：{}</p>'.format(obj.tiktok_douyinid or '')
-                    html += '<p>达人抖音昵称：{}</p>'.format(obj.tiktok_nickname or '')
-                    html += '<p>计划ID：{}</p>'.format(obj.plan_id or '')
-                    html += '<p>计划类型：{}</p>'.format(obj.get_plan_name() or '')
-                elif obj.pay_type == Receipt.PAY_KS:
-                    html += '<p>快手ID(非快手号)：{}</p>'.format(obj.tiktok_douyinid or '')
-                html += '<p>达人佣金：{}</p>'.format(obj.tiktok_commission_amount)
-                html += ' </div>'
-                return mark_safe(html)
-        else:
-            return None
-
-    cps_info.short_description = u'cps信息'
+    # def cps_info(self, obj):
+    #     from mall.models import Receipt
+    #     if obj.pay_type in [Receipt.PAY_TikTok_LP, Receipt.PAY_KS] and obj.status not in [TicketOrder.STATUS_UNPAID,
+    #                                                                                       TicketOrder.STATUS_CANCELED]:
+    #         if obj.source_type == TicketOrder.SOURCE_DEFAULT:
+    #             return '未同步，请稍后再看'
+    #         else:
+    #             html = '<div style="width:200px"><p>带货场景：{}</p>'.format(obj.get_source_type_display())
+    #             if obj.pay_type == Receipt.PAY_TikTok_LP:
+    #                 html += '<p>达人抖音号：{}</p>'.format(obj.tiktok_douyinid or '')
+    #                 html += '<p>达人抖音昵称：{}</p>'.format(obj.tiktok_nickname or '')
+    #                 html += '<p>计划ID：{}</p>'.format(obj.plan_id or '')
+    #                 html += '<p>计划类型：{}</p>'.format(obj.get_plan_name() or '')
+    #             elif obj.pay_type == Receipt.PAY_KS:
+    #                 html += '<p>快手ID(非快手号)：{}</p>'.format(obj.tiktok_douyinid or '')
+    #             html += '<p>达人佣金：{}</p>'.format(obj.tiktok_commission_amount)
+    #             html += ' </div>'
+    #             return mark_safe(html)
+    #     else:
+    #         return None
+    #
+    # cps_info.short_description = u'cps信息'
 
     def user_info(self, obj):
         html = '<div style="width:200px"><p>下单用户：{}</p>'.format(obj.user.get_full_name())
@@ -1645,8 +1648,8 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         html = '<div style="width:250px"><p>支付类型：{}</p>'.format(obj.get_pay_type_display())
         if obj.wx_pay_config_id:
             html += '<p>微信支付商户：{}</p>'.format(obj.wx_pay_config.title)
-        if obj.dy_pay_config_id:
-            html += '<p>抖音支付商户：{}</p>'.format(obj.dy_pay_config.title)
+        # if obj.dy_pay_config_id:
+        #     html += '<p>抖音支付商户：{}</p>'.format(obj.dy_pay_config.title)
         html += '<p>下单时间：{}</p>'.format(obj.create_at.strftime('%Y-%m-%d %H:%M'))
         html += '<p>支付时间：{}</p>'.format(obj.pay_at.strftime('%Y-%m-%d %H:%M') if obj.pay_at else '')
         if obj.transaction_id:
@@ -1712,14 +1715,14 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                 })
             from mall.models import Receipt
             source_type = None
-            if order.pay_type == Receipt.PAY_TikTok_LP:
-                source_type = TicketOrderRefund.ST_TIKTOK
-            elif order.pay_type == Receipt.PAY_WeiXin_LP:
+            if order.pay_type == Receipt.PAY_WeiXin_LP:
                 source_type = TicketOrderRefund.ST_WX
-            elif order.pay_type == Receipt.PAY_KS:
-                source_type = TicketOrderRefund.ST_KS
-            elif order.pay_type == Receipt.PAY_XHS:
-                source_type = TicketOrderRefund.ST_XHS
+            # elif order.pay_type == Receipt.PAY_TikTok_LP:
+            #     source_type = TicketOrderRefund.ST_TIKTOK
+            # elif order.pay_type == Receipt.PAY_KS:
+            #     source_type = TicketOrderRefund.ST_KS
+            # elif order.pay_type == Receipt.PAY_XHS:
+            #     source_type = TicketOrderRefund.ST_XHS
             if not source_type:
                 return JsonResponse(data={
                     'status': 'error',
@@ -1782,95 +1785,95 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         ]
     }
 
-    def set_theater_refund(self, request, queryset):
-        user = request.user
-        from caches import get_redis
-        redis = get_redis()
-        key = 'set_refund{}'.format(user.id)
-        if not redis.setnx(key, 1):
-            return JsonResponse(data={
-                'status': 'error',
-                'msg': '请勿点击多次！'
-            })
-        else:
-            redis.expire(key, 3)
-        post = request.POST
-        if not post.get('_selected'):
-            return JsonResponse(data={
-                'status': 'error',
-                'msg': '请先勾选一条记录！'
-            })
-        else:
-            reason = post.get('reason')
-            qs = queryset.filter(status__in=[TicketOrder.STATUS_PAID, TicketOrder.STATUS_REFUNDED])
-            if qs.count() > 1:
-                return JsonResponse(data={
-                    'status': 'error',
-                    'msg': '每次最多执行一条记录！'
-                })
-            if not qs:
-                return JsonResponse(data={
-                    'status': 'error',
-                    'msg': '只有待核销和已退款的订单可以退款！'
-                })
-            order = qs.first()
-            from mall.models import Receipt
-            source_type = None
-            if order.pay_type == Receipt.PAY_CARD_JC:
-                source_type = TicketOrderRefund.ST_CARD
-            if not source_type:
-                return JsonResponse(data={
-                    'status': 'error',
-                    'msg': '非剧场会员卡订单，不支持退款！'
-                })
-            st, msg = TicketOrderRefund.create_record(order, order.actual_amount, reason, source_type)
-            if not st:
-                return JsonResponse(data={
-                    'status': 'error',
-                    'msg': msg
-                })
-            order.refund_amount += order.actual_amount
-            order.status_before_refund = order.status
-            order.status = order.STATUS_REFUNDING
-            order.save(update_fields=['refund_amount', 'status', 'status_before_refund'])
-            return JsonResponse(data={
-                'status': 'success',
-                'msg': '操作成功！'
-            })
-
-    set_theater_refund.short_description = '会员卡订单退款'
-    set_theater_refund.type = 'success'
-    set_theater_refund.icon = 'el-icon-s-promotion'
-    # 指定为弹出层，这个参数最关键
-    set_theater_refund.layer = {
-        # 弹出层中的输入框配置
-        # 这里指定对话框的标题
-        'title': '会员卡订单退款',
-        # 提示信息
-        'tips': '',
-        # 确认按钮显示文本
-        'confirm_button': '确认提交',
-        # 取消按钮显示文本
-        'cancel_button': '取消',
-        # 弹出层对话框的宽度，默认50%
-        'width': '50%',
-        # 表单中 label的宽度，对应element-ui的 label-width，默认80px
-        'labelWidth': "100px",
-        'params': [
-            {
-                # 这里的type 对应el-input的原生input属性，默认为input
-                'require': True,
-                'type': 'input',
-                # key 对应post参数中的key
-                'key': 'reason',
-                # 显示的文本
-                'label': '退款原因',
-                'width': '70%',
-                # 表单中 label的宽度，对应element-ui的 label-width，默认80px
-                'labelWidth': "120px",
-            }
-        ]
-    }
+    # def set_theater_refund(self, request, queryset):
+    #     user = request.user
+    #     from caches import get_redis
+    #     redis = get_redis()
+    #     key = 'set_refund{}'.format(user.id)
+    #     if not redis.setnx(key, 1):
+    #         return JsonResponse(data={
+    #             'status': 'error',
+    #             'msg': '请勿点击多次！'
+    #         })
+    #     else:
+    #         redis.expire(key, 3)
+    #     post = request.POST
+    #     if not post.get('_selected'):
+    #         return JsonResponse(data={
+    #             'status': 'error',
+    #             'msg': '请先勾选一条记录！'
+    #         })
+    #     else:
+    #         reason = post.get('reason')
+    #         qs = queryset.filter(status__in=[TicketOrder.STATUS_PAID, TicketOrder.STATUS_REFUNDED])
+    #         if qs.count() > 1:
+    #             return JsonResponse(data={
+    #                 'status': 'error',
+    #                 'msg': '每次最多执行一条记录！'
+    #             })
+    #         if not qs:
+    #             return JsonResponse(data={
+    #                 'status': 'error',
+    #                 'msg': '只有待核销和已退款的订单可以退款！'
+    #             })
+    #         order = qs.first()
+    #         from mall.models import Receipt
+    #         source_type = None
+    #         if order.pay_type == Receipt.PAY_CARD_JC:
+    #             source_type = TicketOrderRefund.ST_CARD
+    #         if not source_type:
+    #             return JsonResponse(data={
+    #                 'status': 'error',
+    #                 'msg': '非剧场会员卡订单，不支持退款！'
+    #             })
+    #         st, msg = TicketOrderRefund.create_record(order, order.actual_amount, reason, source_type)
+    #         if not st:
+    #             return JsonResponse(data={
+    #                 'status': 'error',
+    #                 'msg': msg
+    #             })
+    #         order.refund_amount += order.actual_amount
+    #         order.status_before_refund = order.status
+    #         order.status = order.STATUS_REFUNDING
+    #         order.save(update_fields=['refund_amount', 'status', 'status_before_refund'])
+    #         return JsonResponse(data={
+    #             'status': 'success',
+    #             'msg': '操作成功！'
+    #         })
+    #
+    # set_theater_refund.short_description = '会员卡订单退款'
+    # set_theater_refund.type = 'success'
+    # set_theater_refund.icon = 'el-icon-s-promotion'
+    # # 指定为弹出层，这个参数最关键
+    # set_theater_refund.layer = {
+    #     # 弹出层中的输入框配置
+    #     # 这里指定对话框的标题
+    #     'title': '会员卡订单退款',
+    #     # 提示信息
+    #     'tips': '',
+    #     # 确认按钮显示文本
+    #     'confirm_button': '确认提交',
+    #     # 取消按钮显示文本
+    #     'cancel_button': '取消',
+    #     # 弹出层对话框的宽度，默认50%
+    #     'width': '50%',
+    #     # 表单中 label的宽度，对应element-ui的 label-width，默认80px
+    #     'labelWidth': "100px",
+    #     'params': [
+    #         {
+    #             # 这里的type 对应el-input的原生input属性，默认为input
+    #             'require': True,
+    #             'type': 'input',
+    #             # key 对应post参数中的key
+    #             'key': 'reason',
+    #             # 显示的文本
+    #             'label': '退款原因',
+    #             'width': '70%',
+    #             # 表单中 label的宽度，对应element-ui的 label-width，默认80px
+    #             'labelWidth': "120px",
+    #         }
+    #     ]
+    # }
 
 
 class TicketBookingItemInline(OnlyReadTabularInline):
