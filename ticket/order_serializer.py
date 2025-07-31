@@ -577,6 +577,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             level_key = str(level_inst.id)
             with get_pika_redis() as pika:
                 level_cache = pika.hget(level_name, level_key)
+                level_cache = json.loads(level_cache) if level_cache else dict()
                 if level_cache.get('cy'):
                     # 1是基础票
                     # level_data['ticket_pack_list'] = []
