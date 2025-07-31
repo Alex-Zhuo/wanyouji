@@ -573,22 +573,23 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                 multiply += p_multiply
             else:
                 raise CustomAPIException('下单错误，票档没找到')
-            level_name = redis_ticket_level_cache.format(session.no)
-            level_key = str(level_inst.id)
-            with get_pika_redis() as pika:
-                level_cache = pika.hget(level_name, level_key)
-                level_cache = json.loads(level_cache) if level_cache else dict()
-                if level_cache.get('cy'):
-                    # 1是基础票
-                    # level_data['ticket_pack_list'] = []
-                    if int(level_cache['cy']['category']) in [2, 3]:
-                        # level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
-                        for pack in level_cache['cy']['ticket_pack_list']:
-                            pack_multiply += int(pack['qty'])
+            if session.one_id_one_ticket:
+                level_name = redis_ticket_level_cache.format(session.no)
+                level_key = str(level_inst.id)
+                with get_pika_redis() as pika:
+                    level_cache = pika.hget(level_name, level_key)
+                    level_cache = json.loads(level_cache) if level_cache else dict()
+                    if level_cache.get('cy'):
+                        # 1是基础票
+                        # level_data['ticket_pack_list'] = []
+                        if int(level_cache['cy']['category']) in [2, 3]:
+                            # level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
+                            for pack in level_cache['cy']['ticket_pack_list']:
+                                pack_multiply += int(pack['qty'])
+                        else:
+                            pack_multiply += p_multiply
                     else:
-                        pack_multiply += p_multiply
-                else:
-                    raise CustomAPIException('下单错误，票档错误..')
+                        raise CustomAPIException('下单错误，票档错误..')
         if multiply != validated_data['multiply']:
             raise CustomAPIException('购票数量错误，请重新选择')
         show_type = session.show.show_type
