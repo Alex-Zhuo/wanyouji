@@ -37,7 +37,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         #     st = KsGoodsConfig.set_approve(data['product_id'], data['message'], data['reject_reason'], data['audit_id'])
         #     if not st:
         #         ret['result'] = 0
-        return Response(ret)
+        return JsonResponse(ret)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
