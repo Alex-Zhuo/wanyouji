@@ -2137,7 +2137,7 @@ class TicketFile(models.Model):
                     if tp_qs:
                         from caiyicloud.serializers import CyTicketPackSerializer
                         ticket_pack_list = CyTicketPackSerializer(tp_qs, many=True).data
-                    data['cy'] = dict(category=self.cy_tf.category, ticket_pack_list=ticket_pack_list)
+                    data['cy'] = dict(no=self.cy_tf.cy_no, category=self.cy_tf.category, ticket_pack_list=ticket_pack_list)
                 dd = json.dumps(data)
                 pika.hset(name, key, dd)
                 if self.is_tiktok:

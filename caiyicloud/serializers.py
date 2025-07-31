@@ -5,7 +5,7 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 
-from caiyicloud.models import CyTicketPack
+from caiyicloud.models import CyTicketPack, CySession
 
 log = logging.getLogger(__name__)
 
@@ -14,3 +14,10 @@ class CyTicketPackSerializer(serializers.ModelSerializer):
     class Meta:
         model = CyTicketPack
         fields = ['cy_no', 'ticket_type_id', 'price', 'qty']
+
+
+class CySeatUrlSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CySession
+        fields = []

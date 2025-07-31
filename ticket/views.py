@@ -645,7 +645,6 @@ class SessionInfoViewSet(SerializerSelector, DetailPKtoNoViewSet):
         ret = s.create(s.validated_data)
         return Response(ret)
 
-
 # 后台用的接口
 class TicketFileViewSet(SerializerSelector, ReturnNoDetailViewSet):
     queryset = TicketFile.objects.none()
