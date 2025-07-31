@@ -543,6 +543,8 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         # ticket_list [dict(level_id=1,multiply=2)]
         request = self.context.get('request')
         is_tiktok, is_ks, is_xhs = get_origin(request)
+        if is_tiktok or is_ks or is_xhs:
+            raise CustomAPIException('不支持该渠道')
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
         is_coupon = True if validated_data.get('coupon_no') else False
@@ -559,6 +561,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         multiply = 0
         # 彩艺云购票实际数量，套票
         pack_multiply = 0
+        pack_amount = 0
         for level_data in ticket_list:
             key = cache_order_seat_key.format(level_data['level_id'], session.id)
             level_inst = cache.get(key)
@@ -586,6 +589,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                             # level_data['ticket_pack_list'] = level_cache['cy']['ticket_pack_list']
                             for pack in level_cache['cy']['ticket_pack_list']:
                                 pack_multiply += int(pack['qty'])
+                                pack_amount += pack['qty'] * pack['price']
                         else:
                             pack_multiply += p_multiply
                     else:
@@ -602,6 +606,9 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             user,
             ticket_list, pay_type, session,
             is_tiktok, express_fee, is_coupon=is_coupon)
+        # 套票原价
+        if pack_amount > 0:
+            amount = Decimal(pack_amount)
         # 加上邮费
         amount = amount + express_fee
         actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
@@ -637,7 +644,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         real_name_list = list(show_users.values('id_card', 'name')) if show_users else None
         # try:
         CyOrder.order_create(ticket_order=inst, session=session, real_name_list=real_name_list,
-                                 ticket_list=ticket_list)
+                             ticket_list=ticket_list)
         # except Exception as e:
         #     log.error(e)
         #     raise CustomAPIException('下单失败，请稍后再试')

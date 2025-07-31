@@ -2137,7 +2137,8 @@ class TicketFile(models.Model):
                     if tp_qs:
                         from caiyicloud.serializers import CyTicketPackSerializer
                         ticket_pack_list = CyTicketPackSerializer(tp_qs, many=True).data
-                    data['cy'] = dict(no=self.cy_tf.cy_no, category=self.cy_tf.category, ticket_pack_list=ticket_pack_list)
+                    data['cy'] = dict(no=self.cy_tf.cy_no, category=self.cy_tf.category,
+                                      ticket_pack_list=ticket_pack_list)
                 dd = json.dumps(data)
                 pika.hset(name, key, dd)
                 if self.is_tiktok:
@@ -2350,7 +2351,7 @@ class TicketFile(models.Model):
         amount = 0
         actual_amount = 0
         level_list = []
-        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon  else TicketOrder.DISCOUNT_COUPON
+        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon else TicketOrder.DISCOUNT_COUPON
         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
@@ -2871,7 +2872,7 @@ class SessionSeat(models.Model):
         amount = 0
         actual_amount = 0
         ticket = dict()
-        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon  else TicketOrder.DISCOUNT_COUPON
+        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon else TicketOrder.DISCOUNT_COUPON
         session_seat_list = []
         card = None
         use_old_card = False

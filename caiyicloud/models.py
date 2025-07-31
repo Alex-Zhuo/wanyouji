@@ -738,6 +738,7 @@ class CyTicketType(models.Model):
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name="票价id")
     std_id = models.CharField(max_length=64, verbose_name="中心票价id")
     name = models.CharField(max_length=50, verbose_name="票价名称")
+    origin_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="原价", help_text='单位：元', default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="票价", help_text='单位：元')
     stock = models.PositiveIntegerField('库存数量', default=0)
     comment = models.CharField(max_length=50, blank=True, null=True, verbose_name="票价说明")
@@ -866,6 +867,7 @@ class CyTicketType(models.Model):
                     name=ticket_type['name'],
                     std_id=ticket_type['std_id'],
                     price=price,
+                    origin_price=price,
                     comment=ticket_type['comment'],
                     color=ticket_type['color'],
                     enabled=ticket_type['enabled'],
@@ -903,13 +905,17 @@ class CyTicketType(models.Model):
                 # 添加套票组成
                 ticket_pack_list = ticket_type.get('ticket_pack_list') or []
                 if ticket_pack_list:
+                    origin_price = 0
                     pack_list = []
                     for pack_data in ticket_pack_list:
                         pack = CyTicketPack.update_or_create_record(pack_data['id'], pack_data['ticket_type_id'],
                                                                     Decimal(pack_data['price']), int(pack_data['qty']))
                         pack_list.append(pack)
+                        origin_price += pack_data['price'] * pack_data['qty']
                     if pack_list:
                         cy_ticket.ticket_pack_list.set(pack_list)
+                        cy_ticket.origin_price = origin_price
+                        cy_ticket.save(update_fields=['origin_price'])
                 # 改库存
                 tf.redis_stock()
                 # 改缓存
@@ -1095,8 +1101,8 @@ class CyOrder(models.Model):
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=ticket_order.amount-ticket_order.express_fee,
-                                             actual_total_amount=ticket_order.actual_amount,
+                                             original_total_amount=ticket_order.amount - ticket_order.express_fee,
+                                             actual_total_amount=ticket_order.actual_amount - ticket_order.express_fee,
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
