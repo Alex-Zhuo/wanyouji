@@ -1081,6 +1081,7 @@ class TicketOrderSerializer(serializers.ModelSerializer):
     express_status_display = serializers.ReadOnlyField(source='get_express_status_display')
     id = serializers.SerializerMethodField()
     receipt = serializers.SerializerMethodField()
+    discount_type_display = serializers.ReadOnlyField(source='get_discount_type_display')
 
     def get_id(self, obj):
         return obj.order_no
@@ -1129,7 +1130,7 @@ class TicketOrderSerializer(serializers.ModelSerializer):
                   'receipt', 'pay_type', 'pay_at', 'deliver_at', 'create_at', 'start_at', 'end_at',
                   'is_paper', 'express_no', 'express_name', 'express_comp_no', 'snapshot',
                   'status_display', 'session', 'venue', 'user', 'pay_end_at', 'can_margin',
-                  'can_comment', 'show_express_address', 'express_status_display']
+                  'can_comment', 'show_express_address', 'express_status_display', 'discount_type_display']
 
 
 class TicketOrderDetailSerializer(TicketOrderSerializer):

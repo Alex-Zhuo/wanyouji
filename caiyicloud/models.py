@@ -1094,7 +1094,7 @@ class CyOrder(models.Model):
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=ticket_order.amount,
+                                             original_total_amount=ticket_order.amount-ticket_order.express_fee,
                                              actual_total_amount=ticket_order.actual_amount,
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,

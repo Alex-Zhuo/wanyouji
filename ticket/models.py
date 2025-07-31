@@ -2972,9 +2972,9 @@ class TicketOrder(models.Model):
     DISCOUNT_DEFAULT = 0
     DISCOUNT_YEAR = 1
     DISCOUNT_COUPON = 2
-    DISCOUNT_OTHER = 3
+    DISCOUNT_CY = 3
     DISCOUNT_CHOICES = (
-        (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_OTHER, '其他渠道'))
+        (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_CY, '彩艺'))
     discount_type = models.IntegerField(u'优惠类型', choices=DISCOUNT_CHOICES, default=DISCOUNT_DEFAULT)
     refund_amount = models.DecimalField('已退款金额', max_digits=9, decimal_places=2, default=0)
     TY_HAS_SEAT = 1
