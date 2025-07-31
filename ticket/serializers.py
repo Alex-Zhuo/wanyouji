@@ -1169,7 +1169,7 @@ class TicketOrderDetailSerializer(TicketOrderSerializer):
 
     class Meta:
         model = TicketOrder
-        fields = TicketOrderSerializer.Meta.fields + ['session', 'code_list', 'content', 'show_data']
+        fields = TicketOrderSerializer.Meta.fields + ['session', 'code_list', 'show_data']
 
 
 class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
