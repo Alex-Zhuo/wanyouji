@@ -19,7 +19,7 @@ class CaiYiViewSet(viewsets.ViewSet):
     @action(methods=['post', 'get'], detail=False, permission_classes=[])
     def cy_notify(self, request):
         log.error(request.data)
-        log.error(request.body)
+        # log.error(request.body)
         log.error(request.META)
         # ret = json.loads(request.body.decode('utf-8'))
         # message_id = ret['message_id']
