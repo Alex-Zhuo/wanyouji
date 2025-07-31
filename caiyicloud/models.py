@@ -1070,8 +1070,8 @@ class CyOrder(models.Model):
                                     seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
                                                                 cellphone=real_name_list[i]['mobile'],
                                                                 name=real_name_list[i]['name'], type=1)
-                                    seats.append(seat_data)
                                     i += 1
+                            seats.append(seat_data)
                     else:
                         if session.one_id_one_ticket:
                             seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
