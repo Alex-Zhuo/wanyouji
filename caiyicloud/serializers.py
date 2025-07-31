@@ -31,3 +31,15 @@ class CySeatUrlSerializer(serializers.ModelSerializer):
     class Meta:
         model = CyTicketType
         fields = ['no', 'navigate_url']
+
+
+class CySeatInfoSerializer(serializers.ModelSerializer):
+    biz_id = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        ret = CyTicketType.get_seat_info(biz_id=validated_data['biz_id'])
+        return ret
+
+    class Meta:
+        model = CyTicketType
+        fields = ['biz_id']

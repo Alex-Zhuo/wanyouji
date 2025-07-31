@@ -44,3 +44,12 @@ class CaiYiViewSet(viewsets.ViewSet):
         s.is_valid(True)
         ret = s.create(s.validated_data)
         return Response(ret)
+
+    @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
+    def get_seat_info(self, request):
+        from caiyicloud.models import CyTicketType
+        biz_id = request.GET.get('biz_id')
+        if not biz_id:
+            raise CustomAPIException('获取已选择信息失败')
+        ret = CyTicketType.get_seat_info(biz_id=request.GET.get('biz_id'))
+        return Response(ret)
