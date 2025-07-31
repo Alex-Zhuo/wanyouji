@@ -1106,7 +1106,8 @@ class CyOrder(models.Model):
             raise CustomAPIException('下单失败，请稍后再试。。。')
         from caiyicloud.error_codes import is_success
         if not is_success(response_data["code"]):
-            raise CustomAPIException(response_data['msg'])
+            error_msg = response_data.get('message') or response_data.get('msg')
+            raise CustomAPIException(error_msg)
         else:
             auto_cancel_order_time = datetime.strptime(response_data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
             cy_order = cls.objects.create(ticket_order=ticket_order, cy_session=cy_session,
