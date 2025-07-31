@@ -1026,7 +1026,7 @@ class CyOrder(models.Model):
             raise CustomAPIException('请选择实名认证观影人')
         cy_session = session.cy_session
         delivery_method = cy_session.delivery_methods.first()
-        cy_ticket_list  = []
+        cy_ticket_list = []
         i = 0
         if biz_id:
             # 有座下单
@@ -1044,10 +1044,10 @@ class CyOrder(models.Model):
                     i += 1
                     seats.append(seat_data)
                 cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
-                                        delivery_method=delivery_method.code,
-                                        ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
-                                        qty=t_info['count'],
-                                        seats=seats))
+                                           delivery_method=delivery_method.code,
+                                           ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
+                                           qty=t_info['count'],
+                                           seats=seats))
         else:
             for ticket in ticket_list:
                 seats = []
@@ -1060,8 +1060,6 @@ class CyOrder(models.Model):
                 cy_tf = ticket_obj.cy_tf
                 if session.one_id_one_ticket or cy_tf.is_package_ticket:
                     seat_data = dict(photo_url=None)
-                    id_info = dict(number=real_name_list[i]['id_card'], cellphone=real_name_list[i]['mobile'],
-                                   name=real_name_list[i]['name'], type=1)
                     if cy_tf.is_package_ticket:
                         # 套票
                         for pack in cy_tf.ticket_pack_list.all():
@@ -1069,25 +1067,30 @@ class CyOrder(models.Model):
                             if session.one_id_one_ticket:
                                 for j in list(range(0, pack.qty)):
                                     # 随机填入实名人信息
-                                    seat_data['id_info'] = id_info
+                                    seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                                cellphone=real_name_list[i]['mobile'],
+                                                                name=real_name_list[i]['name'], type=1)
                                     seats.append(seat_data)
                                     i += 1
                     else:
                         if session.one_id_one_ticket:
-                            seat_data['id_info'] = id_info
+                            seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                        cellphone=real_name_list[i]['mobile'],
+                                                        name=real_name_list[i]['name'], type=1)
                             seats.append(seat_data)
                             i += 1
                 cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
-                                        delivery_method=delivery_method.code,
-                                        ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
-                                        qty=multiply,
-                                        seats=seats))
+                                           delivery_method=delivery_method.code,
+                                           ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
+                                           qty=multiply,
+                                           seats=seats))
         # 快递不做
         express_amount = 0
         address_info = None
         promotion_list = None
         id_info = None
-        if not session.one_id_one_ticket and session.is_name_buy and real_name_list:
+        if not session.one_id_one_ticket and session.is_name_buy:
+            # 一单一证
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
