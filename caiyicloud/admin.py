@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib import messages
 
 from caiyicloud.models import CaiYiCloudApp, CyCategory, CyVenue, CyShowEvent, CyDeliveryMethods, CyCheckInMethods, \
-    CyIdTypes, CySession, CyTicketType, CyFirstCategory
+    CyIdTypes, CySession, CyTicketType, CyFirstCategory, CyOrder, CyTicketCode, CyOrderRefund
 from dj import technology_admin
 from dj_ext.permissions import TechnologyModelAdmin, OnlyViewAdmin, RemoveDeleteModelAdmin, OnlyReadTabularInline
 from dj_ext.exceptions import AdminException
@@ -87,6 +87,22 @@ class CySessionAdmin(AllOnlyViewAdmin):
     inlines = [CyTicketTypeInline]
 
 
+class CyTicketCodeInline(OnlyReadTabularInline):
+    model = CyTicketCode
+    extra = 0
+
+
+class CyOrderAdmin(AllOnlyViewAdmin):
+    list_display = ['cy_order_no', 'ticket_order', 'cy_session', 'order_state', 'buyer_cellphone',
+                    'auto_cancel_order_time', 'exchange_code',
+                    'exchange_qr_code', 'code_type', 'delivery_method', 'created_at', 'updated_at']
+    inlines = [CyTicketCodeInline]
+
+
+class CyOrderRefundAdmin(AllOnlyViewAdmin):
+    list_display = ['apply_id', 'refund', 'cy_order', 'status', 'error_msg']
+
+
 admin.site.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
 admin.site.register(CyFirstCategory, CyFirstCategoryAdmin)
 admin.site.register(CyCategory, CyCategoryAdmin)
@@ -96,6 +112,8 @@ admin.site.register(CyIdTypes, CyIdTypesAdmin)
 admin.site.register(CyCheckInMethods, CyCheckInMethodsAdmin)
 admin.site.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 admin.site.register(CySession, CySessionAdmin)
+admin.site.register(CyOrder, CyOrderAdmin)
+admin.site.register(CyOrderRefund, CyOrderRefundAdmin)
 
 technology_admin.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
 technology_admin.register(CyFirstCategory, CyFirstCategoryAdmin)
@@ -106,3 +124,5 @@ technology_admin.register(CyIdTypes, CyIdTypesAdmin)
 technology_admin.register(CyCheckInMethods, CyCheckInMethodsAdmin)
 technology_admin.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 technology_admin.register(CySession, CySessionAdmin)
+technology_admin.register(CyOrder, CyOrderAdmin)
+technology_admin.register(CyOrderRefund, CyOrderRefundAdmin)
