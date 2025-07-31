@@ -1276,7 +1276,8 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
                 inst.mobile = validated_data['mobile']
                 inst.save(update_fields=['name', 'mobile'])
             else:
-                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], mobile=validated_data['mobile'])
+                inst = ShowUser.objects.create(user=request.user, id_card=validated_data['id_card'],
+                                               name=validated_data['name'], mobile=validated_data['mobile'])
         except Exception as e:
             raise CustomAPIException('不能重复添加常用联系人')
         return inst
