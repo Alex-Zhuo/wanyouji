@@ -1035,6 +1035,13 @@ class CyOrder(models.Model):
         delivery_method = cy_session.delivery_methods.first()
         cy_ticket_list = []
         i = 0
+        promotion_list = []
+        original_total_amount = ticket_order.amount - ticket_order.express_fee
+        # 不是彩艺云的按原价
+        if ticket_order.discount_type == TicketOrder.DISCOUNT_CY:
+            actual_total_amount = ticket_order.actual_amount - ticket_order.express_fee
+        else:
+            actual_total_amount = original_total_amount
         if biz_id:
             # 有座下单
             seat_info = cls.get_cy_seat_info(biz_id)
@@ -1079,6 +1086,9 @@ class CyOrder(models.Model):
                                                                 name=real_name_list[i]['name'], type=1)
                                     i += 1
                             seats.append(seat_data)
+                        # 优惠策略,1:套票优惠；2:营销活动,现在只有套票。
+                        promotion_list.append(
+                            dict(category=1, discount_amount=original_total_amount - actual_total_amount))
                     else:
                         if session.one_id_one_ticket:
                             seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
@@ -1094,15 +1104,14 @@ class CyOrder(models.Model):
         # 快递不做
         express_amount = 0
         address_info = None
-        promotion_list = None
         id_info = None
         if not session.one_id_one_ticket and session.is_name_buy:
             # 一单一证
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=ticket_order.amount - ticket_order.express_fee,
-                                             actual_total_amount=ticket_order.actual_amount - ticket_order.express_fee,
+                                             original_total_amount=original_total_amount,
+                                             actual_total_amount=actual_total_amount,
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
