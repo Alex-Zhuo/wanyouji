@@ -1247,7 +1247,7 @@ class ShowUserSerializer(PKtoNoSerializer):
 
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
+    id = serializers.CharField(required=False)
     id_card = serializers.CharField(required=True)
 
     def validate_mobile(self, value):
@@ -1271,14 +1271,12 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
                     raise CustomAPIException('姓名与身份证不匹配或有误，请核对后重试！')
         try:
             if validated_data.get('id'):
-                inst = ShowUser.objects.filter(id=validated_data['id']).first()
+                inst = ShowUser.objects.filter(no=validated_data['id']).first()
                 inst.name = validated_data['name']
                 inst.mobile = validated_data['mobile']
-                inst.id_card = id_card
-                inst.save(update_fields=['name', 'id_card', 'mobile'])
+                inst.save(update_fields=['name', 'mobile'])
             else:
-                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], id_card=id_card,
-                                               mobile=validated_data['mobile'])
+                inst = ShowUser.objects.create(user=request.user, name=validated_data['name'], mobile=validated_data['mobile'])
         except Exception as e:
             raise CustomAPIException('不能重复添加常用联系人')
         return inst
