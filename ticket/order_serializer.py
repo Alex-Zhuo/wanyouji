@@ -635,7 +635,7 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         real_name_list = list(show_users.values('id_card', 'name')) if show_users else None
         try:
             CyOrder.order_create(ticket_order=inst, session=session, real_name_list=real_name_list,
-                                            ticket_list=ticket_list)
+                                 ticket_list=ticket_list)
         except Exception as e:
             log.error(e)
             raise CustomAPIException('下单失败，请稍后再试')
@@ -663,6 +663,10 @@ class CyTicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         fields = TicketOrderCreateCommonSerializer.Meta.fields
 
 
+class CyTicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
+    pass
+
+
 def ticket_order_dispatch(order_type: int, channel_type: int):
     # 补差订单走另外的接口
     if channel_type == TicketOrder.SR_DEFAULT:
@@ -672,7 +676,7 @@ def ticket_order_dispatch(order_type: int, channel_type: int):
             return TicketOrderOnSeatCreateSerializer
     elif channel_type == TicketOrder.SR_CY:
         if order_type == TicketOrder.TY_HAS_SEAT:
-            pass
+            return CyTicketOrderCreateSerializer
         elif order_type == TicketOrder.TY_NO_SEAT:
             return CyTicketOrderOnSeatCreateSerializer
     else:
