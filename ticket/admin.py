@@ -14,7 +14,7 @@ from ticket.models import TicketOrder, ShowProject, ShowType, Venues, TicketColo
     LiveRoomCpsItem, CommonPlanCps, CpsDirectional, VenuesLayers, ShowComment, ShowCommentImage, TicketBooking, \
     TicketBookingItem, MaiZuoTask, TicketOrderChangePrice, DownLoadTask, SessionChangeSaleTimeRecord, \
     ShowContentCategory, ShowPerformerBanner, MaiZuoLoginLog, TicketOrderExpress, TicketGiveRecord, TicketGiveDetail, \
-    TicketOrderRealName, ShowContentCategorySecond, TicketPurchaseNotice, TicketWatchingNotice
+    TicketOrderRealName, ShowContentCategorySecond, TicketPurchaseNotice, TicketWatchingNotice, TicketOrderDiscount
 import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -819,7 +819,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     # actions = [set_on_session, set_off_session, dy_set_on_session, dy_set_off_session, push_to_tiktok, 'change_end_at',
     #            'copy_session', refresh_from_tiktok, pull_maizuo, 'change_sale_time', set_delete, cancel_delete,
     #            set_sale_off, close_comment]
-    actions = [set_on_session, set_off_session, 'change_end_at', 'copy_session', 'change_sale_time', set_delete,
+    actions = [set_on_session, set_off_session, 'change_end_at', 'copy_session', set_delete,
                cancel_delete,
                set_sale_off, close_comment]
     # autocomplete_fields = ['show', 'tiktok_store', 'main_session']
@@ -909,8 +909,9 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                                                                                                            start_at,
                                                                                                            end_at,
                                                                                                            obj.has_seat)
-        html += '<button type="button" class="el-button el-button--success el-button--small item_change_end_at" ' \
-                'style="margin-top:8px" alt={}>推迟/延后</button><br>'.format(obj.id)
+        if obj.source_type == SessionInfo.SR_DEFAULT:
+            html += '<button type="button" class="el-button el-button--success el-button--small item_change_end_at" ' \
+                    'style="margin-top:8px" alt={}>推迟/延后</button><br>'.format(obj.id)
         # if obj.tiktok_store:
         #     html += '<button type="button" class="el-button el-button--success el-button--small item_change_sale_time" ' \
         #             'style="margin-top:8px" alt={}>修改抖音开售时间</button><br>'.format(obj.id)
@@ -1506,6 +1507,11 @@ class TicketOrderRealNameInline(OnlyReadTabularInline):
     s_id_card.short_description = u'身份证号'
 
 
+class TicketOrderDiscountInline(OnlyReadTabularInline):
+    model = TicketOrderDiscount
+    extra = 0
+
+
 class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     # paginator = LargeTablePaginator
     show_full_result_count = False
@@ -1537,7 +1543,8 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                                       'need_refund_mz', 'ks_report', 'card_jc_amount', 'snapshot', 'u_user_id',
                                       'u_agent_id',
                                       'discount_amount', 'status_before_refund', 'item_order_info_list']]
-    inlines = [TicketOrderRealNameInline, TicketUserCodeInline, TicketOrderChangePriceInline, TicketOrderInline]
+    inlines = [TicketOrderRealNameInline, TicketOrderDiscountInline, TicketUserCodeInline, TicketOrderChangePriceInline,
+               TicketOrderInline]
     list_per_page = 10
 
     def get_search_results(self, request, queryset, search_term):

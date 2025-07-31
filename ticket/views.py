@@ -29,7 +29,8 @@ from ticket.serializers import VenuesSerializer, TicketColorSerializer, SeatCrea
     SessionExpressFeeSerializer, TicketGiveRecordCreateSerializer, TicketGiveRecordSerializer, \
     TicketGiveRecordDetailSerializer, TicketOrderGiveDetailSerializer, \
     TicketOrderLockSeatSerializer, TicketOrderDetailNewSerializer, TicketUserCodeNewSerializer, ShowAiSerializer, \
-    VenuesCustomerDetailSerializer, ShowContentCategoryHomeSerializer, ShowContentCategorySecondSerializer
+    VenuesCustomerDetailSerializer, ShowContentCategoryHomeSerializer, ShowContentCategorySecondSerializer, \
+    CyTicketOrderDetailSerializer
 from restframework_ext.exceptions import CustomAPIException
 from django.utils import timezone
 from django.db.models import Max, Min
@@ -882,7 +883,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # log.debug(request.META)
         try:
             order = TicketOrder.objects.get(order_no=order_no, user_id=request.user.id)
-            data = TicketOrderDetailNewSerializer(order, context={'request': request}).data
+            if order.channel_type==TicketOrder.SR_DEFAULT:
+                data = TicketOrderDetailNewSerializer(order, context={'request': request}).data
+            else:
+                data = CyTicketOrderDetailSerializer(order, context={'request': request}).data
         except TicketOrder.DoesNotExist:
             raise Http404
         return Response(data)

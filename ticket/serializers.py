@@ -1193,6 +1193,31 @@ class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
         fields = TicketOrderDetailSerializer.Meta.fields + ['real_name_list']
 
 
+class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
+    real_name_list = serializers.SerializerMethodField()
+
+    def get_real_name_list(self, obj):
+        if hasattr(obj, 'real_name_order'):
+            qs = obj.real_name_order.all()
+        else:
+            qs = TicketOrderRealName.objects.none()
+        data = TicketOrderRealNameSerializer(qs, many=True, context=self.context).data
+        return data
+
+    def get_code_list(self, obj):
+        qs = TicketUserCode.objects.filter(order=obj)
+        data = TicketUserCodeNewSerializer(qs, many=True, context=self.context).data
+        return data
+
+    def get_snapshot(self, obj):
+        snapshot = json.loads(obj.snapshot)
+        return snapshot
+
+    class Meta:
+        model = TicketOrder
+        fields = TicketOrderDetailNewSerializer.Meta.fields
+
+
 class TicketOrderMarginCreateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=True)
     amount = serializers.DecimalField(required=True, max_digits=9, decimal_places=2)

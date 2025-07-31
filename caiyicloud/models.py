@@ -1042,22 +1042,33 @@ class CyOrder(models.Model):
             actual_total_amount = ticket_order.actual_amount - ticket_order.express_fee
         else:
             actual_total_amount = original_total_amount
+        event_id = cy_session.event.event_id
         if biz_id:
-            # 有座下单
+            """ 
+            有座下单
+             {'utcOffset': 480, 'promotion_list': [{'discount_amount': 1, 'name': '套票优惠', 'category': 1}],
+              'price_infos': [{'seat_infos': [{'area_name': '二层104 ', 'seat_price': 3, 'seat_group_id': '1753946793697100000008',
+               'seat_concreate_id': '67480f33b1c1c30001be191a', 'seat_remark': '10排21座'}, {'area_name': '二层104 ', 'seat_price': 3,
+                'seat_group_id': '1753946793697100000008', 'seat_concreate_id': '67480f33b1c1c30001be1919', 'seat_remark': '10排19座'}],
+                 'price_category': 3, 'price': 5, 'price_id': '683577f1a70f7a0001865f42', 'count': 1, 'session_id': '683577f0a70f7a0001865f39'}],
+                  'lang': 'zh'}}
+            """
             seat_info = cls.get_cy_seat_info(biz_id)
             if not seat_info:
                 raise CustomAPIException('下单失败，参数错误')
+            promotion_list = seat_info['promotion_list']
             for t_info in seat_info['price_infos']:
                 seats = []
                 for seat in t_info['seat_infos']:
                     seat_data = dict(id=seat['seat_concreate_id'], seat_group_id=seat.get('seat_group_id', None),
                                      photo_url=None)
-                    seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                                cellphone=real_name_list[i]['mobile'],
-                                                name=real_name_list[i]['name'], type=1)
-                    i += 1
+                    if session.one_id_one_ticket:
+                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                    cellphone=real_name_list[i]['mobile'],
+                                                    name=real_name_list[i]['name'], type=1)
+                        i += 1
                     seats.append(seat_data)
-                cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=t_info['session_id'],
+                cy_ticket_list.append(dict(event_id=event_id, session_id=t_info['session_id'],
                                            delivery_method=delivery_method.code,
                                            ticket_type_id=t_info['price_id'], ticket_category=t_info['price_category'],
                                            qty=t_info['count'],
@@ -1096,7 +1107,7 @@ class CyOrder(models.Model):
                                                         name=real_name_list[i]['name'], type=1)
                             seats.append(seat_data)
                             i += 1
-                cy_ticket_list.append(dict(event_id=cy_session.event.event_id, session_id=cy_session.cy_no,
+                cy_ticket_list.append(dict(event_id=event_id, session_id=cy_session.cy_no,
                                            delivery_method=delivery_method.code,
                                            ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
                                            qty=multiply,
@@ -1131,7 +1142,7 @@ class CyOrder(models.Model):
                                           buyer_cellphone=ticket_order.mobile,
                                           auto_cancel_order_time=auto_cancel_order_time,
                                           delivery_method=delivery_method,
-                                          ticket_list_snapshot=json.dumps(ticket_list))
+                                          ticket_list_snapshot=json.dumps(cy_ticket_list))
         if biz_id:
             cy_order.delete_redis_cache(biz_id)
         return cy_order

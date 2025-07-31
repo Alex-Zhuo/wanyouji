@@ -1077,6 +1077,7 @@ class SessionInfo(UseNoAbstract):
     SR_CY = 2
     SR_CHOICES = ((SR_DEFAULT, U'自建'), (SR_CY, '彩艺云'))
     source_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
+    cy_discount_overlay = models.BooleanField(default=False, verbose_name='是否开启彩艺云与本系统优惠叠加')
     main_session = models.ForeignKey('self', verbose_name='关联主场次', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='m_session', limit_choices_to=models.Q(has_seat=SEAT_HAS),
                                      help_text='有座场次才能选为主场次')
@@ -4258,6 +4259,31 @@ class TicketOrderRealName(models.Model):
     @classmethod
     def create_record(cls, order: TicketOrder, name, mobile, id_card=None):
         inst = cls.objects.create(order=order, name=name, mobile=mobile, id_card=id_card)
+        return inst
+
+
+class TicketOrderDiscount(models.Model):
+    order = models.ForeignKey(TicketOrder, verbose_name='订单', on_delete=models.CASCADE, related_name='discount_order')
+    DISCOUNT_YEAR = 1
+    DISCOUNT_COUPON = 2
+    DISCOUNT_PACK = 3
+    DISCOUNT_PROMOTION = 4
+    DISCOUNT_CHOICES = (
+        (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_PACK, '彩艺套票优惠'), (DISCOUNT_PROMOTION, '彩艺营销活动'))
+    discount_type = models.IntegerField(u'优惠类型', choices=DISCOUNT_CHOICES)
+    title = models.CharField('优惠名称', max_length=20)
+    amount = models.DecimalField('优惠金额', max_digits=10, decimal_places=2)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '订单优惠信息'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.title
+
+    @classmethod
+    def create_record(cls, order: TicketOrder, title, discount_type, amount):
+        inst = cls.objects.create(order=order, title=title, discount_type=discount_type, amount=amount)
         return inst
 
 
