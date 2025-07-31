@@ -5,12 +5,12 @@ import logging
 from rest_framework.response import Response
 from django.http.response import HttpResponse, JsonResponse, HttpResponseRedirect
 import json
-from kuaishou_wxa.models import KsUser, KsPoiService, KsGoodsConfig
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 import jwt
 import uuid
-
+from caiyicloud.models import CyOrder
+from caiyicloud.serializers import CySeatUrlSerializer
 log = logger = logging.getLogger(__name__)
 
 
@@ -41,7 +41,6 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
-        from caiyicloud.serializers import CySeatUrlSerializer
         s = CySeatUrlSerializer(data=request.GET, context=dict(request=request))
         s.is_valid(True)
         ret = s.create(s.validated_data)
@@ -49,9 +48,8 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_info(self, request):
-        from caiyicloud.models import CyTicketType
         biz_id = request.GET.get('biz_id')
         if not biz_id:
             raise CustomAPIException('获取已选择信息失败')
-        ret = CyTicketType.get_seat_info(biz_id=request.GET.get('biz_id'))
+        ret = CyOrder.get_cy_seat_info(biz_id=request.GET.get('biz_id'))
         return Response(ret)
