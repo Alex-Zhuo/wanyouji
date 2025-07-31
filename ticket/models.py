@@ -2966,7 +2966,6 @@ class TicketOrder(models.Model):
     multiply = models.IntegerField(u'数量', validators=[validate_positive_int_gen])
     amount = models.DecimalField(u'订单总价', max_digits=13, decimal_places=2)
     actual_amount = models.DecimalField('实付金额', max_digits=9, decimal_places=2, default=0)
-    discount_amount = models.DecimalField('折扣金额', max_digits=9, decimal_places=2, default=0, editable=False)
     express_fee = models.DecimalField('邮费', max_digits=9, decimal_places=2, default=0)
     card_jc_amount = models.DecimalField('剧场会员卡支付数额', max_digits=9, decimal_places=2, default=0)
     DISCOUNT_DEFAULT = 0

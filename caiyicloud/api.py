@@ -293,7 +293,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         """
         headers = self.headers()
         headers['sign'] = self.get_sign(headers)
-        ret = self._post(f'api/event/v1/sessions/seat_info?biz_id={biz_id}')
+        params = dict(biz_id=biz_id)
+        ret = self._get(f'api/event/v1/sessions/seat_info', params=params)
         self.parse_resp(ret)
         return ret['data']
 
