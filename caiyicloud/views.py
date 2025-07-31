@@ -9,6 +9,7 @@ from kuaishou_wxa.models import KsUser, KsPoiService, KsGoodsConfig
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 import jwt
+import uuid
 
 log = logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         log.error(request.data)
         # log.error(request.body)
         log.error(request.META)
+        ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
         # ret = json.loads(request.body.decode('utf-8'))
         # message_id = ret['message_id']
         # app_id = ret['app_id']
@@ -35,7 +37,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         #     st = KsGoodsConfig.set_approve(data['product_id'], data['message'], data['reject_reason'], data['audit_id'])
         #     if not st:
         #         ret['result'] = 0
-        return Response()
+        return Response(ret)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
