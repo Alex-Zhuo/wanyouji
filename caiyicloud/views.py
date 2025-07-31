@@ -37,7 +37,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         #         ret['result'] = 0
         return Response()
 
-    @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
+    @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
         from caiyicloud.serializers import CySeatUrlSerializer
         s = CySeatUrlSerializer(data=request.GET, context=dict(request=request))
