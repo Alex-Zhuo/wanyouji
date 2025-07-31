@@ -928,6 +928,7 @@ class CyTicketType(models.Model):
             return
         try:
             data = cy.seat_info(biz_id)
+
             return data
         except Exception as e:
             raise CustomAPIException(e)

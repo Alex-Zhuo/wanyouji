@@ -17,8 +17,8 @@ class CyTicketPackSerializer(serializers.ModelSerializer):
 
 
 class CySeatUrlSerializer(serializers.ModelSerializer):
-    no = serializers.CharField(read_only=True)
-    navigate_url = serializers.CharField(read_only=True)
+    no = serializers.CharField(required=True)
+    navigate_url = serializers.CharField(required=True)
 
     def create(self, validated_data):
         try:
@@ -34,7 +34,7 @@ class CySeatUrlSerializer(serializers.ModelSerializer):
 
 
 class CySeatInfoSerializer(serializers.ModelSerializer):
-    biz_id = serializers.CharField(read_only=True)
+    biz_id = serializers.CharField(required=True)
 
     def create(self, validated_data):
         ret = CyTicketType.get_seat_info(biz_id=validated_data['biz_id'])
