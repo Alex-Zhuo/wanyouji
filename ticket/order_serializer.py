@@ -551,6 +551,22 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
 
 
 class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
+
+    def cy_create_order(self, ticket_order, session, amounts_data, seat_info: dict = None, ticket_list: list = None,
+                        show_users=None):
+        """
+        ticket_list 无座下单使用，有座不用传
+        """
+        # 彩艺云下单
+        from caiyicloud.models import CyOrder
+        real_name_list = list(show_users.values('id_card', 'name')) if show_users else None
+        # try:
+        CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
+                             seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
+        # except Exception as e:
+        #     log.error(e)
+        #     raise CustomAPIException('下单失败，请稍后再试')
+
     class Meta:
         model = TicketOrder
         fields = TicketOrderCreateCommonSerializer.Meta.fields
@@ -563,6 +579,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         # ticket_list [dict(level_id=1,multiply=2)]
         request = self.context.get('request')
         is_tiktok = is_ks = is_xhs = False
+        amounts_data = dict(original_total_amount=0, actual_total_amount=0, promotion_list=[])
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
         # 这里验证了邮费
@@ -624,10 +641,9 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         # user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, level_list = TicketFile.get_cy_order_no_seat_amount(user,
-                                                                                                                 ticket_list,
-                                                                                                                 pay_type,
-                                                                                                                 can_member_card=can_member_card)
+        real_multiply, amount, actual_amount, level_list = TicketFile.get_cy_order_no_seat_amount(user, ticket_list,
+                                                                                                  pay_type,
+                                                                                                  can_member_card=can_member_card)
         # 套票原价
         if pack_amount > 0:
             amount = Decimal(pack_amount)
@@ -646,6 +662,8 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
+        # 彩艺云下单
+        self.cy_create_order(ticket_order=inst, session=session, ticket_list=ticket_list, show_users=show_users, amounts_data=amounts_data)
         if coupon_record:
             coupon_record.set_use(inst)
         dd = []
@@ -659,15 +677,6 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
                 seat_dict[str(level.id)] = ll['multiply']
         inst.snapshot = inst.get_snapshot(dd)
         inst.save(update_fields=['snapshot'])
-        # 彩艺云下单
-        from caiyicloud.models import CyOrder
-        real_name_list = list(show_users.values('id_card', 'name')) if show_users else None
-        # try:
-        CyOrder.order_create(ticket_order=inst, session=session, real_name_list=real_name_list,
-                             ticket_list=ticket_list)
-        # except Exception as e:
-        #     log.error(e)
-        #     raise CustomAPIException('下单失败，请稍后再试')
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
@@ -700,33 +709,40 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         is_tiktok = is_ks = is_xhs = False
+        amounts_data = dict(original_total_amount=0, actual_total_amount=0, promotion_list=[])
+        is_cy_promotion = False
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
         self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
         if session.has_seat == SessionInfo.SEAT_NO:
             raise CustomAPIException('下单错误，无需选择座位')
-        is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
         show_type = session.show.show_type
         express_fee = validated_data.get('express_fee', 0)
+        # 处理彩艺云座位数据
         biz_id = validated_data.pop('biz_id', None)
         from caiyicloud.models import CyOrder
         seat_info = CyOrder.get_cy_seat_info(biz_id)
         if not seat_info:
             raise CustomAPIException('下单失败，biz_id参数错误')
-        cy_actual_amount = 0
-        cy_amount = 0
-        real_multiply = 0
+        cy_actual_amount = 0  # 实付总金额
+        cy_amount = 0  # 原总价
+        real_multiply = 0  # 实际数量
         for t_info in seat_info['price_infos']:
             cy_actual_amount += t_info['price']
             real_multiply += t_info['count']
             for seat in t_info['seat_infos']:
                 cy_amount += seat['seat_price']
-        if not is_coupon:
+        promotion_list = seat_info.get('promotion_list')
+        if promotion_list:
+            is_cy_promotion = True
+        amounts_data['original_total_amount'] = cy_amount
+        amounts_data['actual_total_amount'] = cy_actual_amount
+        is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
+        # 优惠卷和会员卡互斥
+        if can_member_card:
             account = user.account
             discount = account.get_discount()
-            actual_amount = cy_amount * discount
-        from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list
+            cy_actual_amount = cy_actual_amount * discount
         amount = cy_amount + express_fee
         actual_amount = cy_actual_amount + express_fee
         coupon_record = None
@@ -740,6 +756,8 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         validated_data['order_type'] = TicketOrder.TY_HAS_SEAT
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
+        # 彩艺云下单
+        self.cy_create_order(ticket_order=inst, session=session, seat_info=seat_info, show_users=show_users,amounts_data=amounts_data)
         if coupon_record:
             coupon_record.set_use(inst)
         inst.snapshot = inst.get_snapshot(seat_info)
@@ -749,6 +767,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         xhs_order_info = None
         pay_end_at = inst.get_end_at()
         self.after_create(inst, show_type, show_users)
+        CyOrder.delete_redis_cache(biz_id)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
     class Meta:

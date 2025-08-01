@@ -997,8 +997,9 @@ class CyOrder(models.Model):
     def cy_seat_info_key(cls, biz_id: str):
         return get_redis_name('cy_seat_i_{}'.format(biz_id))
 
-    def delete_redis_cache(self, biz_id: str):
-        key = self.cy_seat_info_key(biz_id)
+    @classmethod
+    def delete_redis_cache(cls, biz_id: str):
+        key = cls.cy_seat_info_key(biz_id)
         with get_pika_redis() as redis:
             redis.delete(key)
 
@@ -1020,11 +1021,13 @@ class CyOrder(models.Model):
         return seat_data
 
     @classmethod
-    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, biz_id: str = None,
+    def order_create(cls, ticket_order: TicketOrder, session: SessionInfo, amounts_data: dict, seat_info: dict = None,
                      real_name_list: list = None, ticket_list: list = None):
         """
         ticket_list 传入的票价列表
-        biz_id 彩艺云获取选座H5座位信息(有座)
+        seat_info 彩艺云获取选座H5座位信息(有座)biz_id 兑换的
+        amounts_data = dict(original_total_amount=11,actual_total_amount=44, promotion_list=[])
+        无座的才会有promotion_list，有座直接取seat_info里面的
         """
         cy = caiyi_cloud()
         if not cy.is_init:
@@ -1035,15 +1038,8 @@ class CyOrder(models.Model):
         delivery_method = cy_session.delivery_methods.first()
         cy_ticket_list = []
         i = 0
-        promotion_list = []
-        original_total_amount = ticket_order.amount - ticket_order.express_fee
-        # 不是彩艺云的按原价
-        if ticket_order.discount_type == TicketOrder.DISCOUNT_CY:
-            actual_total_amount = ticket_order.actual_amount - ticket_order.express_fee
-        else:
-            actual_total_amount = original_total_amount
         event_id = cy_session.event.event_id
-        if biz_id:
+        if seat_info:
             """ 
             有座下单
              {'utcOffset': 480, 'promotion_list': [{'discount_amount': 1, 'name': '套票优惠', 'category': 1}],
@@ -1053,7 +1049,6 @@ class CyOrder(models.Model):
                  'price_category': 3, 'price': 5, 'price_id': '683577f1a70f7a0001865f42', 'count': 1, 'session_id': '683577f0a70f7a0001865f39'}],
                   'lang': 'zh'}}
             """
-            seat_info = cls.get_cy_seat_info(biz_id)
             if not seat_info:
                 raise CustomAPIException('下单失败，参数错误')
             promotion_list = seat_info['promotion_list']
@@ -1074,6 +1069,7 @@ class CyOrder(models.Model):
                                            qty=t_info['count'],
                                            seats=seats))
         else:
+            promotion_list = amounts_data['promotion_list']
             for ticket in ticket_list:
                 seats = []
                 multiply = int(ticket['multiply'])
@@ -1097,9 +1093,6 @@ class CyOrder(models.Model):
                                                                 name=real_name_list[i]['name'], type=1)
                                     i += 1
                             seats.append(seat_data)
-                        # 优惠策略,1:套票优惠；2:营销活动,现在只有套票。
-                        promotion_list.append(
-                            dict(category=1, discount_amount=original_total_amount - actual_total_amount))
                     else:
                         if session.one_id_one_ticket:
                             seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
@@ -1121,8 +1114,8 @@ class CyOrder(models.Model):
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=original_total_amount,
-                                             actual_total_amount=actual_total_amount,
+                                             original_total_amount=amounts_data['original_total_amount'],
+                                             actual_total_amount=amounts_data['actual_total_amount'],
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
@@ -1143,8 +1136,6 @@ class CyOrder(models.Model):
                                           auto_cancel_order_time=auto_cancel_order_time,
                                           delivery_method=delivery_method,
                                           ticket_list_snapshot=json.dumps(cy_ticket_list))
-        if biz_id:
-            cy_order.delete_redis_cache(biz_id)
         return cy_order
 
     def cancel_order(self):
