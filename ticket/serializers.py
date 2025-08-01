@@ -705,7 +705,7 @@ class ShowSessionCacheSerializer(PKtoNoSerializer):
                                                  'status', 'create_at', 'is_price', 'push_status', 'has_seat',
                                                  'is_sale_off', 'one_id_one_ticket',
                                                  'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
-                                                 'name_buy_num', 'source_type']
+                                                 'name_buy_num', 'source_type', 'cy_discount_overlay']
 
 
 class ShowSessionInfoSerializer(PKtoNoSerializer):
