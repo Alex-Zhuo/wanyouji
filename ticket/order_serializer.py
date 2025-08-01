@@ -641,12 +641,18 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         # user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, level_list = TicketFile.get_cy_order_no_seat_amount(user, ticket_list,
-                                                                                                  pay_type,
-                                                                                                  can_member_card=can_member_card)
-        # 套票原价
+        real_multiply, cy_amount, actual_amount, level_list = TicketFile.get_cy_order_no_seat_amount(user, ticket_list,
+                                                                                                     pay_type,
+                                                                                                     can_member_card=can_member_card)
         if pack_amount > 0:
+            # 套票原价,type优惠策略,1:套票优惠；2:营销活动
             amount = Decimal(pack_amount)
+            amounts_data['promotion_list'] = [{"type": 1, "discount_amount": pack_amount - cy_amount}]
+        else:
+            # 票档价
+            amount = cy_amount
+        amounts_data['original_total_amount'] = amount
+        amounts_data['actual_total_amount'] = cy_amount
         # 加上邮费
         amount = amount + express_fee
         actual_amount = actual_amount + express_fee
@@ -663,7 +669,8 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
         # 彩艺云下单
-        self.cy_create_order(ticket_order=inst, session=session, ticket_list=ticket_list, show_users=show_users, amounts_data=amounts_data)
+        self.cy_create_order(ticket_order=inst, session=session, ticket_list=ticket_list, show_users=show_users,
+                             amounts_data=amounts_data)
         if coupon_record:
             coupon_record.set_use(inst)
         dd = []
@@ -757,7 +764,8 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         show_users = validated_data.pop('show_user_ids', None)
         inst = TicketOrder.objects.create(**validated_data)
         # 彩艺云下单
-        self.cy_create_order(ticket_order=inst, session=session, seat_info=seat_info, show_users=show_users,amounts_data=amounts_data)
+        self.cy_create_order(ticket_order=inst, session=session, seat_info=seat_info, show_users=show_users,
+                             amounts_data=amounts_data)
         if coupon_record:
             coupon_record.set_use(inst)
         inst.snapshot = inst.get_snapshot(seat_info)
