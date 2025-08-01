@@ -122,9 +122,10 @@ class UserAccount(models.Model):
 
     def get_discount(self):
         mc = MembershipCard.get()
-        inst = CardRecord.objects.filter(user=self.user).first()
-        if inst and inst.deadline_at and inst.deadline_at >= timezone.now().date():
-            return mc.discount / 100
+        if mc:
+            inst = CardRecord.objects.filter(user=self.user).first()
+            if inst and inst.deadline_at and inst.deadline_at >= timezone.now().date():
+                return mc.discount / 100
         return 1
 
     def is_agent(self):

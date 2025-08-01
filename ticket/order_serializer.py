@@ -628,17 +628,16 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         # user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
-            user,
-            ticket_list, pay_type, session,
-            is_tiktok, express_fee, can_member_card=can_member_card)
+        real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_cy_order_no_seat_amount(user,
+                                                                                                                 ticket_list,
+                                                                                                                 pay_type,
+                                                                                                                 can_member_card=can_member_card)
         # 套票原价
         if pack_amount > 0:
             amount = Decimal(pack_amount)
         # 加上邮费
         amount = amount + express_fee
-        # actual_amount = self.get_actual_amount(is_tiktok, user, amount, validated_data['multiply'], actual_amount,
-        #                                        express_fee)
+        actual_amount = actual_amount + express_fee
         coupon_record = None
         if is_coupon:
             actual_amount, coupon_record = self.handle_coupon(show=session.show,
@@ -646,8 +645,8 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
                                                               actual_amount=actual_amount)
         validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
-                                                 user_buy_inst, pack_multiply)
+        validated_data = self.set_validated_data(session, user, real_multiply, validated_data,
+                                                 pack_multiply=pack_multiply)
         validated_data['receipt'] = self.create_receipt(validated_data)
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)

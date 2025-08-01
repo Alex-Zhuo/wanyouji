@@ -2353,7 +2353,8 @@ class TicketFile(models.Model):
         actual_amount = 0
         level_list = []
         discount_type = TicketOrder.DISCOUNT_DEFAULT
-        tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
+        tc_card = None
+        # tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
         # if not is_coupon:
@@ -2400,7 +2401,40 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if can_member_card and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+            account = user.account
+            discount = account.get_discount()
+            actual_amount = amount * discount
+            if discount < 1:
+                discount_type = TicketOrder.DISCOUNT_YEAR
+        from common.utils import quantize
+        return total_multiply, amount, quantize(actual_amount, 2), level_list, discount_type
+
+    @classmethod
+    def get_cy_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, can_member_card=False):
+        total_multiply = 0
+        amount = 0
+        actual_amount = 0
+        level_list = []
+        discount_type = TicketOrder.DISCOUNT_DEFAULT
+        tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
+        card = None
+        use_old_card = False
+        for data in ticket_list:
+            multiply = int(data['multiply'])
+            inst = data.get('level')
+            if inst:
+                if inst.limit_num > 0 and multiply > inst.limit_num:
+                    raise CustomAPIException(
+                        '价格{}的票,超过限购数量{}，请重新选择'.format(inst.price, inst.limit_num))
+                total_multiply += multiply
+                amount += inst.price * multiply
+                price, _ = inst.get_price(card, tc_card, pay_type, multiply, use_old_card)
+                actual_amount += price
+                level_list.append(dict(level=inst, multiply=multiply))
+            else:
+                raise CustomAPIException('下单失败，请重新选择')
+        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
@@ -2974,6 +3008,7 @@ class TicketOrder(models.Model):
     DISCOUNT_YEAR = 1
     DISCOUNT_COUPON = 2
     DISCOUNT_CY = 3
+    DISCOUNT_THEATER= 4
     DISCOUNT_CHOICES = (
         (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_CY, '彩艺'))
     discount_type = models.IntegerField(u'优惠类型', choices=DISCOUNT_CHOICES, default=DISCOUNT_DEFAULT)
