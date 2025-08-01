@@ -64,7 +64,7 @@ class CertNoImpl(object):
             return False
 
     def check_cert_no(self, cert_name: str, cert_no: str):
-        from alibaba.api_limit import QPS_Queue
+        from concu.api_limit import QPS_Queue
         ret = False
         with QPS_Queue('dxm-api-limit', 150, 1, 3) as got:
             if got:

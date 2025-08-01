@@ -107,6 +107,51 @@ class try_queue:
         return False
 
 
+class QPS_Queue:
+    def __init__(self, queue: str, limit: int, seconds: int, max_wait: int = 3):
+        if not (queue and isinstance(queue, str)):
+            raise ValueError("wrong type")
+        if not isinstance(limit, int) or limit <= 0:
+            raise ValueError('limit error')
+        if max_wait and (not isinstance(max_wait, int) or max_wait <= 0):
+            raise ValueError('max_wait')
+        if not isinstance(seconds, int) or seconds <= 0:
+            raise ValueError('seconds')
+
+        self._queue = queue
+        self._limit = limit
+        self._seconds = seconds
+        self._max_wait = max_wait
+        self._ret = False
+
+    def __enter__(self):
+        queue = self._queue
+        if not isinstance(queue, str):
+            raise TypeError(f'{queue} is not str')
+        r = _get_redis()
+        sleep_func = time.sleep
+        max_wait = self._max_wait
+        limit = self._limit
+        while max_wait > 0:
+            count: int = r.incr(queue)
+            if count > limit:
+                r.decr(queue)
+                interval = random.random()
+                sleep_func(interval)
+                max_wait -= interval
+            else:
+                self._ret = True
+                if r.ttl(queue) == -1:
+                    r.expire(queue, self._seconds)
+                break
+        else:
+            self._ret = False
+        return self._ret
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
 if __name__ == '__main__':
     # print('xbg')
     # # try:
