@@ -244,7 +244,13 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             if not inst.lock_stock:
                 inst.change_stock(multiply)
 
-    def after_create(self, order, show_type=None, show_users=None):
+    def after_create(self, order, show_type=None, show_users=None, ticket_order_discount_list=None):
+        if ticket_order_discount_list:
+            ticket_order_discount_model_list = []
+            for ticket_order_discount in ticket_order_discount_list:
+                ticket_order_discount['order'] = order
+                ticket_order_discount_model_list.append(TicketOrderDiscount(**ticket_order_discount))
+            TicketOrderDiscount.objects.bulk_create(ticket_order_discount_model_list)
         if order.pay_type == Receipt.PAY_CARD_JC and show_type == ShowType.dkxj():
             if order.card_jc_amount > 0:
                 try:
@@ -448,7 +454,7 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         #     from xiaohongshu.models import XhsOrder
         #     xhs_order_info = XhsOrder.push_order(inst, session_seat_list=session_seat_list)
         pay_end_at = inst.get_end_at()
-        self.after_create(inst, show_type, show_users)
+        self.after_create(inst, show_type, show_users, ticket_order_discount_list)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
     class Meta:
@@ -554,7 +560,7 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         pay_end_at = inst.get_end_at()
         self.change_stock_end(ticket_list)
         try:
-            self.after_create(inst, show_type, show_users)
+            self.after_create(inst, show_type, show_users, ticket_order_discount_list)
         except Exception as e:
             self.return_change_stock(ticket_list)
             raise CustomAPIException(e)
@@ -722,7 +728,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         #     xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
         pay_end_at = inst.get_end_at()
         try:
-            self.after_create(inst, show_type, show_users)
+            self.after_create(inst, show_type, show_users, ticket_order_discount_list)
         except Exception as e:
             # self.return_change_stock(ticket_list)
             raise CustomAPIException(e)
@@ -807,7 +813,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         ks_order_info = None
         xhs_order_info = None
         pay_end_at = inst.get_end_at()
-        self.after_create(inst, show_type, show_users)
+        self.after_create(inst, show_type, show_users, ticket_order_discount_list)
         CyOrder.delete_redis_cache(biz_id)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
