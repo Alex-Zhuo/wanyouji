@@ -30,7 +30,6 @@ from datetime import datetime
 import pysnooper
 from caches import get_pika_redis, get_redis_name
 from django.core.validators import validate_image_file_extension, FileExtensionValidator
-import uuid
 
 from restframework_ext.models import UseNoAbstract
 
@@ -2356,6 +2355,7 @@ class TicketFile(models.Model):
         # tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
+        ticket_order_discount_dict = None
         # if not is_coupon:
         #     if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
         #         old_card_qs = TheaterCardUserDetail.get_old_cards(user.id)
@@ -2402,8 +2402,12 @@ class TicketFile(models.Model):
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
-        from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list
+            if discount < 1:
+                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+                                                  amount=amount - actual_amount)
+        else:
+            actual_amount = quantize(actual_amount, 2)
+        return total_multiply, amount, actual_amount, level_list,ticket_order_discount_dict
 
     @classmethod
     def get_cy_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, can_member_card=False):
@@ -2411,9 +2415,11 @@ class TicketFile(models.Model):
         amount = 0
         actual_amount = 0
         level_list = []
-        tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
+        tc_card = None
+        # tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
+        ticket_order_discount_dict = None
         for data in ticket_list:
             multiply = int(data['multiply'])
             inst = data.get('level')
@@ -2431,9 +2437,13 @@ class TicketFile(models.Model):
         if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
             account = user.account
             discount = account.get_discount()
-            actual_amount = amount * discount
-        from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list
+            actual_amount = quantize(amount * discount, 2)
+            if discount < 1:
+                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+                                                  amount=amount - actual_amount)
+        else:
+            actual_amount = quantize(actual_amount, 2)
+        return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
 
 class ShowUser(UseNoAbstract):
@@ -2903,6 +2913,7 @@ class SessionSeat(models.Model):
         card = None
         use_old_card = False
         tc_card = None
+        ticket_order_discount_dict = None
         # if not is_coupon:
         #     if pay_type == Receipt.PAY_CARD_JC and session.show.show_type == ShowType.dkxj():
         #         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
@@ -2964,12 +2975,16 @@ class SessionSeat(models.Model):
                     raise CustomAPIException('座位{}已被占用，请重新选座'.format(str(inst)))
             else:
                 raise CustomAPIException('座位选择错误，请重新选座，')
-        if can_member_card and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
             account = user.account
             discount = account.get_discount()
-            actual_amount = amount * account.get_discount()
-        from common.utils import quantize
-        return multiply, amount, quantize(actual_amount, 2), session_seat_list
+            actual_amount = quantize(amount * discount, 2)
+            if discount<1:
+                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+                                                  amount=amount - actual_amount)
+        else:
+            actual_amount = quantize(actual_amount, 2)
+        return multiply, amount, actual_amount, session_seat_list, ticket_order_discount_dict
 
 
 class TicketOrder(models.Model):
