@@ -101,7 +101,7 @@ def do_check(params: Dict, sign: str, public_key: str) -> bool:
             signature,
             content.encode('utf-8'),
             padding.PKCS1v15(),
-            hashes.MD5()  # Using MD5 as likely used in original Java code
+            hashes.SHA256()  # Using MD5 as likely used in original Java code
         )
         return True
 

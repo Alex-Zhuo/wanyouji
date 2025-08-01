@@ -12,7 +12,6 @@ import uuid
 from caiyicloud.models import CyOrder
 from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer
-from caiyicloud.sign_utils import do_check
 log = logger = logging.getLogger(__name__)
 
 
