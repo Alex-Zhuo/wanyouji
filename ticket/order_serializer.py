@@ -393,7 +393,7 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
         #     user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, session_seat_list, discount_type = SessionSeat.get_order_amount(
+        real_multiply, amount, actual_amount, session_seat_list = SessionSeat.get_order_amount(
             user, session,
             ticket_list,
             pay_type, is_tiktok, express_fee, can_member_card=can_member_card)
@@ -405,9 +405,7 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
             actual_amount, coupon_record = self.handle_coupon(show=session.show,
                                                               coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
-            discount_type = TicketOrder.DISCOUNT_COUPON
         self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data['discount_type'] = discount_type
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
                                                  user_buy_inst)
         validated_data['receipt'] = self.create_receipt(validated_data)
@@ -492,7 +490,7 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
         #     user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                                   is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_order_no_seat_amount(
+        real_multiply, amount, actual_amount, level_list = TicketFile.get_order_no_seat_amount(
             user,
             ticket_list, pay_type, session,
             is_tiktok, express_fee, can_member_card=can_member_card)
@@ -507,8 +505,6 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             actual_amount, coupon_record = self.handle_coupon(show=session.show,
                                                               coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
-            discount_type = TicketOrder.DISCOUNT_COUPON
-        validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
                                                  user_buy_inst)
@@ -628,7 +624,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         # user_tc_card, user_buy_inst = self.check_can_use_theater_card(multiply, pay_type, show_type, user,
         #                                                               is_coupon=is_coupon)
         express_fee = validated_data.get('express_fee', 0)
-        real_multiply, amount, actual_amount, level_list, discount_type = TicketFile.get_cy_order_no_seat_amount(user,
+        real_multiply, amount, actual_amount, level_list = TicketFile.get_cy_order_no_seat_amount(user,
                                                                                                                  ticket_list,
                                                                                                                  pay_type,
                                                                                                                  can_member_card=can_member_card)
@@ -643,7 +639,6 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             actual_amount, coupon_record = self.handle_coupon(show=session.show,
                                                               coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
-        validated_data['discount_type'] = discount_type
         self.validate_amounts(amount, actual_amount, validated_data)
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data,
                                                  pack_multiply=pack_multiply)
@@ -707,16 +702,10 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         is_tiktok = is_ks = is_xhs = False
         validated_data['user'] = user = request.user
         validated_data['session'] = session = validated_data.pop('session_id')
-        is_coupon = True if validated_data.get('coupon_no') else False
-
         self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
         if session.has_seat == SessionInfo.SEAT_NO:
             raise CustomAPIException('下单错误，无需选择座位')
-        if is_coupon:
-            discount_type = TicketOrder.DISCOUNT_COUPON
-        else:
-            discount_type = TicketOrder.DISCOUNT_DEFAULT
-
+        is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
         show_type = session.show.show_type
         express_fee = validated_data.get('express_fee', 0)
         biz_id = validated_data.pop('biz_id', None)
@@ -732,16 +721,12 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
             real_multiply += t_info['count']
             for seat in t_info['seat_infos']:
                 cy_amount += seat['seat_price']
-        if cy_amount != cy_actual_amount:
-            discount_type = TicketOrder.DISCOUNT_CY
         if not is_coupon:
             account = user.account
             discount = account.get_discount()
             actual_amount = cy_amount * discount
-            if discount < 1:
-                discount_type = TicketOrder.DISCOUNT_YEAR
         from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list, discount_type
+        return total_multiply, amount, quantize(actual_amount, 2), level_list
         amount = cy_amount + express_fee
         actual_amount = cy_actual_amount + express_fee
         coupon_record = None
@@ -750,7 +735,6 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
                                                               coupon_no=validated_data.pop('coupon_no'),
                                                               actual_amount=actual_amount)
         self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data['discount_type'] = discount_type
         validated_data = self.set_validated_data(session, user, real_multiply, validated_data)
         validated_data['receipt'] = self.create_receipt(validated_data)
         validated_data['order_type'] = TicketOrder.TY_HAS_SEAT

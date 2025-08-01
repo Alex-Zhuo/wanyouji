@@ -1526,7 +1526,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     #            check_refund_order, export_ticket_express, cancel_lock_seats, query_dy_status, re_push_delivery]
     list_filter = (
         'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue',
-        'order_type', 'channel_type', 'discount_type', 'wx_pay_config', AgentFilter, 'is_paper', 'express_status',
+        'order_type', 'channel_type', 'wx_pay_config', AgentFilter, 'is_paper', 'express_status',
         'deliver_at')
     actions = [export_ticket_order, export_ticket_order_old, 'set_refund', export_ticket_express, cancel_lock_seats]
     search_fields = ['=order_no', '=mobile', '=transaction_id']

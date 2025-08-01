@@ -2352,7 +2352,6 @@ class TicketFile(models.Model):
         amount = 0
         actual_amount = 0
         level_list = []
-        discount_type = TicketOrder.DISCOUNT_DEFAULT
         tc_card = None
         # tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
@@ -2394,9 +2393,7 @@ class TicketFile(models.Model):
                 #         inst.change_stock(-multiply)
                 total_multiply += multiply
                 amount += inst.price * multiply
-                price, discount_theater = inst.get_price(card, tc_card, pay_type, multiply, use_old_card)
-                if discount_theater:
-                    discount_type = TicketOrder.DISCOUNT_THEATER
+                price, _ = inst.get_price(card, tc_card, pay_type, multiply, use_old_card)
                 actual_amount += price
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
@@ -2405,10 +2402,8 @@ class TicketFile(models.Model):
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
-            if discount < 1:
-                discount_type = TicketOrder.DISCOUNT_YEAR
         from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list, discount_type
+        return total_multiply, amount, quantize(actual_amount, 2), level_list
 
     @classmethod
     def get_cy_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, can_member_card=False):
@@ -2416,7 +2411,6 @@ class TicketFile(models.Model):
         amount = 0
         actual_amount = 0
         level_list = []
-        discount_type = TicketOrder.DISCOUNT_DEFAULT
         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
@@ -2438,10 +2432,8 @@ class TicketFile(models.Model):
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
-            if discount < 1:
-                discount_type = TicketOrder.DISCOUNT_YEAR
         from common.utils import quantize
-        return total_multiply, amount, quantize(actual_amount, 2), level_list, discount_type
+        return total_multiply, amount, quantize(actual_amount, 2), level_list
 
 
 class ShowUser(UseNoAbstract):
@@ -2907,7 +2899,6 @@ class SessionSeat(models.Model):
         amount = 0
         actual_amount = 0
         ticket = dict()
-        discount_type = TicketOrder.DISCOUNT_DEFAULT
         session_seat_list = []
         card = None
         use_old_card = False
@@ -2961,9 +2952,7 @@ class SessionSeat(models.Model):
                             redis.expire(key, 300)
                             inst.set_buy()
                             amount += ticket_level.price
-                            price, discount_theater = ticket_level.get_price(card, tc_card, pay_type, 1, use_old_card)
-                            if discount_theater:
-                                discount_type = TicketOrder.DISCOUNT_THEATER
+                            price, _ = ticket_level.get_price(card, tc_card, pay_type, 1, use_old_card)
                             actual_amount += price
                             multiply += 1
                             session_seat_list.append(inst)
@@ -2979,10 +2968,8 @@ class SessionSeat(models.Model):
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * account.get_discount()
-            if discount < 1:
-                discount_type = TicketOrder.DISCOUNT_YEAR
         from common.utils import quantize
-        return multiply, amount, quantize(actual_amount, 2), session_seat_list, discount_type
+        return multiply, amount, quantize(actual_amount, 2), session_seat_list
 
 
 class TicketOrder(models.Model):
@@ -3004,14 +2991,6 @@ class TicketOrder(models.Model):
     actual_amount = models.DecimalField('实付金额', max_digits=9, decimal_places=2, default=0)
     express_fee = models.DecimalField('邮费', max_digits=9, decimal_places=2, default=0)
     card_jc_amount = models.DecimalField('剧场会员卡支付数额', max_digits=9, decimal_places=2, default=0)
-    DISCOUNT_DEFAULT = 0
-    DISCOUNT_YEAR = 1
-    DISCOUNT_COUPON = 2
-    DISCOUNT_CY = 3
-    DISCOUNT_THEATER= 4
-    DISCOUNT_CHOICES = (
-        (DISCOUNT_DEFAULT, U'无'), (DISCOUNT_YEAR, '年度会员卡'), (DISCOUNT_COUPON, '消费卷'), (DISCOUNT_CY, '彩艺'))
-    discount_type = models.IntegerField(u'优惠类型', choices=DISCOUNT_CHOICES, default=DISCOUNT_DEFAULT)
     refund_amount = models.DecimalField('已退款金额', max_digits=9, decimal_places=2, default=0)
     TY_HAS_SEAT = 1
     TY_NO_SEAT = 2
@@ -3122,6 +3101,10 @@ class TicketOrder(models.Model):
     def export_express_fields(cls):
         return ['下单用户', '姓名', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
+
+    @property
+    def promotion_amount(self):
+        return self.amount - self.actual_amount
 
     @classmethod
     def can_refund_status(cls):

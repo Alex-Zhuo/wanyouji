@@ -9,7 +9,8 @@ from ticket.models import Venues, Seat, TicketColor, ShowProject, ShowCollectRec
     SessionSeat, TicketOrder, TicketUserCode, ShowPerformer, PerformerFlag, PerformerFocusRecord, VenuesLogoImage, \
     ShowType, ShowsDetailImage, VenuesDetailImage, ShowUser, SessionChangeRecord, VenuesLayers, ShowComment, \
     ShowCommentImage, TicketBooking, TicketOrderChangePrice, ShowContentCategory, ShowPerformerBanner, TicketGiveRecord, \
-    TicketGiveDetail, TicketOrderRealName, ShowContentCategorySecond, TicketWatchingNotice, TicketPurchaseNotice
+    TicketGiveDetail, TicketOrderRealName, ShowContentCategorySecond, TicketWatchingNotice, TicketPurchaseNotice, \
+    TicketOrderDiscount
 import json
 from mall.models import Receipt, UserAddress
 from django.utils import timezone
@@ -1067,6 +1068,14 @@ class TicketOrderRealNameSerializer(serializers.ModelSerializer):
         fields = ['name', 'mobile', 'id_card']
 
 
+class TicketOrderDiscountSerializer(serializers.ModelSerializer):
+    discount_type_display = serializers.ReadOnlyField(source='get_discount_type_display')
+
+    class Meta:
+        model = TicketOrderDiscount
+        fields = ['discount_type_display', 'title', 'amount']
+
+
 class TicketOrderSerializer(serializers.ModelSerializer):
     snapshot = serializers.SerializerMethodField()
     status_display = serializers.ReadOnlyField(source='get_status_display')
@@ -1081,7 +1090,6 @@ class TicketOrderSerializer(serializers.ModelSerializer):
     express_status_display = serializers.ReadOnlyField(source='get_express_status_display')
     id = serializers.SerializerMethodField()
     receipt = serializers.SerializerMethodField()
-    discount_type_display = serializers.ReadOnlyField(source='get_discount_type_display')
 
     def get_id(self, obj):
         return obj.order_no
@@ -1126,11 +1134,11 @@ class TicketOrderSerializer(serializers.ModelSerializer):
         model = TicketOrder
         fields = ['id', 'title', 'mobile', 'express_address', 'order_no', 'tiktok_order_id', 'ks_order_no',
                   'multiply', 'amount', 'actual_amount', 'discount_amount', 'express_fee', 'card_jc_amount',
-                  'discount_type', 'refund_amount', 'order_type', 'status', 'express_status', 'is_cancel_pay',
+                  'refund_amount', 'order_type', 'status', 'express_status', 'is_cancel_pay',
                   'receipt', 'pay_type', 'pay_at', 'deliver_at', 'create_at', 'start_at', 'end_at',
                   'is_paper', 'express_no', 'express_name', 'express_comp_no', 'snapshot',
-                  'status_display', 'session', 'venue', 'user', 'pay_end_at', 'can_margin',
-                  'can_comment', 'show_express_address', 'express_status_display', 'discount_type_display']
+                  'status_display', 'session', 'venue', 'user', 'pay_end_at', 'can_margin', 'promotion_amount',
+                  'can_comment', 'show_express_address', 'express_status_display']
 
 
 class TicketOrderDetailSerializer(TicketOrderSerializer):
@@ -1174,6 +1182,7 @@ class TicketOrderDetailSerializer(TicketOrderSerializer):
 
 class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
     real_name_list = serializers.SerializerMethodField()
+    promotion_amount_list = serializers.SerializerMethodField()
 
     def get_real_name_list(self, obj):
         if hasattr(obj, 'real_name_order'):
@@ -1188,9 +1197,14 @@ class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
         data = TicketUserCodeNewSerializer(qs, many=True, context=self.context).data
         return data
 
+    def get_promotion_amount_list(self, obj):
+        qs = obj.discount_order.all()
+        data = TicketOrderDiscountSerializer(qs, many=True, context=self.context).data
+        return data
+
     class Meta:
         model = TicketOrder
-        fields = TicketOrderDetailSerializer.Meta.fields + ['real_name_list']
+        fields = TicketOrderDetailSerializer.Meta.fields + ['real_name_list', 'promotion_amount_list']
 
 
 class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
