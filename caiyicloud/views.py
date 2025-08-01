@@ -12,6 +12,7 @@ import uuid
 from caiyicloud.models import CyOrder
 from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer
+from caiyicloud.sign_utils import do_check
 log = logger = logging.getLogger(__name__)
 
 
@@ -25,9 +26,14 @@ class CaiYiViewSet(viewsets.ViewSet):
         log.error(request.META)
         data = request.data
         cy = caiyi_cloud()
-        event_type = data['header']['event_type']
-        sign = data['header']['sign']
-        cy =1
+        header = data['header']
+        event_type = header['event_type']
+        sign = header['sign']
+        cy = 1
+        sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
+                         create_time=header['create_time'], app_id=header['event_id'])
+        sign_content = do_check(sign_dict,sign)
+
         if event_type == 'ticket.stock.sync':
             # 库存变更通知
             pass

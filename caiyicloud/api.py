@@ -16,6 +16,7 @@ from typing import List, Dict
 from requests import Response
 import uuid
 from decimal import Decimal
+from caiyicloud.sign_utils import do_check
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +163,9 @@ class CaiYiCloud(CaiYiCloudAbstract):
         # pt[length + 21:] appid
         decrypted = json.loads(pt[20:length + 20])
         return decrypted
+
+    def do_check_sign(self, sign_dict: Dict, sign: str):
+        return do_check(sign_dict, sign, self.notify_public_key)
 
     def recover_bytes(self, data: bytes):
         source_number = 0

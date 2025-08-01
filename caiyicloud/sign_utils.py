@@ -10,17 +10,7 @@ from cryptography.hazmat.primitives.serialization import load_der_public_key
 from cryptography.exceptions import InvalidSignature
 
 
-def sign_top_request(params: Dict, private_key: str) -> str:
-    """
-    签名请求参数
-    
-    Args:
-        params: 参数字典
-        private_key: 私钥字符串
-    
-    Returns:
-        签名字符串
-    """
+def deal_params(params: Dict):
     # 第一步：参数排序
     keys = sorted(params.keys())
 
@@ -33,6 +23,21 @@ def sign_top_request(params: Dict, private_key: str) -> str:
 
     # 用&连接所有值
     sign_content = '&'.join(query_parts)
+    return sign_content
+
+
+def sign_top_request(params: Dict, private_key: str) -> str:
+    """
+    签名请求参数
+    
+    Args:
+        params: 参数字典
+        private_key: 私钥字符串
+    
+    Returns:
+        签名字符串
+    """
+    sign_content = deal_params(params)
 
     # 第三步：使用MD5WithRSA加签
     return rsa_sign(sign_content, private_key)
@@ -65,18 +70,19 @@ def rsa_sign(content: str, private_key: str) -> str:
         return ''
 
 
-def do_check(content: str, sign: str, public_key: str) -> bool:
+def do_check(params: Dict, sign: str, public_key: str) -> bool:
     """
     Verify RSA signature
 
     Args:
-        content: The original content that was signed
+        params:
         sign: Base64 encoded signature to verify
         public_key: Base64 encoded DER public key
 
     Returns:
         bool: True if signature is valid, False otherwise
     """
+    content = deal_params(params)
     try:
         # Decode base64 encoded public key
         key_der = base64.b64decode(public_key)
