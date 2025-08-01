@@ -1516,7 +1516,6 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
     # paginator = LargeTablePaginator
     show_full_result_count = False
     list_select_related = ['user', 'agent', 'session', 'venue', 'wx_pay_config', 'dy_pay_config']
-
     list_display = ['order_no', 'user_info', 'show_info', 'price_info', 'status_info', 'time_info', 'op']
     # list_filter = (
     #     'status', 'is_cancel_pay', 'session__start_at', 'create_at', 'pay_at', SessionFilter, 'venue', 'pay_type',
@@ -1582,6 +1581,10 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         html += '<p>实付金额(包含邮费)：{}</p>'.format(obj.actual_amount)
         html += '<p>邮费：{}</p>'.format(obj.express_fee)
         html += '<p>退款金额：{}</p>'.format(obj.refund_amount)
+        if obj.discount_order.all():
+            html += '<p>优惠：{}</p>'
+            for discount_order in obj.discount_order.all():
+                html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
         # if obj.tiktok_order_id:
         #     html += '<p>抖音订单号：{}</p>'.format(obj.tiktok_order_id)
         # elif obj.ks_order_no:
