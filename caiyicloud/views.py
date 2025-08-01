@@ -10,6 +10,7 @@ from restframework_ext.permissions import IsPermittedUser
 import jwt
 import uuid
 from caiyicloud.models import CyOrder
+from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer
 log = logger = logging.getLogger(__name__)
 
@@ -22,6 +23,14 @@ class CaiYiViewSet(viewsets.ViewSet):
         log.error(request.data)
         # log.error(request.body)
         log.error(request.META)
+        data = request.data
+        cy = caiyi_cloud()
+        event_type = data['header']['event_type']
+        sign = data['header']['sign']
+        cy =1
+        if event_type == 'ticket.stock.sync':
+            # 库存变更通知
+            pass
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
         # ret = json.loads(request.body.decode('utf-8'))
         # message_id = ret['message_id']

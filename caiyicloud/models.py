@@ -69,6 +69,7 @@ class CaiYiCloudApp(models.Model):
     app_id = models.CharField('app_id', max_length=50)
     supplier_id = models.CharField('supplierId', max_length=64)
     private_key = models.TextField('api私钥')
+    notify_public_key = models.TextField('回调公钥', null=True)
     notify_private_key = models.TextField('回调私钥', null=True)
 
     class Meta:
