@@ -2347,12 +2347,12 @@ class TicketFile(models.Model):
 
     @classmethod
     def get_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, session, is_tiktok=False, express_fee=0,
-                                 is_coupon=False):
+                                 can_member_card=False):
         total_multiply = 0
         amount = 0
         actual_amount = 0
         level_list = []
-        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon else TicketOrder.DISCOUNT_COUPON
+        discount_type = TicketOrder.DISCOUNT_DEFAULT
         tc_card = TheaterCardUserRecord.objects.filter(user=user).first()
         card = None
         use_old_card = False
@@ -2400,7 +2400,7 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if not is_coupon and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if can_member_card and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * discount
@@ -2866,14 +2866,14 @@ class SessionSeat(models.Model):
 
     @classmethod
     def get_order_amount(cls, user, session, ticket_list: list, pay_type, is_tiktok=False, express_fee=0,
-                         is_coupon=False):
+                         can_member_card=False):
         from caches import get_redis, seat_lock, session_seat_key
         redis = get_redis()
         multiply = 0
         amount = 0
         actual_amount = 0
         ticket = dict()
-        discount_type = TicketOrder.DISCOUNT_DEFAULT if not is_coupon else TicketOrder.DISCOUNT_COUPON
+        discount_type = TicketOrder.DISCOUNT_DEFAULT
         session_seat_list = []
         card = None
         use_old_card = False
@@ -2941,7 +2941,7 @@ class SessionSeat(models.Model):
                     raise CustomAPIException('座位{}已被占用，请重新选座'.format(str(inst)))
             else:
                 raise CustomAPIException('座位选择错误，请重新选座，')
-        if not is_coupon and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
+        if can_member_card and pay_type in [Receipt.PAY_WeiXin_LP, Receipt.PAY_KS]:
             account = user.account
             discount = account.get_discount()
             actual_amount = amount * account.get_discount()
