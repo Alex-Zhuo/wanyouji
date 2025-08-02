@@ -22,13 +22,11 @@ ShowProjectViewSet 演出项目接口
 SessionSeatViewSet 演出场次座位接口  
 SessionInfoViewSet  演出场次接口  
 TicketFileViewSet  演出场次票档接口  
-TicketOrderViewSet  订单接口  
-ShowPerformerViewSet 演员管理接口  
+TicketOrderViewSet  订单接口    
 ShowUserViewSet  常用联系人接口  
 PerformerFocusRecordViewSet  用户演员关注记录接口  
 ShowCommentImageViewSet  演出评论图片接口  
 ShowCommentViewSet  演出评论接口  
-TicketBookingViewSet 抖音预约单接口  
 TicketGiveRecordViewSet  门票赠送相关接口
   
  
