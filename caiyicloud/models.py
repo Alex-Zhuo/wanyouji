@@ -1311,13 +1311,13 @@ class CyTicketCode(models.Model):
             code_snapshot = dict(color=ticket_level.color.name,
                                  origin_price=float(ticket_level.origin_price), desc=ticket_level.desc,
                                  seat=seat, price=float(ticket_level.price))
-            ticket_code = TicketUserCode.objects.create(order=ticket_order, level_id=ticket_level.id,
-                                                        price=ticket_level.price,
-                                                        session_id=session.id, product_id=session.product_id,
-                                                        snapshot=json.dumps(code_snapshot))
-            cls_data = dict(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
-                            check_in_type=check_in_type, check_in_code=check_in_code, state=state,
-                            check_state=check_state, snapshot=snapshot_json)
+            ticket_code, _ = TicketUserCode.objects.get_or_create(order=ticket_order, level_id=ticket_level.id,
+                                                                  price=ticket_level.price,
+                                                                  session_id=session.id, product_id=session.product_id,
+                                                                  snapshot=json.dumps(code_snapshot))
+            cls_data = cls(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
+                           check_in_type=check_in_type, check_in_code=check_in_code, state=state,
+                           check_state=check_state, snapshot=snapshot_json)
             cls_create_list.append(cls_data)
         cls.objects.bulk_create(cls_create_list)
 
