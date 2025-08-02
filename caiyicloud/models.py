@@ -1315,9 +1315,11 @@ class CyTicketCode(models.Model):
                                                                   price=ticket_level.price,
                                                                   session_id=session.id, product_id=session.product_id,
                                                                   snapshot=json.dumps(code_snapshot))
+            img_dir, file_path, filename = create_code_qr(check_in_code, 'codes')
+            check_in_code_img = '{}/{}'.format(img_dir, filename)
             cls_data = cls(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
                            check_in_type=check_in_type, check_in_code=check_in_code, state=state,
-                           check_state=check_state, snapshot=snapshot_json)
+                           check_state=check_state, snapshot=snapshot_json, check_in_code_img=check_in_code_img)
             cls_create_list.append(cls_data)
         cls.objects.bulk_create(cls_create_list)
 

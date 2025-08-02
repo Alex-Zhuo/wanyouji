@@ -19,7 +19,7 @@ import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.contrib import messages
-from common.utils import get_config, s_mobile, s_name, show_content, s_id_card
+from common.utils import get_config, s_mobile, s_name, show_content, s_id_card, get_whole_url
 from django.db.transaction import atomic
 from dj_ext.exceptions import AdminException
 import pysnooper
@@ -1352,14 +1352,12 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
     def cy_code_info(self, obj):
         if hasattr(obj, 'cy_code'):
             cy_code = obj.cy_code
-            config = get_config()
             html = '<p>票ID：{}</p>'.format(cy_code.ticket_id)
             html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
             html += '<p>二维码类型：{}</p>'.format(cy_code.get_check_in_type_display())
             html += '<p>二维码：{}</p>'.format(cy_code.check_in_code)
             if cy_code.check_in_code_img:
-                html += '<img src="{}" width="100px" height="auto">'.format(
-                    '{}{}'.format(config['uri'], cy_code.check_in_code_img.url))
+                html += '<img src="{}" width="100px" height="auto">'.format(get_whole_url(cy_code.check_in_code_img.url))
             html += '<p>状态：{}</p>'.format(cy_code.get_state_display())
             html += '<p>核销状态：{}</p>'.format(cy_code.get_check_state_display())
             html += ' </div>'

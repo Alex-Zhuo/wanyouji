@@ -5312,7 +5312,7 @@ class TicketOrderRefund(models.Model):
         from mall.pay_service import get_mp_pay_client
         mp_pay_client = get_mp_pay_client(self.order.receipt.pay_type, self.order.receipt.wx_pay_config)
         config = get_config()
-        refund_notify_url = config['uri'] + self.get_refund_notify_url()
+        refund_notify_url = config['template_url'] + self.get_refund_notify_url()
         result = mp_pay_client.ticket_refund(self, refund_notify_url=refund_notify_url)
         self.return_code = result.get('return_code')
         self.result_code = result.get('result_code')

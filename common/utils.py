@@ -576,17 +576,18 @@ def save_url_img(img_url: str, logo_mobile_dir: str):
     return logo_mobile_path
 
 
-def qrcode_cy(filepath_name:str):
+def qrcode_cy(filepath_name: str):
     """
     二维码存放的文件目录、相对url(相对于media_root，不包含文件名)
     :return:
     """
     from django.conf import settings
     rel_url = settings.MEDIA_URL + '/'.join(['cy_ticket', filepath_name])
-    return os.path.join(settings.MEDIA_ROOT, 'cy_ticket', filepath_name), rel_url, '/'.join(['cy_ticket', filepath_name])
+    return os.path.join(settings.MEDIA_ROOT, 'cy_ticket', filepath_name), rel_url, '/'.join(
+        ['cy_ticket', filepath_name])
 
 
-def qrcode_dir_cy(filepath_name:str):
+def qrcode_dir_cy(filepath_name: str):
     """
     在qrcode_dir创建目录
     :return:
@@ -595,3 +596,8 @@ def qrcode_dir_cy(filepath_name:str):
     if not os.path.isdir(dir):
         os.makedirs(dir)
     return dir, rel_url, img_dir
+
+
+def get_whole_url(url: str):
+    config = get_config()
+    return '{}{}'.format(config['template_url'], url)
