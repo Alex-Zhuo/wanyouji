@@ -125,6 +125,11 @@ class RemoveDeleteStackedInline(admin.StackedInline):
                 request.user.has_delete and request.user.is_superuser) or self.admin_site == technology_admin
 
 
+class ChangeAndViewStackedInline(RemoveDeleteStackedInline):
+    def has_add_permission(self, request, obj):
+        return request.user and request.user.is_active and request.user.is_staff and self.admin_site == technology_admin
+
+
 class OnlyReadTabularInline(RemoveDeleteTabularInline):
     def has_change_permission(self, request, obj=None):
         return False
