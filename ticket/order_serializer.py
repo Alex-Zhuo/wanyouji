@@ -747,6 +747,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         is_tiktok = is_ks = is_xhs = False
+        validated_data.pop('ticket_list', None)
         ticket_order_discount_list = []
         amounts_data = dict(original_total_amount=0, actual_total_amount=0, promotion_list=[])
         is_cy_promotion = False
