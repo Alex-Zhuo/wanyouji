@@ -26,7 +26,7 @@ class HistoryChatAdmin(OnlyViewAdmin):
             content_list = json.loads(obj.content)
             for cn in content_list:
                 timestamp = int(int(cn['timestamp']) / 1000)
-                date_at = datetime.strptime(timestamp, '%Y-%m-%d %H:%M')
+                date_at = datetime.fromtimestamp(timestamp)
                 html += '<p>时间：{}</p>'.format(date_at)
                 html += '<p>问题：{}</p>'.format(cn['question'])
                 html += '<p>回答：{}</p>'.format(cn['answer'])
