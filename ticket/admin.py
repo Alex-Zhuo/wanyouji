@@ -1345,8 +1345,8 @@ class TicketUserCodeInline(admin.StackedInline):
     model = TicketUserCode
     extra = 0
     readonly_fields = [f.name for f in TicketUserCode._meta.fields if
-                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check']]
-    exclude = ['snapshot', 'level_id', 'product_id', 'source_type']
+                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check', 'product_id', 'source_type']]
+    exclude = ['snapshot', 'level_id', 'product_id', 'source_type','tiktok_check']
 
     # def voucher_code(self, obj):
     #     return obj.xhs_code.voucher_code if hasattr(obj, 'xhs_code') else None
