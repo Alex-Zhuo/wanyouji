@@ -581,12 +581,8 @@ class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
         # 彩艺云下单
         from caiyicloud.models import CyOrder
         real_name_list = list(show_users.values('id_card', 'name', 'mobile')) if show_users else None
-        # try:
         CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
                              seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
-        # except Exception as e:
-        #     log.error(e)
-        #     raise CustomAPIException('下单失败，请稍后再试')
 
     class Meta:
         model = TicketOrder
