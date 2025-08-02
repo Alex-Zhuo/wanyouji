@@ -1190,7 +1190,7 @@ class CyOrder(models.Model):
                 self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
                 fields.append('exchange_qr_code_img')
             self.save(update_fields=fields)
-            CyTicketCode.order_create(cy_order_detail['ticket_list'], self)
+            CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
         except Exception as e:
             log.error(e)
 
@@ -1281,11 +1281,11 @@ class CyTicketCode(models.Model):
     snapshot = models.TextField('票信息快照', editable=False, help_text='彩艺订单的ticket_list', null=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '小红书核销码'
+        verbose_name_plural = verbose_name = '票信息'
         ordering = ['-pk']
 
     @classmethod
-    def order_create(cls, ticket_list: List[Dict], cy_order: CyOrder):
+    def ticket_create(cls, ticket_list: List[Dict], cy_order: CyOrder):
         cls_create_list = []
         ticket_order = cy_order.ticket_order
         session = ticket_order.session
@@ -1296,14 +1296,28 @@ class CyTicketCode(models.Model):
             check_in_code = ticket.pop('check_in_code', None)
             state = ticket.pop('state', None)
             check_state = ticket.pop('check_state', None)
-            snapshot = json.dumps(ticket)
-            ticket_code = TicketUserCode.objects.create(order=ticket_order, level_id=ticket_level.id, price=ticket_level.price,
-                                                 session_id=session.id, product_id=session.product_id)
-            inst.snapshot = inst.get_snapshot(ticket_level)
-            inst.save(update_fields=[ 'snapshot'])
+            snapshot_json = json.dumps(ticket)
+            ticket_type_id = ticket.get('ticket_type_id') or ticket.get('pack_ticket_type_id')
+            session_id = ticket['session_id']
+            ctf = CyTicketType.objects.filter(cy_no=ticket_type_id, cy_session__cy_no=session_id).first()
+            if not ctf:
+                log.error('彩艺云找不到票档')
+                break
+            ticket_level = ctf.ticket_file
+            floor_name = ticket.get('floor_name') or ''
+            zone_name = '{}区'.format(ticket.get('zone_name')) if ticket.get('zone_name') else ''
+            seat_name = ticket.get('seat_name') or ''
+            seat = '{}{}{}'.format(floor_name, zone_name, seat_name)
+            code_snapshot = dict(color=ticket_level.color.name,
+                                 origin_price=float(ticket_level.origin_price), desc=ticket_level.desc,
+                                 seat=seat, price=float(ticket_level.price))
+            ticket_code = TicketUserCode.objects.create(order=ticket_order, level_id=ticket_level.id,
+                                                        price=ticket_level.price,
+                                                        session_id=session.id, product_id=session.product_id,
+                                                        snapshot=json.dumps(code_snapshot))
             cls_data = dict(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
                             check_in_type=check_in_type, check_in_code=check_in_code, state=state,
-                            check_state=check_state, snapshot=snapshot)
+                            check_state=check_state, snapshot=snapshot_json)
             cls_create_list.append(cls_data)
         cls.objects.bulk_create(cls_create_list)
 
