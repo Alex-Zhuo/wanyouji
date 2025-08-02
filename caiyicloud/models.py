@@ -963,7 +963,7 @@ class CyOrder(models.Model):
         (ST_DEFAULT, '已下单'), (ST_PAY, '已支付'), (ST_OUT, '已出票'), (ST_FINISH, '已完成'),
         (ST_CLOSE, '已关闭'), (ST_CANCEL, '已取消'))
     order_state = models.PositiveSmallIntegerField('订单状态', choices=ST_CHOICES, default=ST_DEFAULT)
-    buyer_cellphone = models.CharField(max_length=20, help_text="购票人手机号")
+    buyer_cellphone = models.CharField(max_length=20, verbose_name="购票人手机号")
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
     exchange_code = models.CharField('换票码', max_length=64, null=True, blank=True)
     exchange_qr_code = models.CharField('换二维票码', max_length=64, null=True, blank=True)

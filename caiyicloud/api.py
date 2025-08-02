@@ -16,7 +16,7 @@ from typing import List, Dict
 from requests import Response
 import uuid
 from decimal import Decimal
-from caiyicloud.sign_utils import do_check
+from caiyicloud.sign_utils import do_check, deal_params, sign_top_request
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return decrypted
 
     def do_check_sign(self, sign_dict: Dict, sign: str):
-        return do_check(sign_dict, sign, self.notify_public_key)
+        content = deal_params(sign_dict)
+        return do_check(content, sign, self.notify_public_key)
 
     def recover_bytes(self, data: bytes):
         source_number = 0
@@ -191,7 +192,6 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return dict(app_id=self.app_id, timestamp=str(timestamp))
 
     def get_sign(self, params: Dict) -> str:
-        from caiyicloud.sign_utils import sign_top_request
         return sign_top_request(params, self.private_key)
 
     def common_sign_params(self, params: dict):

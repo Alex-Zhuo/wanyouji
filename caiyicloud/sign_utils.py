@@ -70,7 +70,7 @@ def rsa_sign(content: str, private_key: str) -> str:
         return ''
 
 
-def do_check(params: Dict, sign: str, public_key: str) -> bool:
+def do_check(content: str, sign: str, public_key: str) -> bool:
     """
     Verify RSA signature
 
@@ -82,7 +82,6 @@ def do_check(params: Dict, sign: str, public_key: str) -> bool:
     Returns:
         bool: True if signature is valid, False otherwise
     """
-    content = deal_params(params)
     try:
         # Decode base64 encoded public key
         key_der = base64.b64decode(public_key)
