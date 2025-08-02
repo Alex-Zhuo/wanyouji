@@ -1345,24 +1345,23 @@ class TicketUserCodeInline(admin.StackedInline):
     model = TicketUserCode
     extra = 0
     readonly_fields = [f.name for f in TicketUserCode._meta.fields if
-                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check']] + ['voucher_code', 'xhs_check',
-                                                                                            'xhs_msg']
-    exclude = ['snapshot', 'level_id']
+                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check']]
+    exclude = ['snapshot', 'level_id', 'product_id', 'source_type']
 
-    def voucher_code(self, obj):
-        return obj.xhs_code.voucher_code if hasattr(obj, 'xhs_code') else None
-
-    voucher_code.short_description = u'小红书检票码'
-
-    def xhs_check(self, obj):
-        return '是' if hasattr(obj, 'xhs_code') and obj.xhs_code.xhs_check else '否'
-
-    xhs_check.short_description = u'小红书是否推送核销'
-
-    def xhs_msg(self, obj):
-        return obj.xhs_code.msg or '' if hasattr(obj, 'xhs_code') else ''
-
-    xhs_msg.short_description = u'小红书核销返回'
+    # def voucher_code(self, obj):
+    #     return obj.xhs_code.voucher_code if hasattr(obj, 'xhs_code') else None
+    #
+    # voucher_code.short_description = u'小红书检票码'
+    #
+    # def xhs_check(self, obj):
+    #     return '是' if hasattr(obj, 'xhs_code') and obj.xhs_code.xhs_check else '否'
+    #
+    # xhs_check.short_description = u'小红书是否推送核销'
+    #
+    # def xhs_msg(self, obj):
+    #     return obj.xhs_code.msg or '' if hasattr(obj, 'xhs_code') else ''
+    #
+    # xhs_msg.short_description = u'小红书核销返回'
 
 
 class TicketOrderChangePriceInline(OnlyReadTabularInline):
