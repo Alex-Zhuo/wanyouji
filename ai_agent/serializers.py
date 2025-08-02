@@ -19,7 +19,7 @@ class DefaultQuestionsSerializer(serializers.ModelSerializer):
 class HistoryChatDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = HistoryChatDetail
-        fields = ['question', 'answer', 'create_at', 'answer_at']
+        fields = ['question', 'answer', 'create_at']
 
 
 class HistoryChatDetailCreateSerializer(serializers.ModelSerializer):
