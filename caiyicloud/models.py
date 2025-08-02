@@ -1130,9 +1130,10 @@ class CyOrder(models.Model):
             error_msg = response_data.get('message') or response_data.get('msg')
             raise CustomAPIException(error_msg)
         else:
-            auto_cancel_order_time = datetime.strptime(response_data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
+            data = response_data['data']
+            auto_cancel_order_time = datetime.strptime(data['auto_cancel_order_time'], '%Y-%m-%d %H:%M:%S')
             cy_order = cls.objects.create(ticket_order=ticket_order, cy_session=cy_session,
-                                          cy_order_no=response_data['order_no'],
+                                          cy_order_no=data['order_no'],
                                           buyer_cellphone=ticket_order.mobile,
                                           auto_cancel_order_time=auto_cancel_order_time,
                                           delivery_method=delivery_method,
