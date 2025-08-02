@@ -1585,7 +1585,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
             html += '<p>优惠：{}</p>'
             for discount_order in obj.discount_order.all():
                 html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
-        html += '<p>渠道类型：{}</p>'.format(obj.get_channcel_type_display())
+        html += '<p>渠道类型：{}</p>'.format(obj.get_channel_type_display())
         if obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'):
             html += '<p>彩艺云订单号：{}</p>'.format(obj.cy_order.cy_order_no)
         # if obj.tiktok_order_id:

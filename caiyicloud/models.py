@@ -1300,7 +1300,7 @@ class CyTicketCode(models.Model):
             ticket_code = TicketUserCode.objects.create(order=ticket_order, level_id=ticket_level.id, price=ticket_level.price,
                                                  session_id=session.id, product_id=session.product_id)
             inst.snapshot = inst.get_snapshot(ticket_level)
-            inst.save(update_fields=['code', 'snapshot'])
+            inst.save(update_fields=[ 'snapshot'])
             cls_data = dict(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
                             check_in_type=check_in_type, check_in_code=check_in_code, state=state,
                             check_state=check_state, snapshot=snapshot)
