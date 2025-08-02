@@ -16,26 +16,26 @@ class DefaultQuestionsAdmin(admin.ModelAdmin):
 
 class HistoryChatAdmin(OnlyViewAdmin):
     list_display = ['user', 'create_at']
-    readonly_fields = ['chat']
-    exclude = ['content']
-
-    def chat(self, obj):
-        content = None
-        if obj.content:
-            html = '<div style="width:900px">'
-            content_list = json.loads(obj.content)
-            for cn in content_list:
-                timestamp = int(int(cn['timestamp']) / 1000)
-                date_at = datetime.fromtimestamp(timestamp)
-                html += '<p>时间：{}</p>'.format(date_at)
-                html += '<p>问题：{}</p>'.format(cn['question'])
-                html += '<p>回答：{}</p>'.format(cn['answer'])
-                html += '<p></p>'
-            html += ' </div>'
-            content = mark_safe(html)
-        return content
-
-    chat.short_description = '对话记录'
+    # readonly_fields = ['chat']
+    # exclude = ['content']
+    #
+    # def chat(self, obj):
+    #     content = None
+    #     if obj.content:
+    #         html = '<div style="width:900px">'
+    #         content_list = json.loads(obj.content)
+    #         for cn in content_list:
+    #             timestamp = int(int(cn['timestamp']) / 1000)
+    #             date_at = datetime.fromtimestamp(timestamp)
+    #             html += '<p>时间：{}</p>'.format(date_at)
+    #             html += '<p>问题：{}</p>'.format(cn['question'])
+    #             html += '<p>回答：{}</p>'.format(cn['answer'])
+    #             html += '<p></p>'
+    #         html += ' </div>'
+    #         content = mark_safe(html)
+    #     return content
+    #
+    # chat.short_description = '对话记录'
 
 
 admin.site.register(DefaultQuestions, DefaultQuestionsAdmin)
