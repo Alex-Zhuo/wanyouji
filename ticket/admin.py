@@ -1341,7 +1341,7 @@ def export_ticket_order_old(modeladmin, request, queryset):
 export_ticket_order_old.short_description = u'导出订单(少量)'
 
 
-class TicketUserCodeInline(admin.StackedInline):
+class TicketUserCodeInline(ChangeAndViewAdmin):
     model = TicketUserCode
     extra = 0
     readonly_fields = [f.name for f in TicketUserCode._meta.fields if
