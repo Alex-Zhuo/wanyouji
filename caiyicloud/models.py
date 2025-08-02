@@ -980,7 +980,7 @@ class CyOrder(models.Model):
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
     exchange_code = models.CharField('换票码', max_length=64, null=True, blank=True)
     exchange_qr_code = models.CharField('换二维票码', max_length=64, null=True, blank=True)
-    exchange_qr_code_img = models.ImageField('检票二维码', null=True, blank=True,
+    exchange_qr_code_img = models.ImageField('换二维票码二维码', null=True, blank=True,
                                              upload_to=f'{IMAGE_FIELD_PREFIX}/cy_cloud/order',
                                              validators=[validate_image_file_extension])
     code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(1, '文本码'), (3, 'URL链接')], default=1)
@@ -1190,7 +1190,7 @@ class CyOrder(models.Model):
                 self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
                 fields.append('exchange_qr_code_img')
             self.save(update_fields=fields)
-            CyTicketCode.order_create(cy_order_detail['ticket_list'], self.ticket_order.id)
+            CyTicketCode.order_create(cy_order_detail['ticket_list'], self)
         except Exception as e:
             log.error(e)
 
@@ -1269,28 +1269,37 @@ class CyTicketCode(models.Model):
     ticket_code = models.OneToOneField(TicketUserCode, verbose_name='演出票(座位)信息', on_delete=models.CASCADE,
                                        related_name='cy_code')
     cy_order = models.ForeignKey(CyOrder, verbose_name='订单', on_delete=models.CASCADE)
+    ticket_id = models.CharField('票ID', max_length=50, db_index=True, null=True)
+    ticket_no = models.CharField('票号', max_length=50, null=True, blank=True)
     check_in_type = models.PositiveSmallIntegerField('二维码类型', choices=CHECK_IN_TYPE_CHOICES, default=1)
-    check_in_code = models.CharField('二维码', max_length=500, db_index=True)
+    check_in_code = models.CharField('二维码', max_length=500, null=True, blank=True)
+    check_in_code_img = models.ImageField('二维码图片', null=True, blank=True,
+                                          upload_to=f'{IMAGE_FIELD_PREFIX}/cy_cloud/code',
+                                          validators=[validate_image_file_extension])
     state = models.PositiveSmallIntegerField('状态', choices=STATE_CHOICES, default=0)
     check_state = models.PositiveSmallIntegerField('核销状态', choices=CHECK_STATE_CHOICES, default=0)
+    snapshot = models.TextField('票信息快照', editable=False, help_text='彩艺订单的ticket_list', null=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '小红书核销码'
         ordering = ['-pk']
 
     @classmethod
-    def get_or_create_record(cls, ticket_code: TicketUserCode, voucher_code: str):
-        inst, _ = cls.objects.get_or_create(ticket_code=ticket_code, voucher_code=voucher_code,
-                                            ticket_order=ticket_code.order)
-        return inst
-
-    @classmethod
-    def order_create(cls, ticket_list: List[Dict], ticket_order_id: int):
-        code_qs = TicketUserCode.objects.filter(order_id=ticket_order_id)
-        i = 0
-        for code in code_qs:
-            cls.get_or_create_record(code, voucher_infos[i]['VoucherCode'])
-            i = i + 1
+    def order_create(cls, ticket_list: List[Dict], cy_order: CyOrder):
+        cls_create_list = []
+        for ticket in ticket_list:
+            ticket_id = ticket.pop('id')
+            ticket_no = ticket.pop('ticket_no', None)
+            check_in_type = ticket.pop('check_in_type', 1)
+            check_in_code = ticket.pop('check_in_code', None)
+            state = ticket.pop('state', None)
+            check_state = ticket.pop('check_state', None)
+            snapshot = json.dumps(ticket)
+            cls_data = dict(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
+                            check_in_type=check_in_type, check_in_code=check_in_code, state=state,
+                            check_state=check_state, snapshot=snapshot)
+            cls_create_list.append(cls_data)
+        cls.objects.bulk_create(cls_create_list)
 
 
 class CyOrderRefund(models.Model):

@@ -1108,7 +1108,8 @@ class TicketOrderSerializer(serializers.ModelSerializer):
 
     def get_can_margin(self, obj):
         # 状态为待核销或者已付款，且未结束
-        st = obj.status in [TicketOrder.STATUS_FINISH, TicketOrder.STATUS_PAID]
+        st = obj.channel_type == TicketOrder.SR_DEFAULT and obj.status in [TicketOrder.STATUS_FINISH,
+                                                                           TicketOrder.STATUS_PAID]
         # return obj.session.show.show_type != ShowType.xunyan() and st and timezone.now() < obj.session.end_at
         return st and timezone.now() < obj.session.end_at
 
@@ -1208,19 +1209,9 @@ class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
 
 
 class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
-    real_name_list = serializers.SerializerMethodField()
-
-    def get_real_name_list(self, obj):
-        if hasattr(obj, 'real_name_order'):
-            qs = obj.real_name_order.all()
-        else:
-            qs = TicketOrderRealName.objects.none()
-        data = TicketOrderRealNameSerializer(qs, many=True, context=self.context).data
-        return data
 
     def get_code_list(self, obj):
-        qs = TicketUserCode.objects.filter(order=obj)
-        data = TicketUserCodeNewSerializer(qs, many=True, context=self.context).data
+        # 重写
         return data
 
     def get_snapshot(self, obj):

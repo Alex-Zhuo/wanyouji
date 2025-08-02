@@ -3631,17 +3631,20 @@ class TicketOrder(models.Model):
             self.settle_order()
             # 下面注释的丢到任务做
             # self.do_order()
-            if self.order_type == self.TY_HAS_SEAT:
-                # 有座的
-                self.set_code()
-            elif self.order_type == self.TY_NO_SEAT:
-                self.no_seat_set_code()
-            elif self.order_type == self.TY_MARGIN:
-                # 补差价订单退出付款页面就直接取消，付款后直接变为已完成；
-                self.set_finish()
-            if hasattr(self, 'cy_order'):
-                from caiyicloud.tasks import async_confirm_order
-                async_confirm_order.delay(self.id)
+            if self.channel_type == TicketOrder.SR_CY:
+                # 彩艺云异步下单确认
+                if hasattr(self, 'cy_order'):
+                    from caiyicloud.tasks import async_confirm_order
+                    async_confirm_order.delay(self.id)
+            else:
+                if self.order_type == self.TY_HAS_SEAT:
+                    # 有座的
+                    self.set_code()
+                elif self.order_type == self.TY_NO_SEAT:
+                    self.no_seat_set_code()
+                elif self.order_type == self.TY_MARGIN:
+                    # 补差价订单退出付款页面就直接取消，付款后直接变为已完成；
+                    self.set_finish()
         elif self.status == self.STATUS_CANCELED:
             if self.receipt.status == Receipt.STATUS_FINISHED:
                 self.is_cancel_pay = True
@@ -4483,7 +4486,7 @@ class TicketUserCode(models.Model):
     STATUS_CHOICES = (
         (STATUS_DEFAULT, u'未检票'), (STATUS_CHECK, '已检票'), (STATUS_OVER_TIME, '已过期'), (STATUS_CANCEL, '已作废'))
     status = models.IntegerField(u'检票状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
-    source_type = models.IntegerField(u'带货场景', choices=TicketOrder.SOURCE_CHOICES, default=TicketOrder.SOURCE_DEFAULT)
+    source_type = models.IntegerField(u'带货场景', choices=TicketOrder.SOURCE_CHOICES, default=TicketOrder.SOURCE_DEFAULT, editable=False)
     check_user = models.ForeignKey('shopping_points.UserAccount', verbose_name='验票员', null=True, blank=True,
                                    on_delete=models.SET_NULL)
     code = models.CharField('检票码', max_length=30, null=True, db_index=True)
@@ -4492,7 +4495,7 @@ class TicketUserCode(models.Model):
     check_at = models.DateTimeField('检票时间', null=True, blank=True)
     snapshot = models.TextField('场次座位快照', null=True, blank=True, help_text='下单时保存的场次座位快照', editable=False,
                                 max_length=2048)
-    tiktok_check = models.BooleanField('是否推送抖音核销', default=False)
+    tiktok_check = models.BooleanField('是否推送抖音核销', default=False, editable=False)
     push_at = models.DateTimeField('核销时间', null=True, blank=True)
     msg = models.CharField('核销返回', max_length=100, null=True, blank=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True, null=True)
