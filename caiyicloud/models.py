@@ -4,7 +4,7 @@ from django.db import models
 from django.conf import settings
 import logging
 from mall.models import User
-from common.utils import get_config, save_url_img
+from common.utils import get_config, save_url_img, hash_ids, random_str, sha256_str, qrcode_dir_cy
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
@@ -23,6 +23,7 @@ import re
 from decimal import Decimal
 from caches import get_redis, get_redis_name, get_pika_redis
 from common.utils import get_timestamp
+import os
 
 log = logging.getLogger(__name__)
 """
@@ -36,6 +37,18 @@ EVENT_CATEGORIES = {
 CY_NEED_CONFIRM_DICT_KEY = get_redis_name('cy_need_confirm_key')
 CONFIRM_RETRY_TIMES = 3
 APPLY_PLATFORM = '深圳文旅体'
+
+
+def create_code_qr(code: str, filepath_name: str):
+    dir, rel_url, img_dir = qrcode_dir_cy(filepath_name)
+    name = sha256_str(code)
+    filename = '{}.jpg'.format(name)
+    file_path = os.path.join(dir, filename)
+    if os.path.isfile(file_path):
+        filename = '{}{}.jpg'.format(name, random_str(4))
+    from common import qrutils
+    qrutils.generate(code, size=(410, 410), save_path=file_path)
+    return img_dir, file_path, filename
 
 
 def init_all():
@@ -967,6 +980,9 @@ class CyOrder(models.Model):
     auto_cancel_order_time = models.DateTimeField(verbose_name="订单未支付自动取消时间")
     exchange_code = models.CharField('换票码', max_length=64, null=True, blank=True)
     exchange_qr_code = models.CharField('换二维票码', max_length=64, null=True, blank=True)
+    exchange_qr_code_img = models.ImageField('检票二维码', null=True, blank=True,
+                                             upload_to=f'{IMAGE_FIELD_PREFIX}/cy_cloud/order',
+                                             validators=[validate_image_file_extension])
     code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(1, '文本码'), (3, 'URL链接')], default=1)
     delivery_method = models.ForeignKey(CyDeliveryMethods, verbose_name='配送方式', null=True, on_delete=models.PROTECT)
     # ST_DEFAULT = 0
@@ -1165,10 +1181,15 @@ class CyOrder(models.Model):
             return
         try:
             cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
+            fields = ['exchange_code', 'exchange_qr_code', 'code_type']
             self.exchange_code = cy_order_detail.get('exchange_code')
             self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
             self.code_type = cy_order_detail.get('code_type')
-            self.save(update_fields=['exchange_code', 'exchange_qr_code', 'code_type'])
+            if self.exchange_qr_code and self.code_type == 1:
+                img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
+                self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
+                fields.append('exchange_qr_code_img')
+            self.save(update_fields=fields)
             CyTicketCode.order_create(cy_order_detail['ticket_list'], self.ticket_order.id)
         except Exception as e:
             log.error(e)
