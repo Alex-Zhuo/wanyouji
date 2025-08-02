@@ -17,6 +17,7 @@ class DefaultQuestionsAdmin(admin.ModelAdmin):
 class HistoryChatAdmin(OnlyViewAdmin):
     list_display = ['user', 'create_at']
     readonly_fields = ['chat']
+    exclude = ['content']
 
     def chat(self, obj):
         content = None
@@ -34,7 +35,7 @@ class HistoryChatAdmin(OnlyViewAdmin):
             content = mark_safe(html)
         return content
 
-    chat.short_description = '聊天内容'
+    chat.short_description = '对话记录'
 
 
 admin.site.register(DefaultQuestions, DefaultQuestionsAdmin)
