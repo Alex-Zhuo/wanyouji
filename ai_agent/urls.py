@@ -1,9 +1,9 @@
 # coding: utf-8
 from rest_framework.routers import DefaultRouter
 
-from ai_agent.views import DefaultQuestionsViewSet,HistoryChatDetailViewSet
+from ai_agent.views import DefaultQuestionsViewSet,HistoryChatViewSet
 
 router = DefaultRouter()
 
 router.register('questions', DefaultQuestionsViewSet)
-router.register('history', HistoryChatDetailViewSet)
+router.register('history', HistoryChatViewSet)

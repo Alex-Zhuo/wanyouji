@@ -5,7 +5,7 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 
-from ai_agent.models import DefaultQuestions, HistoryChatDetail, HistoryChat
+from ai_agent.models import DefaultQuestions, HistoryChat
 
 log = logging.getLogger(__name__)
 
@@ -16,24 +16,19 @@ class DefaultQuestionsSerializer(serializers.ModelSerializer):
         fields = ['title']
 
 
-class HistoryChatDetailSerializer(serializers.ModelSerializer):
+class HistoryChatSerializer(serializers.ModelSerializer):
     class Meta:
-        model = HistoryChatDetail
-        fields = ['question', 'answer', 'create_at']
+        model = HistoryChat
+        fields = ['content', 'create_at']
 
 
-class HistoryChatDetailCreateSerializer(serializers.ModelSerializer):
-    question = serializers.CharField(required=True)
-    answer = serializers.CharField(required=True)
+class HistoryChatCreateSerializerSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=True)
 
     def create(self, validated_data):
         request = self.context.get('request')
-        hc = HistoryChat.get_inst(request.user)
-        validated_data['hc'] = hc
-        HistoryChatDetail.objects.create(**validated_data)
-        hc.update_at = timezone.now()
-        hc.save(update_fields=['update_at'])
+        HistoryChat.objects.create(user=request.user, content=validated_data['content'])
 
     class Meta:
-        model = HistoryChatDetail
-        fields = ['question', 'answer']
+        model = HistoryChat
+        fields = ['content']

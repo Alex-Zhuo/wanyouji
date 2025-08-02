@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
 
-from ai_agent.models import DefaultQuestions, HistoryChatDetail
-from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatDetailSerializer, \
-    HistoryChatDetailCreateSerializer
+from ai_agent.models import DefaultQuestions, HistoryChat
+from ai_agent.serializers import DefaultQuestionsSerializer,  HistoryChatSerializer, HistoryChatCreateSerializerSerializer
 from home.views import ReturnNoDetailViewSet
+from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
 from restframework_ext.permissions import IsPermittedUser
 import logging
@@ -21,16 +21,17 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     http_method_names = ['get']
 
 
-class HistoryChatDetailViewSet(ReturnNoDetailViewSet):
-    queryset = HistoryChatDetail.objects.all()
+class HistoryChatViewSet(ReturnNoDetailViewSet):
+    queryset = HistoryChat.objects.all()
     permission_classes = [IsPermittedUser]
-    serializer_class = HistoryChatDetailSerializer
+    serializer_class = HistoryChatSerializer
     pagination_class = DefaultNoPagePagination
     http_method_names = ['get']
+    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
 
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def post_history(self, request):
-        s = HistoryChatDetailCreateSerializer(data=request.data, context={'request': request})
+        s = HistoryChatCreateSerializerSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         s.create(s.validated_data)
         return Response()

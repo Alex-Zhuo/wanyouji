@@ -1,5 +1,5 @@
 # coding=utf-8
-from ai_agent.models import HistoryChatDetail, HistoryChat, DefaultQuestions
+from ai_agent.models import HistoryChat, DefaultQuestions
 from django.contrib import admin
 from dj import technology_admin
 from dj_ext.permissions import OnlyViewAdmin, OnlyReadTabularInline
@@ -11,14 +11,15 @@ class DefaultQuestionsAdmin(admin.ModelAdmin):
     list_filter = ['is_use']
 
 
-class HistoryChatDetailInline(OnlyReadTabularInline):
-    model = HistoryChatDetail
-    extra = 0
-
-
 class HistoryChatAdmin(OnlyViewAdmin):
-    list_display = ['user', 'update_at']
-    inlines = [HistoryChatDetailInline]
+    list_display = ['user', 'create_at']
+    readonly_fields = ['chat']
+
+    def chat(self, obj):
+        return
+
+    chat.short_description = '聊天内容'
+
 
 admin.site.register(DefaultQuestions, DefaultQuestionsAdmin)
 admin.site.register(HistoryChat, HistoryChatAdmin)
