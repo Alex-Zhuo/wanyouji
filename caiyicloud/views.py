@@ -23,35 +23,21 @@ class CaiYiViewSet(viewsets.ViewSet):
         log.error(request.data)
         # log.error(request.body)
         log.error(request.META)
-        data = request.data
-        cy = caiyi_cloud()
-        header = data['header']
-        event_type = header['event_type']
-        sign = header['sign']
-        cy = 1
-        sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
-                         create_time=header['create_time'], app_id=header['event_id'])
-        sign_content = do_check(sign_dict,sign)
-
-        if event_type == 'ticket.stock.sync':
-            # 库存变更通知
-            pass
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
-        # ret = json.loads(request.body.decode('utf-8'))
-        # message_id = ret['message_id']
-        # app_id = ret['app_id']
-        # event = ret['event']
-        # data = ret['data']
-        # ret = {"result": 1, "message_id": message_id}
-        # if event == 'POI_AUDITED':
-        #     st = KsPoiService.update_status(data['poi_id'], data['app_id'], data['message'], data['reject_reason'])
-        #     if not st:
-        #         ret['result'] = 0
-        # elif event == 'PRODUCT_AUDITED':
-        #     st = KsGoodsConfig.set_approve(data['product_id'], data['message'], data['reject_reason'], data['audit_id'])
-        #     if not st:
-        #         ret['result'] = 0
         return JsonResponse(ret)
+        # data = request.data
+        # cy = caiyi_cloud()
+        # header = data['header']
+        # event_type = header['event_type']
+        # sign = header['sign']
+        # cy = 1
+        # sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
+        #                  create_time=header['create_time'], app_id=header['event_id'])
+        # sign_content = do_check(sign_dict,sign)
+        #
+        # if event_type == 'ticket.stock.sync':
+        #     # 库存变更通知
+        #     pass
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
