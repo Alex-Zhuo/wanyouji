@@ -1690,10 +1690,11 @@ class TicketOrderLockSeatSerializer(serializers.ModelSerializer):
 
 class ShowAiSerializer(serializers.ModelSerializer):
     venues = VenuesAiSerializer()
+    show_type = ShowTypeBasicSerializer()
 
     class Meta:
         model = ShowProject
-        fields = ['no', 'logo_mobile', 'title', 'price', 'venues']
+        fields = ['no', 'logo_mobile', 'title', 'price', 'venues', 'show_type']
 
 
 class ShowIndexSerializer(serializers.ModelSerializer):

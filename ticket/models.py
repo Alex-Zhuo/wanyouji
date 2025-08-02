@@ -4474,7 +4474,7 @@ class TicketUserCode(models.Model):
     order = models.ForeignKey(TicketOrder, verbose_name='订单', on_delete=models.CASCADE, null=True,
                               related_name='user_code')
     level_id = models.IntegerField('票档ID', default=0, editable=False)
-    product_id = models.CharField('抖音商品ID', null=True, blank=True, max_length=50)
+    product_id = models.CharField('抖音商品ID', null=True, blank=True, max_length=50, editable=False)
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
     session_seat = models.ForeignKey(SessionSeat, verbose_name='演出场次座位', null=True, blank=True,
                                      on_delete=models.CASCADE)
