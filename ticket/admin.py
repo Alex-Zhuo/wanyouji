@@ -1356,8 +1356,9 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
             html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
             html += '<p>二维码类型：{}</p>'.format(cy_code.get_check_in_type_display())
             html += '<p>二维码：{}</p>'.format(cy_code.check_in_code)
-            if cy_code.check_in_code_img:
-                html += '<img src="{}" width="100px" height="auto">'.format(get_whole_url(cy_code.check_in_code_img.url))
+            if cy_code.check_in_type == 1 and cy_code.check_in_code_img:
+                check_in_code_img_url = get_whole_url(cy_code.check_in_code_img.url)
+                html += '<img src="{}" width="150px" height="auto">'.format(check_in_code_img_url)
             html += '<p>状态：{}</p>'.format(cy_code.get_state_display())
             html += '<p>核销状态：{}</p>'.format(cy_code.get_check_state_display())
             html += ' </div>'
