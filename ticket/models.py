@@ -3118,7 +3118,7 @@ class TicketOrder(models.Model):
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
 
     @property
-    def promotion_amount(self):
+    def discount_amount(self):
         return self.amount - self.actual_amount
 
     @classmethod

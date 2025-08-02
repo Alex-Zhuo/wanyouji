@@ -1137,7 +1137,7 @@ class TicketOrderSerializer(serializers.ModelSerializer):
                   'refund_amount', 'order_type', 'status', 'express_status', 'is_cancel_pay',
                   'receipt', 'pay_type', 'pay_at', 'deliver_at', 'create_at', 'start_at', 'end_at',
                   'is_paper', 'express_no', 'express_name', 'express_comp_no', 'snapshot',
-                  'status_display', 'session', 'venue', 'user', 'pay_end_at', 'can_margin', 'promotion_amount',
+                  'status_display', 'session', 'venue', 'user', 'pay_end_at', 'can_margin',
                   'can_comment', 'show_express_address', 'express_status_display']
 
 
