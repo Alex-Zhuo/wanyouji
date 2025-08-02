@@ -1352,13 +1352,13 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
     def cy_code_info(self, obj):
         if hasattr(obj, 'cy_code'):
             cy_code = obj.cy_code
-            request = get_request()
+            config = get_config()
             html = '<p>票ID：{}</p>'.format(cy_code.ticket_id)
             html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
             html += '<p>二维码类型：{}</p>'.format(cy_code.get_check_in_type_display())
             html += '<p>二维码：{}</p>'.format(cy_code.check_in_code)
             html += '<img src="{}" width="100px" height="auto">'.format(
-                request.build_absolute_uri(cy_code.check_in_code_img.url)) if cy_code.check_in_code_img else None
+                '{}{}'.format(config['uri'], cy_code.check_in_code_img.url)) if cy_code.check_in_code_img else None
             html += '<p>状态：{}</p>'.format(cy_code.get_state_display())
             html += '<p>核销状态：{}</p>'.format(cy_code.get_check_state_display())
             html += ' </div>'
