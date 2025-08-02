@@ -1164,7 +1164,7 @@ class CyOrder(models.Model):
         if not cy.is_init:
             return
         try:
-            cy_order_detail = cy.order_detail(cy_order_no=self.cy_order_no)
+            cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
             self.exchange_code = cy_order_detail.get('exchange_code')
             self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
             self.code_type = cy_order_detail.get('code_type')
