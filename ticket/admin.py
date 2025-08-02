@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.http import HttpResponse
 from dj import technology_admin
 from dj_ext.permissions import RemoveDeleteModelAdmin, RemoveDeleteTabularInline, OnlyViewAdmin, ChangeAndViewAdmin, \
-    OnlyReadTabularInline, SaveSignalAdmin, RemoveDeleteStackedInline, OnlyReadStackedInline
+    OnlyReadTabularInline, SaveSignalAdmin, RemoveDeleteStackedInline, OnlyReadStackedInline, ChangeAndViewTabularInline
 from restframework_ext.filterbackends import AgentFilter, CityFilter, ShowTypeFilter, SessionFilter
 from simpleui.admin import AjaxAdmin
 from ticket.models import TicketOrder, ShowProject, ShowType, Venues, TicketColor, TicketReceipt, \
@@ -1341,7 +1341,7 @@ def export_ticket_order_old(modeladmin, request, queryset):
 export_ticket_order_old.short_description = u'导出订单(少量)'
 
 
-class TicketUserCodeInline(ChangeAndViewAdmin):
+class TicketUserCodeInline(ChangeAndViewTabularInline):
     model = TicketUserCode
     extra = 0
     readonly_fields = [f.name for f in TicketUserCode._meta.fields if
