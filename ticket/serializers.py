@@ -989,6 +989,10 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
     # code_img = serializers.SerializerMethodField()
     snapshot = serializers.SerializerMethodField()
     give_status_display = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.code
 
     # give_status = serializers.SerializerMethodField()
     #
@@ -1006,12 +1010,6 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
 
     def get_snapshot(self, obj):
         snapshot = json.loads(obj.snapshot)
-        seat = ''
-        if obj.session_seat:
-            seat = obj.session_seat.seat_desc(obj.order.venue)
-        snapshot['seat'] = seat
-        if seat:
-            snapshot['desc'] = seat
         return snapshot
 
     def get_check_user(self, obj):
@@ -1030,10 +1028,6 @@ class TicketUserCodeSerializer(serializers.ModelSerializer):
 
 class TicketUserCodeNewSerializer(TicketUserCodeSerializer):
     code_img_data = serializers.SerializerMethodField()
-    id = serializers.SerializerMethodField()
-
-    def get_id(self, obj):
-        return obj.code
 
     def get_code_img_data(self, obj):
         request = self.context.get('request')
@@ -1053,8 +1047,7 @@ class TicketUserCodeNewSerializer(TicketUserCodeSerializer):
 
     class Meta:
         model = TicketUserCode
-        fields = ['id', 'session_seat', 'status', 'status_display', 'check_user', 'check_at',
-                  'snapshot', 'give_status', 'give_status_display', 'give_mobile', 'code_img_data']
+        fields = TicketUserCodeSerializer.Meta.fields + ['code_img_data']
 
 
 class TicketOrderRealNameSerializer(serializers.ModelSerializer):
@@ -1208,10 +1201,40 @@ class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
         fields = TicketOrderDetailSerializer.Meta.fields + ['real_name_list', 'promotion_amount_list']
 
 
+class TicketUserCodeCySerializer(TicketUserCodeSerializer):
+    session_seat = serializers.SerializerMethodField()
+    code_img_data = serializers.SerializerMethodField()
+
+    def get_session_seat(self, obj):
+        return None
+
+    def get_code_img_data(self, obj):
+        request = self.context.get('request')
+        cy_code = obj.cy_code
+        url = None
+        if cy_code.check_in_type == 1:
+            if cy_code.check_in_code_img:
+                url = request.build_absolute_uri(cy_code.check_in_code_img.url)
+        elif cy_code.check_in_type == 3:
+            url = cy_code.check_in_code
+        return dict(url=url, code=cy_code.ticket_no, can_share=True,
+                    deadline_at=None, deadline_timestamp=None)
+
+    class Meta:
+        model = TicketUserCode
+        fields = TicketUserCodeSerializer.Meta.fields + ['code_img_data']
+
+
 class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
+    cy_exchange = serializers.SerializerMethodField()
+
+    def get_cy_exchange(self, obj):
+        from caiyicloud.serializers import CyOrderBasicSerializer
+        return CyOrderBasicSerializer(obj.cy_order, context=self.context).data
 
     def get_code_list(self, obj):
-        # 重写
+        qs = TicketUserCode.objects.filter(order=obj)
+        data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
         return data
 
     def get_snapshot(self, obj):
@@ -1220,7 +1243,7 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
 
     class Meta:
         model = TicketOrder
-        fields = TicketOrderDetailNewSerializer.Meta.fields
+        fields = TicketOrderDetailNewSerializer.Meta.fields + ['cy_exchange']
 
 
 class TicketOrderMarginCreateSerializer(serializers.ModelSerializer):

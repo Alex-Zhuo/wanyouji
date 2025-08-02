@@ -1311,10 +1311,12 @@ class CyTicketCode(models.Model):
             code_snapshot = dict(color=ticket_level.color.name,
                                  origin_price=float(ticket_level.origin_price), desc=ticket_level.desc,
                                  seat=seat, price=float(ticket_level.price))
+            code = 'cy{}'.format(ticket_id)
             ticket_code, _ = TicketUserCode.objects.get_or_create(order=ticket_order, level_id=ticket_level.id,
-                                                                  price=ticket_level.price,
+                                                                  price=ticket_level.price, code=code,
                                                                   session_id=session.id, product_id=session.product_id,
                                                                   snapshot=json.dumps(code_snapshot))
+            check_in_code_img = None
             if check_in_type == 1:
                 img_dir, file_path, filename = create_code_qr(check_in_code, 'codes')
                 check_in_code_img = '{}/{}'.format(img_dir, filename)
