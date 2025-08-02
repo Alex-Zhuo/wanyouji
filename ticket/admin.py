@@ -1345,9 +1345,27 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
     model = TicketUserCode
     extra = 0
     readonly_fields = [f.name for f in TicketUserCode._meta.fields if
-                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check', 'product_id', 'source_type']]
+                       f.name not in ['status', 'snapshot', 'level_id', 'tiktok_check', 'product_id',
+                                      'source_type']] + ['cy_code_info']
     exclude = ['snapshot', 'level_id', 'product_id', 'source_type', 'tiktok_check']
 
+    def cy_code_info(self, obj):
+        if hasattr(obj, 'cy_code'):
+            cy_code = obj.cy_code
+            request = get_request()
+            html = '<p>票ID：{}</p>'.format(cy_code.ticket_id)
+            html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
+            html += '<p>二维码类型：{}</p>'.format(cy_code.get_check_in_type_display())
+            html += '<p>二维码：{}</p>'.format(cy_code.check_in_code)
+            html += '<img src="{}" width="100px" height="auto">'.format(
+                request.build_absolute_uri(cy_code.check_in_code_img)) if cy_code.check_in_code_img else None
+            html += '<p>状态：{}</p>'.format(cy_code.get_state_display())
+            html += '<p>核销状态：{}</p>'.format(cy_code.get_check_state_display())
+            html += ' </div>'
+            return mark_safe(html)
+        return None
+
+    cy_code_info.short_description = u'彩艺票信息'
     # def voucher_code(self, obj):
     #     return obj.xhs_code.voucher_code if hasattr(obj, 'xhs_code') else None
     #
