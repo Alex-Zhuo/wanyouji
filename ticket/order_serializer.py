@@ -647,10 +647,9 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
                         log.error(level_cache['cy']['ticket_pack_list'])
                         for pack in level_cache['cy']['ticket_pack_list']:
                             qty = int(pack['qty'])
-                            pack_multiply += qty
-                            pack_amount += qty * Decimal(pack['price'])
-                    else:
-                        pack_multiply += p_multiply
+                            total = qty * p_multiply
+                            pack_multiply += total
+                            pack_amount += total * Decimal(pack['price'])
                 else:
                     raise CustomAPIException('下单错误，票档错误..')
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
