@@ -89,8 +89,7 @@ def do_check(params: Dict, sign: str, public_key: str) -> bool:
 
         # Load the public key
         pub_key = load_der_public_key(
-            key_der,
-            backend=default_backend()
+            key_der
         )
 
         # Decode the signature
@@ -101,7 +100,7 @@ def do_check(params: Dict, sign: str, public_key: str) -> bool:
             signature,
             content.encode('utf-8'),
             padding.PKCS1v15(),
-            hashes.SHA256()  # Using MD5 as likely used in original Java code
+            hashes.MD5()
         )
         return True
 
