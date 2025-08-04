@@ -1868,11 +1868,11 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
             'msg': '操作成功！'
         })
 
-    set_theater_refund.short_description = '会员卡订单退款'
-    set_theater_refund.type = 'success'
-    set_theater_refund.icon = 'el-icon-s-promotion'
+    set_cy_refund.short_description = '会员卡订单退款'
+    set_cy_refund.type = 'success'
+    set_cy_refund.icon = 'el-icon-s-promotion'
     # 指定为弹出层，这个参数最关键
-    set_theater_refund.layer = {
+    set_cy_refund.layer = {
         # 弹出层中的输入框配置
         # 这里指定对话框的标题
         'title': '会员卡订单退款',
