@@ -663,6 +663,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             can_member_card=can_member_card)
         if ticket_order_discount_card_dict:
             ticket_order_discount_list.append(ticket_order_discount_card_dict)
+        log.error(pack_amount)
         if pack_amount > 0:
             # 套票原价,type优惠策略,1:套票优惠；2:营销活动
             amount = Decimal(pack_amount)
@@ -673,6 +674,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         else:
             # 票档价
             amount = cy_amount
+        log.error(amounts_data)
         amounts_data['original_total_amount'] = amount
         amounts_data['actual_total_amount'] = cy_amount
         # 加上邮费
