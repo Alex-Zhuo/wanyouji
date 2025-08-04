@@ -5167,15 +5167,15 @@ class TicketOrderRefund(models.Model):
         st = False
         msg = '退款类型不对'
         is_finish = False
-        if self.source_type == self.ST_TIKTOK:
+        if self.source_type == self.ST_WX:
+            st = self.wx_refund()
+            msg = self.error_msg
+        elif self.source_type == self.ST_TIKTOK:
             st = self.tiktok_refund()
             msg = self.error_msg
         elif self.source_type == self.ST_KS:
             from kuaishou_wxa.models import KsOrderSettleRecord
             st = KsOrderSettleRecord.ks_refund(self)
-            msg = self.error_msg
-        elif self.source_type == self.ST_WX:
-            st = self.wx_refund()
             msg = self.error_msg
         elif self.source_type == self.ST_XHS:
             from xiaohongshu.models import XhsOrder
@@ -5347,7 +5347,7 @@ class TicketOrderRefund(models.Model):
         self.order.save(update_fields=['status'])
 
     def biz_refund(self, op_user):
-        if hasattr(self.order, 'cy_order'):
+        if self.order.channel_type == TicketOrder.SR_CY and hasattr(self.order, 'cy_order'):
             from caiyicloud.models import CyOrderRefund
             st, msg = CyOrderRefund.confirm_refund(self)
             if st:
