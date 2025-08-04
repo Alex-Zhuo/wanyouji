@@ -5100,7 +5100,7 @@ class TicketOrderRefund(models.Model):
 
     @classmethod
     def create_record(cls, order, refund_amount, return_reason, source_type):
-        can_refund = False
+        can_refund = True
         receipt = order.receipt
         theater_amount = 0
         if source_type == cls.ST_CARD:
