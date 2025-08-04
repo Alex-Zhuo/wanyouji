@@ -667,7 +667,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             # 套票原价,type优惠策略,1:套票优惠；2:营销活动
             amount = Decimal(pack_amount)
             discount_amount = pack_amount - cy_amount
-            amounts_data['promotion_list'] = [{"type": 1, "discount_amount": discount_amount}]
+            amounts_data['promotion_list'] = [{"category": 1, "discount_amount": discount_amount}]
             ticket_order_discount_list.append(
                 dict(discount_type=TicketOrderDiscount.DISCOUNT_PACK, title='套票优惠', amount=discount_amount))
         else:
