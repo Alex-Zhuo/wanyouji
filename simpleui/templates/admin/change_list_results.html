@@ -135,10 +135,18 @@
 
             if(window.location.href.indexOf('/ticket/ticketorder/')>=0){
                 $('button[data-name="cancel_lock_seats"]').hide()
+                $('button[data-name="set_wx_refund"]').hide()
+                $('button[data-name="set_cy_refund"]').hide()
                 this.cancel()
-                 //取消出票
-                 $('.item_cancel_lock_seats').click(function(event){
+                //取消出票
+                $('.item_cancel_lock_seats').click(function(event){
                     that.openPopup($('button[data-name="cancel_lock_seats"]'), event)
+                })
+                $('.item_set_wx_refund').click(function(event){
+                    that.openPopup($('button[data-name="set_wx_refund"]'), event)
+                })
+                $('.item_set_cy_refund').click(function(event){
+                    that.openPopup($('button[data-name="set_cy_refund"]'), event)
                 })
             }
 
