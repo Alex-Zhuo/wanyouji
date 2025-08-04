@@ -29,6 +29,7 @@ import json
 from decimal import Decimal
 from dj_ext.middlewares import get_request
 from caches import run_with_lock
+
 # from kuaishou_wxa.models import KsGoodsConfig, KsGoodsImage, KsOrderSettleRecord
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
 
@@ -1574,8 +1575,8 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         return queryset, use_distinct
 
     def op(self, obj):
+        html = ''
         if obj.session.has_seat == SessionInfo.SEAT_NO and obj.session.main_session:
-            html = ''
             config = get_config()
             url = "{}/static/talkShow/seatManager/#/showSeatPrice?session_id={}&templeteId={}&order_id={}&multiply={}".format(
                 config['template_url'], obj.session.main_session.id, obj.session.main_session.show.venues.id, obj.id,
@@ -1588,15 +1589,14 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                     if obj.status == TicketOrder.STATUS_PAID:
                         html = '<a class="el-button el-button--danger el-button--small" style="margin-top:8px;color: #ffffff!important;" ' \
                                'target="_blank" href={}>手动出票</a>'.format(url)
-            if obj.status in TicketOrder.can_refund_status():
-                if obj.channel_type == TicketOrder.SR_CY:
-                    action = 'set_cy_refund'
-                else:
-                    action = 'set_wx_refund'
-                html += '<button type="button" class="el-button el-button--success el-button--small item_{}" ' \
-                        'style="margin-top:8px" alt={}>申请退款</button><br>'.format(action, obj.id)
-            return mark_safe(html) if html else ''
-        return ''
+        if obj.status in TicketOrder.can_refund_status():
+            if obj.channel_type == TicketOrder.SR_CY:
+                action = 'set_cy_refund'
+            else:
+                action = 'set_wx_refund'
+            html += '<button type="button" class="el-button el-button--success el-button--small item_{}" ' \
+                    'style="margin-top:8px" alt={}>申请退款</button><br>'.format(action, obj.id)
+        return mark_safe(html) if html else ''
 
     op.short_description = u'操作'
 
