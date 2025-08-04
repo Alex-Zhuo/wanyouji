@@ -1109,7 +1109,9 @@ class CyOrder(models.Model):
                                                                 cellphone=real_name_list[i]['mobile'],
                                                                 name=real_name_list[i]['name'], type=1)
                                     i += 1
-                            seats.append(seat_data)
+                            for j in list(range(0, pack.qty)):
+                                # 例如这个套票里面数量2，则需要添加与数量相同的seats，seatGroupId每一个数量都要一个
+                                seats.append(seat_data)
                     else:
                         if session.one_id_one_ticket:
                             seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
