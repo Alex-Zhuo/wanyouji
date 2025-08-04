@@ -1715,7 +1715,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         if not qs:
             return JsonResponse(data={
                 'status': 'error',
-                'msg': '只有待核销和已退款的订单可以退款！'
+                'msg': '只有待核销和退款失败可以退款！'
             })
         if qs.count() > 1:
             return JsonResponse(data={
@@ -1827,7 +1827,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         if not qs:
             return JsonResponse(data={
                 'status': 'error',
-                'msg': '只有待核销和已退款的订单可以退款！'
+                'msg': '只有待核销和退款失败可以退款！'
             })
         if qs.count() > 1:
             return JsonResponse(data={
@@ -1846,20 +1846,16 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         reason = post.get('reason')
         from mall.models import Receipt
         source_type = None
-        if order.pay_type == Receipt.PAY_CARD_JC:
-            source_type = TicketOrderRefund.ST_CARD
-        if not source_type:
-            return JsonResponse(data={
-                'status': 'error',
-                'msg': '非剧场会员卡订单，不支持退款！'
-            })
-        st, msg = TicketOrderRefund.create_record(order, order.actual_amount, reason, source_type)
+        if order.pay_type == Receipt.PAY_WeiXin_LP:
+            source_type = TicketOrderRefund.ST_WX
+        amount = order.actual_amount - order.express_fee
+        st, msg = TicketOrderRefund.create_record(order, amount, reason, source_type)
         if not st:
             return JsonResponse(data={
                 'status': 'error',
                 'msg': msg
             })
-        order.refund_amount += order.actual_amount
+        order.refund_amount += amount
         order.status_before_refund = order.status
         order.status = order.STATUS_REFUNDING
         order.save(update_fields=['refund_amount', 'status', 'status_before_refund'])
@@ -1868,14 +1864,14 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
             'msg': '操作成功！'
         })
 
-    set_cy_refund.short_description = '会员卡订单退款'
+    set_cy_refund.short_description = '彩艺订单退款'
     set_cy_refund.type = 'success'
     set_cy_refund.icon = 'el-icon-s-promotion'
     # 指定为弹出层，这个参数最关键
     set_cy_refund.layer = {
         # 弹出层中的输入框配置
         # 这里指定对话框的标题
-        'title': '会员卡订单退款',
+        'title': '彩艺订单退款',
         # 提示信息
         'tips': '',
         # 确认按钮显示文本
