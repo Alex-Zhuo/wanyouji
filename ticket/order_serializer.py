@@ -68,7 +68,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                     raise CustomAPIException(detail=u'当前演出不能使用此优惠券')
             except Coupon.DoesNotExist:
                 raise CustomAPIException(detail=u'优惠券信息有误')
-            coupon_amount = snapshot['amount']
+            coupon_amount = Decimal(snapshot['amount'])
             actual_amount = 0 if actual_amount <= coupon_amount else actual_amount - coupon_amount
             ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_COUPON, title='消费卷优惠',
                                               amount=coupon_amount)
