@@ -3771,6 +3771,9 @@ class TicketOrder(models.Model):
         return True, ''
 
     def release_seat(self, is_cancel=False):
+        if self.channel_type == self.SR_CY:
+            # 彩艺订单不返回库存和座位等
+            return
         if self.session.has_seat == SessionInfo.SEAT_NO:
             # 无座位的只需要退库存
             snapshot = json.loads(self.snapshot)

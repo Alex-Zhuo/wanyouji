@@ -35,8 +35,11 @@ class CaiYiViewSet(viewsets.ViewSet):
         sign = header['sign']
         sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
                          create_time=header['create_time'], app_id=header['app_id'])
+        error_msg = None
         if event_type == 'order.issue.ticket':
             sign_dict.update(dict(cyy_order_no=event['cyy_order_no'], supplier_id=event['supplier_id']))
+        elif event_type == 'order.ticket.refund':
+            sign_dict.update(dict(cyy_order_no=event['cyy_order_no']))
         is_sign = cy.do_check_sign(sign_dict, sign)
         is_success = True
         if not is_sign:
@@ -46,12 +49,17 @@ class CaiYiViewSet(viewsets.ViewSet):
             if event_type == 'order.issue.ticket':
                 # 订单出票通知
                 cyy_order_no = event['cyy_order_no']
-                st, msg = CyOrder.notify_issue_ticket(cyy_order_no)
-                if not st:
-                    ret_error['msg'] = msg
+                is_success, error_msg = CyOrder.notify_issue_ticket(cyy_order_no)
+            elif event_type == 'order.ticket.refund':
+                # 订单退票审批通知
+                cyy_order_no = event['cyy_order_no']
+                approval_state = event['approval_state']
+                is_success, error_msg = CyOrder.notify_ticket_refund(cyy_order_no, approval_state)
         if is_success:
             return JsonResponse(ret)
         else:
+            if error_msg:
+                ret_error['msg'] = error_msg
             return JsonResponse(ret_error)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])

@@ -21,7 +21,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, validate_image_file_extension
 import re
 from decimal import Decimal
-from caches import get_redis, get_redis_name, get_pika_redis
+from caches import get_redis, get_redis_name, get_pika_redis, run_with_lock
 from common.utils import get_timestamp
 import os
 
@@ -1178,27 +1178,33 @@ class CyOrder(models.Model):
             pika.hset(CY_NEED_CONFIRM_DICT_KEY, self.cy_order_no, json.dumps([timestamp, 1]))
 
     def set_ticket_code(self):
-        cy = caiyi_cloud()
         st = True
         msg = None
-        if not cy.is_init:
-            st = False
-        try:
-            cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
-            fields = ['exchange_code', 'exchange_qr_code', 'code_type']
-            self.exchange_code = cy_order_detail.get('exchange_code')
-            self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
-            self.code_type = cy_order_detail.get('code_type')
-            if self.exchange_qr_code and self.code_type == 1:
-                img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
-                self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
-                fields.append('exchange_qr_code_img')
-            self.save(update_fields=fields)
-            CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
-        except Exception as e:
-            log.error(e)
-            st = False
-            msg = '获取code失败'
+        key = get_redis_name('cy_code_{}'.format(self.id))
+        with run_with_lock(key, 3) as got:
+            if got and not self.exchange_code:
+                cy = caiyi_cloud()
+                if not cy.is_init:
+                    st = False
+                else:
+                    try:
+                        cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
+                        fields = ['exchange_code', 'exchange_qr_code', 'code_type']
+                        self.exchange_code = cy_order_detail.get('exchange_code')
+                        self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
+                        self.code_type = cy_order_detail.get('code_type')
+                        if self.exchange_qr_code and self.code_type == 1:
+                            img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
+                            self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
+                            fields.append('exchange_qr_code_img')
+                        self.save(update_fields=fields)
+                        CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
+                    except Exception as e:
+                        log.error(e)
+                        st = False
+                        msg = '获取code失败'
+            if not self.exchange_code:
+                st = False
         return st, msg
 
     @classmethod
@@ -1206,6 +1212,15 @@ class CyOrder(models.Model):
         order = cls.objects.filter(cy_order_no=cyy_order_no).first()
         if order:
             st, msg = order.set_ticket_code()
+            return st, msg
+        else:
+            return False, '找不到订单'
+
+    @classmethod
+    def notify_ticket_refund(cls, cyy_order_no: str, approval_state: int):
+        refund = CyOrderRefund.objects.filter(cy_order__cy_order_no=cyy_order_no).first()
+        if refund:
+            st, msg = refund.set_refund_approve(approval_state)
             return st, msg
         else:
             return False, '找不到订单'
@@ -1363,6 +1378,7 @@ class CyOrderRefund(models.Model):
     STATUS_CHOICES = (
         (STATUS_DEFAULT, '审核中'), (STATUS_SUCCESS, '审核通过'), (STATUS_FAIL, '审核失败'))
     status = models.PositiveSmallIntegerField('退款审核状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
+    approve_at = models.DateTimeField('审核时间', null=True, blank=True)
     error_msg = models.CharField('退款返回信息', max_length=1000, null=True, blank=True)
 
     class Meta:
@@ -1387,4 +1403,22 @@ class CyOrderRefund(models.Model):
             log.error(e)
             msg = str(e)
             st = False
+        return st, msg
+
+    def set_refund_approve(self, approval_state: int):
+        st = False
+        msg = None
+        if self.status == self.STATUS_DEFAULT:
+            if approval_state == 1:
+                status = self.STATUS_SUCCESS
+            else:
+                status = self.STATUS_FAIL
+            self.status = status
+            self.approve_at = timezone.now()
+            self.save(update_fields=['status', 'approve_at'])
+            if status == self.STATUS_SUCCESS:
+                self.refund.set_finished()
+            else:
+                self.refund.set_fail('彩艺审核驳回')
+            st = True
         return st, msg
