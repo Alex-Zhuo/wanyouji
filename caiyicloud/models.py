@@ -1379,7 +1379,7 @@ class CyOrderRefund(models.Model):
         cy_order = refund.order.cy_order
         try:
             cy = caiyi_cloud()
-            data = cy.refund_apply(cy_order=cy_order, apply_remark=refund.return_reason,
+            data = cy.refund_apply(cy_order_no=cy_order.cy_order_no, apply_remark=refund.return_reason,
                                    apply_platform=APPLY_PLATFORM)
             if data.get('apply_id'):
                 cls.objects.get_or_create(refund=refund, cy_order_no=cy_order.cy_order_no, apply_id=data['apply_id'])
