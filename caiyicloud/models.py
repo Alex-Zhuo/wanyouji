@@ -1382,7 +1382,7 @@ class CyOrderRefund(models.Model):
             data = cy.refund_apply(cy_order_no=cy_order.cy_order_no, apply_remark=refund.return_reason,
                                    apply_platform=APPLY_PLATFORM)
             if data.get('apply_id'):
-                cls.objects.get_or_create(refund=refund, cy_order_no=cy_order.cy_order_no, apply_id=data['apply_id'])
+                cls.objects.get_or_create(refund=refund, cy_order=cy_order, apply_id=data['apply_id'])
         except Exception as e:
             log.error(e)
             msg = str(e)
