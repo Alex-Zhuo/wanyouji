@@ -2028,7 +2028,7 @@ def set_confirm(modeladmin, request, queryset):
         if redis.setnx(ticket_order_refund_key, 1):
             redis.expire(ticket_order_refund_key, 5)
             try:
-                st, msg = inst.biz_refund()
+                st, msg = inst.biz_refund(request.user)
                 if not st:
                     raise AdminException(msg)
                 # st, msg = inst.set_confirm(request.user)
