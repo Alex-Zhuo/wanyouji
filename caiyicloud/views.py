@@ -26,8 +26,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         log.error(request.META)
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
-        return JsonResponse(ret)
-
+        # return JsonResponse(ret)
         data = request.data
         cy = caiyi_cloud()
         header = data['header']
