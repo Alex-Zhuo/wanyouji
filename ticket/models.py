@@ -5077,7 +5077,7 @@ class TicketOrderRefund(models.Model):
                                      db_index=True)
     refund_amount = models.DecimalField(u'退款金额', max_digits=13, decimal_places=2, default=0)
     theater_amount = models.DecimalField(u'剧场卡订单退款数额', max_digits=13, decimal_places=2, default=0,
-                                         help_text='仅用剧场卡支付有效')
+                                         help_text='仅用剧场卡支付有效', editable=False)
     amount = models.DecimalField(u'实退金额', max_digits=13, decimal_places=2, default=0)
     return_reason = models.CharField('退款原因', max_length=100)
     error_msg = models.CharField('退款返回信息', max_length=1000, null=True, blank=True)
