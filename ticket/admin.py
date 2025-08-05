@@ -1355,6 +1355,7 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
             cy_code = obj.cy_code
             html = '<p>票ID：{}</p>'.format(cy_code.ticket_id)
             html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
+            html += '<p>座位：{}</p>'.format(cy_code.set_info)
             html += '<p>二维码类型：{}</p>'.format(cy_code.get_check_in_type_display())
             html += '<p>二维码：{}</p>'.format(cy_code.check_in_code)
             if cy_code.check_in_type == 1 and cy_code.check_in_code_img:

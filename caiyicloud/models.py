@@ -1286,6 +1286,15 @@ class CyTicketCode(models.Model):
         verbose_name_plural = verbose_name = '票信息'
         ordering = ['-pk']
 
+    @property
+    def set_info(self):
+        ticket = json.loads(self.snapshot)
+        floor_name = ticket.get('floor_name') or ''
+        zone_name = '{}区'.format(ticket.get('zone_name')) if ticket.get('zone_name') else ''
+        seat_name = ticket.get('seat_name') or ''
+        seat = '{}{}{}'.format(floor_name, zone_name, seat_name)
+        return seat
+
     @classmethod
     def ticket_create(cls, ticket_list: List[Dict], cy_order: CyOrder):
         cls_create_list = []
