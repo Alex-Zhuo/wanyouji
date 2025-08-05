@@ -2097,7 +2097,7 @@ class TicketUserCodeAdmin(OnlyViewAdmin):
 
 
 class TicketOrderRefundAdmin(ChangeAndViewAdmin):
-    list_display = ['id', 'order', 'out_refund_no', 'user', 'status', 'refund_amount', 'theater_amount', 'amount',
+    list_display = ['id', 'order', 'out_refund_no', 'user', 'status', 'refund_amount', 'amount',
                     'return_reason',
                     'error_msg',
                     'transaction_id', 'time_at', 'op']
@@ -2106,7 +2106,7 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
     autocomplete_fields = ['user', 'order', 'op_user']
     actions = [set_confirm, set_cancel, check_refund, check_refund_order]
     readonly_fields = [f.name for f in TicketOrderRefund._meta.fields if
-                       f.name not in ['refund_amount', 'return_reason']]
+                       f.name not in ['refund_amount', 'return_reason', 'theater_amount']]
 
     def save_model(self, request, obj, form, change):
         if not change:

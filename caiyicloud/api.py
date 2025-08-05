@@ -483,7 +483,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         """
         headers = self.headers()
         sign_params = self.common_sign_params(headers)
-        data = dict(cyy_order_no=cy_order_no)
+        data = dict(cy_order_no=cy_order_no)
         sign_params.update(data)
         headers['sign'] = self.get_sign(sign_params)
         params = dict(supplier_id=self.supplier_id)
