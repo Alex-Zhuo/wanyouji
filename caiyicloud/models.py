@@ -1417,7 +1417,13 @@ class CyOrderRefund(models.Model):
             self.approve_at = timezone.now()
             self.save(update_fields=['status', 'approve_at'])
             if status == self.STATUS_SUCCESS:
-                self.refund.set_finished()
+                wx_st = False
+                try:
+                    wx_st, wx_msg = self.refund.set_confirm()
+                except Exception as e:
+                    wx_msg = str(e)
+                if not wx_st:
+                    self.refund.set_fail(wx_msg)
             else:
                 self.refund.set_fail('彩艺审核驳回')
             st = True
