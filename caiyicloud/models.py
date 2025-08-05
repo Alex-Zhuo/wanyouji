@@ -1179,8 +1179,10 @@ class CyOrder(models.Model):
 
     def set_ticket_code(self):
         cy = caiyi_cloud()
+        st = True
+        msg = None
         if not cy.is_init:
-            return
+            st = False
         try:
             cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
             fields = ['exchange_code', 'exchange_qr_code', 'code_type']
@@ -1195,6 +1197,18 @@ class CyOrder(models.Model):
             CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
         except Exception as e:
             log.error(e)
+            st = False
+            msg = '获取code失败'
+        return st, msg
+
+    @classmethod
+    def notify_issue_ticket(cls, cyy_order_no: str):
+        order = cls.objects.filter(cyy_order_no=cyy_order_no).first()
+        if order:
+            st, msg = order.set_ticket_code()
+            return st, msg
+        else:
+            return False, '找不到订单'
 
     @classmethod
     def async_confirm_order(cls, ticket_order_id):
@@ -1212,7 +1226,7 @@ class CyOrder(models.Model):
                 obj.order_state = cls.ST_PAY
                 obj.confirm_times = 1
                 obj.save(update_fields=['order_state', 'confirm_times'])
-                obj.set_ticket_code()
+                # obj.set_ticket_code()
             else:
                 # 写入任务重试
                 obj.set_need_confirm()

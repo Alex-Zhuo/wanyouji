@@ -12,6 +12,7 @@ import uuid
 from caiyicloud.models import CyOrder
 from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer
+
 log = logger = logging.getLogger(__name__)
 
 
@@ -24,21 +25,35 @@ class CaiYiViewSet(viewsets.ViewSet):
         # log.error(request.body)
         log.error(request.META)
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
+        ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         return JsonResponse(ret)
 
         data = request.data
         cy = caiyi_cloud()
         header = data['header']
+        event = data['event']
         event_type = header['event_type']
         sign = header['sign']
-        cy = 1
         sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
                          create_time=header['create_time'], app_id=header['app_id'])
-        sign_content = do_check(sign_dict,sign)
-
-        if event_type == 'ticket.stock.sync':
-            # 库存变更通知
-            pass
+        if event_type == 'order.issue.ticket':
+            sign_dict.update(dict(cyy_order_no=event['cyy_order_no'], supplier_id=event['supplier_id']))
+        is_sign = cy.do_check_sign(sign_dict, sign)
+        is_success = True
+        if not is_sign:
+            ret_error['msg'] = '验签失败'
+            is_success = False
+        else:
+            if event_type == 'order.issue.ticket':
+                # 订单出票通知
+                cyy_order_no = event['cyy_order_no']
+                st, msg = CyOrder.notify_issue_ticket(cyy_order_no)
+                if not st:
+                    ret_error['msg'] = msg
+        if is_success:
+            return JsonResponse(ret)
+        else:
+            return JsonResponse(ret_error)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
