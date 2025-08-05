@@ -5359,8 +5359,9 @@ class TicketOrderRefund(models.Model):
             st, msg = CyOrderRefund.confirm_refund(self)
             if st:
                 self.status = self.STATUS_NEED_CONFIRM
+                self.confirm_at = timezone.now()
                 self.op_user = op_user
-                self.save(update_fields=['status', 'op_user'])
+                self.save(update_fields=['status', 'op_user', 'confirm_at'])
         else:
             st, msg = self.set_confirm(op_user)
         return st, msg
