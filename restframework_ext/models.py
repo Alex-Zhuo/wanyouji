@@ -99,10 +99,9 @@ class ReceiptAbstract(DateDetailAbstract):
             if self.pay_type == self.PAY_TikTok_LP:
                 from douyin import get_dou_yin
                 mp_pay_client = get_dou_yin()
-                if self.transaction_id:
-                    st, channel_pay_id = mp_pay_client.query_status(order_no)
-                    if st:
-                        self.set_paid(transaction_id=channel_pay_id)
+                st, channel_pay_id = mp_pay_client.query_status(order_no)
+                if st:
+                    self.set_paid(transaction_id=channel_pay_id)
             elif self.pay_type == self.PAY_KS:
                 from kuaishou_wxa.api import get_ks_wxa
                 mp_pay_client = get_ks_wxa()
