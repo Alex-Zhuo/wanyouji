@@ -1416,6 +1416,8 @@ class CyOrderRefund(models.Model):
             self.status = status
             self.approve_at = timezone.now()
             self.save(update_fields=['status', 'approve_at'])
+            self.cy_order.order_state = CyOrder.ST_CLOSE
+            self.cy_order.save(update_fields=['order_state'])
             if status == self.STATUS_SUCCESS:
                 wx_st = False
                 try:

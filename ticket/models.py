@@ -2407,7 +2407,7 @@ class TicketFile(models.Model):
                                                   amount=amount - actual_amount)
         else:
             actual_amount = quantize(actual_amount, 2)
-        return total_multiply, amount, actual_amount, level_list,ticket_order_discount_dict
+        return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
     @classmethod
     def get_cy_order_no_seat_amount(cls, user, ticket_list: list, pay_type: int, can_member_card=False):
@@ -2979,7 +2979,7 @@ class SessionSeat(models.Model):
             account = user.account
             discount = account.get_discount()
             actual_amount = quantize(amount * discount, 2)
-            if discount<1:
+            if discount < 1:
                 ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
                                                   amount=amount - actual_amount)
         else:
@@ -4489,7 +4489,8 @@ class TicketUserCode(models.Model):
     STATUS_CHOICES = (
         (STATUS_DEFAULT, u'未检票'), (STATUS_CHECK, '已检票'), (STATUS_OVER_TIME, '已过期'), (STATUS_CANCEL, '已作废'))
     status = models.IntegerField(u'检票状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
-    source_type = models.IntegerField(u'带货场景', choices=TicketOrder.SOURCE_CHOICES, default=TicketOrder.SOURCE_DEFAULT, editable=False)
+    source_type = models.IntegerField(u'带货场景', choices=TicketOrder.SOURCE_CHOICES, default=TicketOrder.SOURCE_DEFAULT,
+                                      editable=False)
     check_user = models.ForeignKey('shopping_points.UserAccount', verbose_name='验票员', null=True, blank=True,
                                    on_delete=models.SET_NULL)
     code = models.CharField('检票码', max_length=30, null=True, db_index=True)
@@ -5097,6 +5098,9 @@ class TicketOrderRefund(models.Model):
     class Meta:
         verbose_name_plural = verbose_name = '退款记录'
         ordering = ['-pk']
+
+    def __str__(self):
+        return self.out_refund_no
 
     def get_refund_notify_url(self):
         return wx_refund_notify_url
