@@ -3123,7 +3123,7 @@ class TicketOrder(models.Model):
 
     @classmethod
     def can_refund_status(cls):
-        return [cls.STATUS_PAID, cls.STATUS_REFUNDED_FAIL]
+        return [cls.STATUS_PAID, cls.STATUS_OVER_TIME]
 
     def auto_refund(self):
         refund_amount = self.actual_amount
@@ -5335,7 +5335,7 @@ class TicketOrderRefund(models.Model):
         self.finish_at = timezone.now()
         self.error_msg = msg
         self.save(update_fields=['status', 'error_msg', 'finish_at'])
-        self.return_order_status(True)
+        # self.return_order_status(True)
 
     def set_finished(self, amount=0):
         """
