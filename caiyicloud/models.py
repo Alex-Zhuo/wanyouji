@@ -21,7 +21,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, validate_image_file_extension
 import re
 from decimal import Decimal
-from caches import get_redis, get_redis_name, get_pika_redis, run_with_lock
+from caches import  get_redis_name, get_pika_redis, run_with_lock
 from common.utils import get_timestamp
 import os
 
@@ -682,7 +682,7 @@ class CySession(models.Model):
             sessions_data = cy.sessions_list(event_id=event_id, page=page, page_size=page_size)
             if sessions_data.get('list'):
                 session_list += sessions_data['list']
-        redis = get_redis()
+        redis = get_pika_redis()
         key = get_redis_name('cyinitsessionkey')
         has_change_session_list = redis.lrange(key, 0, -1) or []
         tk_key = get_redis_name('cyinitticketkey')
