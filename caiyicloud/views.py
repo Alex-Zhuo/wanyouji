@@ -9,9 +9,10 @@ from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 import jwt
 import uuid
-from caiyicloud.models import CyOrder
+from caiyicloud.models import CyOrder, CaiYiCloudApp
 from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer
+from datetime import datetime
 
 log = logger = logging.getLogger(__name__)
 
@@ -28,33 +29,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         # return JsonResponse(ret)
         data = request.data
-        cy = caiyi_cloud()
-        header = data['header']
-        event = data['event']
-        event_type = header['event_type']
-        sign = header['sign']
-        sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
-                         create_time=header['create_time'], app_id=header['app_id'])
-        error_msg = None
-        if event_type == 'order.issue.ticket':
-            sign_dict.update(dict(cyy_order_no=event['cyy_order_no'], supplier_id=event['supplier_id']))
-        elif event_type == 'order.ticket.refund':
-            sign_dict.update(dict(cyy_order_no=event['cyy_order_no']))
-        is_sign = cy.do_check_sign(sign_dict, sign)
-        is_success = True
-        if not is_sign:
-            ret_error['msg'] = '验签失败'
-            is_success = False
-        else:
-            if event_type == 'order.issue.ticket':
-                # 订单出票通知
-                cyy_order_no = event['cyy_order_no']
-                is_success, error_msg = CyOrder.notify_issue_ticket(cyy_order_no)
-            elif event_type == 'order.ticket.refund':
-                # 订单退票审批通知
-                cyy_order_no = event['cyy_order_no']
-                approval_state = event['approval_state']
-                is_success, error_msg = CyOrder.notify_ticket_refund(cyy_order_no, approval_state)
+        is_success, error_msg = CaiYiCloudApp.due_notify(data)
         if is_success:
             return JsonResponse(ret)
         else:

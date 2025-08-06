@@ -28,9 +28,8 @@ from common.utils import quantize
 from django.forms.models import model_to_dict
 from datetime import datetime
 import pysnooper
-from caches import get_pika_redis, get_redis_name
+from caches import get_pika_redis, get_redis_name, run_with_lock
 from django.core.validators import validate_image_file_extension, FileExtensionValidator
-
 from restframework_ext.models import UseNoAbstract
 
 log = logging.getLogger(__name__)
@@ -2445,6 +2444,11 @@ class TicketFile(models.Model):
             actual_amount = quantize(actual_amount, 2)
         return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
+    def reset_stock(self, stock):
+        self.stock = stock
+        self.save(update_fields=['stock'])
+        self.redis_stock()
+
 
 class ShowUser(UseNoAbstract):
     user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
@@ -4519,6 +4523,15 @@ class TicketUserCode(models.Model):
         ordering = ['-pk']
 
     random_code_len = 4
+
+    def cy_check(self, check_at):
+        self.status = self.STATUS_CHECK
+        self.check_at = check_at
+        self.save(update_fields=['status', 'check_at'])
+        self.order.is_check_num = self.order.is_check_num + 1
+        if self.order.is_check_num >= self.order.multiply:
+            self.order.set_finish()
+        self.order.save(update_fields=['is_check_num'])
 
     def clear_give(self):
         self.give_status = self.GIVE_DEFAULT

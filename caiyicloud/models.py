@@ -95,6 +95,54 @@ class CaiYiCloudApp(models.Model):
     def get(cls):
         return cls.objects.first()
 
+    @classmethod
+    def due_notify(cls, data):
+        cy = caiyi_cloud()
+        header = data['header']
+        event = data['event']
+        event_type = header['event_type']
+        sign = header['sign']
+        sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
+                         create_time=header['create_time'], app_id=header['app_id'])
+        error_msg = None
+        if event_type == 'order.issue.ticket':
+            sign_dict.update(dict(cyy_order_no=event['cyy_order_no'], supplier_id=event['supplier_id']))
+        elif event_type == 'order.ticket.refund':
+            sign_dict.update(dict(cyy_order_no=event['cyy_order_no']))
+        elif event_type == 'order.ticket.status.update':
+            sign_dict.update(dict(stock_code_id=event['stock_code_id']))
+        elif event_type == 'ticket.stock.sync':
+            pass
+        is_sign = cy.do_check_sign(sign_dict, sign)
+        is_success = True
+        if not is_sign:
+            error_msg = '验签失败'
+            is_success = False
+        else:
+            if event_type == 'order.issue.ticket':
+                # 订单出票通知
+                cyy_order_no = event['cyy_order_no']
+                is_success, error_msg = CyOrder.notify_issue_ticket(cyy_order_no)
+            elif event_type == 'order.ticket.refund':
+                # 订单退票审批通知
+                cyy_order_no = event['cyy_order_no']
+                approval_state = event['approval_state']
+                is_success, error_msg = CyOrder.notify_ticket_refund(cyy_order_no, approval_state)
+            elif event_type == 'order.ticket.status.update':
+                # 票品核验通知
+                cyy_order_no = event['cyy_order_no']
+                ticket_id = event['ticket_id']
+                ac_check_time = datetime.strptime(event['ac_check_time'], '%Y-%m-%d %H:%M:%S')
+                check_times = event['check_times']
+                is_success, error_msg = CyTicketCode.update_status(cyy_order_no, ticket_id, ac_check_time, check_times)
+            elif event_type == 'ticket.stock.sync':
+                # 库存变更通知
+                event_id = event['event_id']
+                seat_change_vo_list = event['seat_change_vo_list']
+                is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
+
+        return is_success, error_msg
+
 
 class CyFirstCategory(ChoicesCommon):
     INIT_DATA = [
@@ -552,6 +600,44 @@ class CySession(models.Model):
         return ", ".join(qs)
 
     @classmethod
+    def sync_stock_key(cls):
+        return get_redis_name('cy_sync_stock')
+
+    @classmethod
+    def sync_stock_save_to_pika(cls, event_id: str, seat_change_vo_list: list):
+        name = cls.sync_stock_key()
+        session_dict = dict()
+        with get_pika_redis() as redis:
+            for seat in seat_change_vo_list:
+                cy_session = session_dict.get(seat['session_id'])
+                if not cy_session:
+                    cy_session = CySession.objects.filter(cy_no=seat['session_id']).first()
+                    session_dict[seat['session_id']] = cy_session
+                # 无座才要
+                if cy_session and cy_session.event.seat_type == CyShowEvent.SEAT_NO:
+                    if not redis.hget(name, seat['session_id']):
+                        redis.hset(name, seat['session_id'], event_id)
+        return True, None
+
+    @classmethod
+    def cy_update_stock_task(cls):
+        name = cls.sync_stock_key()
+        cy = caiyi_cloud()
+        with get_pika_redis() as redis:
+            session_no_list = redis.hkeys(name)
+            if session_no_list:
+                for cy_no in session_no_list:
+                    try:
+                        ticket_stock_list = cy.ticket_stock([cy_no])
+                        for tf in ticket_stock_list:
+                            ct = CyTicketType.objects.filter(cy_no=tf['ticket_type_id'],
+                                                             cy_session__cy_no=cy_no).first()
+                            if ct:
+                                ct.change_stock(tf['inventory'])
+                    finally:
+                        redis.hdel(name, cy_no)
+
+    @classmethod
     def init_cy_session(cls, event_id: str, is_refresh=False):
         cy = caiyi_cloud()
         cy_show = CyShowEvent.objects.filter(event_id=event_id).first()
@@ -953,6 +1039,12 @@ class CyTicketType(models.Model):
         except Exception as e:
             raise CustomAPIException(e)
 
+    def change_stock(self, stock: int):
+        self.stock = stock
+        self.updated_at = timezone.now()
+        self.save(update_fields=['stock', 'updated_at'])
+        self.ticket_file.reset_stock(stock)
+
 
 """
 纸质票上是否有check_in_code是看票面设计的。这是两个码
@@ -1214,7 +1306,7 @@ class CyOrder(models.Model):
             st, msg = order.set_ticket_code()
             return st, msg
         else:
-            return False, '找不到订单'
+            return True, None
 
     @classmethod
     def notify_ticket_refund(cls, cyy_order_no: str, approval_state: int):
@@ -1223,7 +1315,7 @@ class CyOrder(models.Model):
             st, msg = refund.set_refund_approve(approval_state)
             return st, msg
         else:
-            return False, '找不到订单'
+            return True, None
 
     @classmethod
     def async_confirm_order(cls, ticket_order_id):
@@ -1258,22 +1350,28 @@ class CyOrder(models.Model):
         with get_pika_redis() as pika:
             confirm_keys = pika.hkeys(CY_NEED_CONFIRM_DICT_KEY)
             for cy_order_no in confirm_keys:
-                data_list = pika.hget(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
-                cancel_timestamp, retry_times = json.loads(data_list)
-                if now_timestamp < cancel_timestamp and retry_times < CONFIRM_RETRY_TIMES:
-                    retry_times += 1
-                    has_confirm = cy.confirm_order(order_no=cy_order_no)
-                    qs = cls.objects.filter(cy_order_no=cy_order_no)
-                    if has_confirm:
-                        qs.update(order_state=cls.ST_PAY, confirm_times=retry_times)
-                        pika.hdel(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                try:
+                    data_list = pika.hget(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                    cancel_timestamp, retry_times = json.loads(data_list)
+                    if now_timestamp < cancel_timestamp and retry_times < CONFIRM_RETRY_TIMES:
+                        retry_times += 1
+                        has_confirm = cy.confirm_order(order_no=cy_order_no)
+                        qs = cls.objects.filter(cy_order_no=cy_order_no)
+                        if has_confirm:
+                            qs.update(order_state=cls.ST_PAY, confirm_times=retry_times)
+                            pika.hdel(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                        else:
+                            pika.hset(CY_NEED_CONFIRM_DICT_KEY, cy_order_no,
+                                      json.dumps([cancel_timestamp, retry_times]))
                     else:
-                        pika.hset(CY_NEED_CONFIRM_DICT_KEY, cy_order_no, json.dumps([cancel_timestamp, retry_times]))
-                else:
-                    # 彩艺云取消 和 微信自动执行退款
-                    obj = cls.objects.filter(cy_order_no=cy_order_no).first()
-                    obj.cancel_order()
-                    obj.ticket_order.auto_refund()
+                        # 彩艺云取消 和 微信自动执行退款
+                        pika.hdel(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
+                        obj = cls.objects.filter(cy_order_no=cy_order_no).first()
+                        obj.cancel_order()
+                        obj.ticket_order.auto_refund()
+                except Exception as e:
+                    log.error(e)
+                    pika.hdel(CY_NEED_CONFIRM_DICT_KEY, cy_order_no)
 
 
 class CyTicketCode(models.Model):
@@ -1310,10 +1408,32 @@ class CyTicketCode(models.Model):
     state = models.PositiveSmallIntegerField('状态', choices=STATE_CHOICES, default=0)
     check_state = models.PositiveSmallIntegerField('核销状态', choices=CHECK_STATE_CHOICES, default=0)
     snapshot = models.TextField('票信息快照', editable=False, help_text='彩艺订单的ticket_list', null=True)
+    ac_check_time = models.DateTimeField('核验时间', null=True, blank=True)
+    check_times = models.PositiveSmallIntegerField('已核验次数', default=0)
 
     class Meta:
         verbose_name_plural = verbose_name = '票信息'
         ordering = ['-pk']
+
+    @classmethod
+    def update_status(cls, cyy_order_no: str, ticket_id: str, ac_check_time: datetime, check_times: int):
+        obj = cls.objects.filter(ticket_id=ticket_id, cy_order__cy_order_no=cyy_order_no).first()
+        if obj:
+            obj.ac_check_time = ac_check_time
+            obj.check_times = check_times
+            obj.check_state = 1
+            obj.save(update_fields=['ac_check_time', 'check_times', 'check_state'])
+            key = get_redis_name('cy_check_code{}'.format(obj.cy_order.id))
+            with run_with_lock(key, 2, 2) as got:
+                if got:
+                    obj.ticket_code.cy_check(check_times)
+                else:
+                    return False, '更新失败'
+        return True, None
+
+    @classmethod
+    def refund_change(cls, cy_order_id: int):
+        cls.objects.filter(cy_order_id=cy_order_id).update(state=2)
 
     @property
     def set_info(self):
@@ -1419,6 +1539,7 @@ class CyOrderRefund(models.Model):
             self.cy_order.order_state = CyOrder.ST_CLOSE
             self.cy_order.save(update_fields=['order_state'])
             if status == self.STATUS_SUCCESS:
+                CyTicketCode.refund_change(self.cy_order.id)
                 wx_st = False
                 try:
                     wx_st, wx_msg = self.refund.set_confirm()
