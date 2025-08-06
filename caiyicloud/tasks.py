@@ -1,6 +1,6 @@
 from celery import shared_task
 import logging
-from caiyicloud.models import CyOrder,CySession
+from caiyicloud.models import CyOrder, CySession, CyShowEvent
 
 log = logging.getLogger(__name__)
 
@@ -20,3 +20,9 @@ def confirm_order_task():
 @shared_task
 def cy_update_stock_task():
     return CySession.cy_update_stock_task()
+
+
+@shared_task
+def notify_create_show_task(event_id: str):
+    # 异步创建项目和场次
+    return CyShowEvent.notify_create_show_task(event_id)

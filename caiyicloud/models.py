@@ -97,6 +97,8 @@ class CaiYiCloudApp(models.Model):
 
     @classmethod
     def due_notify(cls, data):
+        event_type_list = ['order.issue.ticket', 'order.ticket.refund', 'order.ticket.status.update',
+                           'ticket.stock.sync', 'event.distribution.create', 'event.distribution.change']
         cy = caiyi_cloud()
         header = data['header']
         event = data['event']
@@ -105,14 +107,17 @@ class CaiYiCloudApp(models.Model):
         sign_dict = dict(version=data['version'], event_id=header['event_id'], event_type=event_type,
                          create_time=header['create_time'], app_id=header['app_id'])
         error_msg = None
+        if event_type not in event_type_list:
+            log.error(event_type)
+            return True, None
         if event_type == 'order.issue.ticket':
             sign_dict.update(dict(cyy_order_no=event['cyy_order_no'], supplier_id=event['supplier_id']))
         elif event_type == 'order.ticket.refund':
             sign_dict.update(dict(cyy_order_no=event['cyy_order_no']))
         elif event_type == 'order.ticket.status.update':
             sign_dict.update(dict(stock_code_id=event['stock_code_id']))
-        elif event_type == 'ticket.stock.sync':
-            pass
+        # elif event_type in ['ticket.stock.sync', 'event.distribution.create', 'event.distribution.change']:
+        #     pass
         is_sign = cy.do_check_sign(sign_dict, sign)
         is_success = True
         if not is_sign:
@@ -140,7 +145,15 @@ class CaiYiCloudApp(models.Model):
                 event_id = event['event_id']
                 seat_change_vo_list = event['seat_change_vo_list']
                 is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
-
+            elif event_type == 'event.distribution.create':
+                # 项目分销创建通知
+                event_id = event['event_id']
+                is_success, error_msg = CyShowEvent.sync_create_event(event_id)
+            elif event_type == 'event.distribution.change':
+                # 库存变更通知
+                event_id = event['event_id']
+                seat_change_vo_list = event['seat_change_vo_list']
+                is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
         return is_success, error_msg
 
 
@@ -310,6 +323,10 @@ class CyShowEvent(models.Model):
         return self.state not in [5, 7]
 
     @classmethod
+    def init_event_pika_key(cls):
+        return get_redis_name('cyiniteventkey')
+
+    @classmethod
     def init_cy_show(cls, is_refresh=False):
         cy = caiyi_cloud()
         if not cy.is_init:
@@ -325,8 +342,8 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
-        redis = get_redis()
-        key = get_redis_name('cyiniteventkey')
+        redis = get_pika_redis()
+        key = cls.init_event_pika_key()
         has_change_event_list = redis.lrange(key, 0, -1) or []
         for event in event_list:
             if is_refresh or event['id'] not in has_change_event_list:
@@ -335,6 +352,16 @@ class CyShowEvent(models.Model):
             CySession.init_cy_session(event['id'], is_refresh)
         if is_refresh:
             redis.delete(key)
+
+    @classmethod
+    def notify_create_show_task(cls, event_id: str):
+        cls.update_or_create_record(event_id)
+        CySession.init_cy_session(event_id, True)
+
+    @classmethod
+    def sync_create_event(cls, event_id: str):
+        from caiyicloud.tasks import notify_create_show_task
+        notify_create_show_task.delay(event_id)
 
     @classmethod
     @atomic
