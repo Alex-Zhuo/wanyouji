@@ -2023,28 +2023,49 @@ class TicketReceiptAdmin(OnlyViewAdmin):
 def set_confirm(modeladmin, request, queryset):
     inst = queryset.filter(status=TicketOrderRefund.STATUS_DEFAULT).first()
     if inst:
-        from caches import get_redis, ticket_order_refund_key
-        redis = get_redis()
-        if redis.setnx(ticket_order_refund_key, 1):
-            redis.expire(ticket_order_refund_key, 5)
-            try:
-                st, msg = inst.biz_refund(request.user)
-                if not st:
-                    raise AdminException(msg)
-                # st, msg = inst.set_confirm(request.user)
-                # if not st:
-                #     raise AdminException(msg)
-                messages.success(request, '执行成功')
-            except Exception as e:
-                redis.delete(ticket_order_refund_key)
-                raise AdminException(str(e))
-        else:
-            messages.error(request, '请勿操作太快')
+        from caches import run_with_lock, ticket_order_refund_key
+        key = '{}_{}'.format(ticket_order_refund_key, inst.id)
+        with run_with_lock(key, 5) as got:
+            if got:
+                try:
+                    st, msg = inst.biz_refund(request.user)
+                    if not st:
+                        raise AdminException(msg)
+                    messages.success(request, '执行成功')
+                except Exception as e:
+                    raise AdminException(str(e))
+            else:
+                messages.error(request, '请勿操作太快')
     else:
         messages.error(request, '待退款状态才可执行')
 
 
 set_confirm.short_description = u'确认退款'
+
+
+def retry_refund(modeladmin, request, queryset):
+    from caiyicloud.models import CyOrderRefund
+    inst = queryset.filter(status=TicketOrderRefund.STATUS_PAY_FAILED,
+                           cy_refund__status=CyOrderRefund.STATUS_SUCCESS).first()
+    if inst:
+        from caches import run_with_lock, ticket_order_refund_key
+        key = '{}_{}'.format(ticket_order_refund_key, inst.id)
+        with run_with_lock(key, 5) as got:
+            if got:
+                try:
+                    st, msg = inst.set_confirm(request.user)
+                    if not st:
+                        raise AdminException(msg)
+                    messages.success(request, '执行成功')
+                except Exception as e:
+                    raise AdminException(str(e))
+            else:
+                messages.error(request, '请勿操作太快')
+    else:
+        messages.error(request, '彩艺确认成功，微信退款失败才可执行')
+
+
+retry_refund.short_description = u'重试确认退款(彩艺确认成功，微信退款失败用)'
 
 
 def set_cancel(modeladmin, request, queryset):
@@ -2104,7 +2125,7 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
     search_fields = ['=order__order_no', '=out_refund_no', '=transaction_id', '=user__mobile', 'user__last_name']
     list_filter = ['status', 'create_at']
     autocomplete_fields = ['user', 'order', 'op_user']
-    actions = [set_confirm, set_cancel, check_refund, check_refund_order]
+    actions = [set_confirm, set_cancel, check_refund, check_refund_order, retry_refund]
     readonly_fields = [f.name for f in TicketOrderRefund._meta.fields if
                        f.name not in ['refund_amount', 'return_reason', 'theater_amount']]
 
@@ -2129,8 +2150,17 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
             html = '<button type="button" class="el-button el-button--success el-button--small item_set_confirm" ' \
                    'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
         if obj.status in [TicketOrderRefund.STATUS_DEFAULT, TicketOrderRefund.STATUS_PAY_FAILED]:
-            html += '<button type="button" class="el-button el-button--warning el-button--small item_set_cancel" ' \
-                    'style="margin-top:8px" alt={}>取消退款</button><br>'.format(obj.id)
+            can_cancel = True
+            if hasattr(obj, 'cy_refund'):
+                cy_refund = obj.cy_refund
+                if cy_refund.status == cy_refund.STATUS_SUCCESS:
+                    can_cancel = False
+            if can_cancel:
+                html += '<button type="button" class="el-button el-button--warning el-button--small item_set_cancel" ' \
+                        'style="margin-top:8px" alt={}>取消退款</button><br>'.format(obj.id)
+            else:
+                html += '<button type="button" class="el-button el-button--warning el-button--small item_retry_refund" ' \
+                        'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
         return mark_safe(html)
 
     op.short_description = '操作'
