@@ -362,6 +362,7 @@ class CyShowEvent(models.Model):
     def sync_create_event(cls, event_id: str):
         from caiyicloud.tasks import notify_create_show_task
         notify_create_show_task.delay(event_id)
+        return True, None
 
     @classmethod
     @atomic
@@ -382,7 +383,8 @@ class CyShowEvent(models.Model):
                          venues=venue, lat=venue.lat,
                          lng=venue.lng,
                          city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
-                         status=cls.get_show_status(event_detail['state']),
+                         # status=cls.get_show_status(event_detail['state']),
+                         status=ShowProject.STATUS_OFF,
                          logo_mobile=logo_mobile_path)
         cy_show_qs = cls.objects.filter(event_id=event_id)
         snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
@@ -759,7 +761,8 @@ class CySession(models.Model):
                             end_at=end_time, dy_sale_time=sale_time, one_id_one_ticket=require_id_on_ticket,
                             name_buy_num=limit_on_session, source_type=SessionInfo.SR_CY,
                             is_name_buy=require_id_on_order, has_seat=has_seat,
-                            status=cls.get_session_status(api_data['state']))
+                            status=SessionInfo.STATUS_OFF)
+        # status=cls.get_session_status(api_data['state']))
         cy_session_qs = cls.objects.filter(cy_no=api_data['id'])
         if not cy_session_qs:
             session = SessionInfo.objects.create(**session_data)
