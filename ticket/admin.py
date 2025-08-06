@@ -529,9 +529,11 @@ def set_on_session(modeladmin, request, queryset):
     if not inst:
         raise AdminException('商品已上架')
     try:
-        inst.set_status(SessionInfo.STATUS_ON)
+        st, msg = inst.set_status(SessionInfo.STATUS_ON)
     except Exception as e:
-        raise AdminException('抖音返回:{}'.format(e))
+        raise AdminException('{}'.format(e))
+    if not st:
+        raise AdminException(msg)
     messages.success(request, '执行成功')
 
 
@@ -543,9 +545,11 @@ def set_off_session(modeladmin, request, queryset):
     if not inst:
         raise AdminException('商品已下架')
     try:
-        inst.set_status(SessionInfo.STATUS_OFF)
+        st, msg = inst.set_status(SessionInfo.STATUS_OFF)
     except Exception as e:
-        raise AdminException('抖音返回:{}'.format(e))
+        raise AdminException('{}'.format(e))
+    if not st:
+        raise AdminException(msg)
     messages.success(request, '执行成功')
 
 

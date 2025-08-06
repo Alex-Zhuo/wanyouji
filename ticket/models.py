@@ -1593,11 +1593,18 @@ class SessionInfo(UseNoAbstract):
         return [cls.PUSH_DEFAULT, cls.PUSH_APPROVE, cls.PUSH_FAIL, cls.PUSH_AUTH_FAIL]
 
     def set_status(self, status):
-        if self.push_status == self.PUSH_SUCCESS:
-            self.push_on_or_off_to_dy(status)
+        # if self.push_status == self.PUSH_SUCCESS:
+        #     self.push_on_or_off_to_dy(status)
         self.status = status
-        self.dy_status = status
-        self.save(update_fields=['status', 'dy_status'])
+        # self.dy_status = status
+        self.save(update_fields=['status'])
+        st = True
+        msg = None
+        if status == self.STATUS_ON and hasattr(self, 'c_session'):
+            if self.c_session.get_session_status() != self.STATUS_ON:
+                st = False
+                msg = '彩艺场次状态，不支持上架'
+        return st, msg
 
     def set_dy_status(self, dy_status):
         self.push_on_or_off_to_dy(dy_status)
@@ -2448,6 +2455,11 @@ class TicketFile(models.Model):
         self.stock = stock
         self.save(update_fields=['stock'])
         self.redis_stock()
+
+    def set_status(self, status):
+        self.status = status
+        self.save(update_fields=['status'])
+        self.redis_ticket_level_cache()
 
 
 class ShowUser(UseNoAbstract):

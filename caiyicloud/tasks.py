@@ -26,3 +26,20 @@ def cy_update_stock_task():
 def notify_create_show_task(event_id: str):
     # 异步创建项目和场次
     return CyShowEvent.notify_create_show_task(event_id)
+
+
+@shared_task
+def notify_update_record(event_id: str):
+    # 更新项目
+    return CyShowEvent.notify_update_record(event_id)
+
+
+@shared_task
+def notify_update_session(event_change_type: int, cy_sessions_list: list):
+    # 更新场次
+    return CyShowEvent.notify_update_session(event_change_type, cy_sessions_list)
+
+@shared_task
+def notify_update_ticket_type(event_change_type: int, price_ids: list):
+    # 更新场次
+    return CyShowEvent.notify_update_ticket_type(event_change_type, price_ids)

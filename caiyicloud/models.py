@@ -21,7 +21,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, validate_image_file_extension
 import re
 from decimal import Decimal
-from caches import  get_redis_name, get_pika_redis, run_with_lock
+from caches import get_redis_name, get_pika_redis, run_with_lock
 from common.utils import get_timestamp
 import os
 
@@ -57,6 +57,7 @@ def init_all():
     CyCheckInMethods.init_record()
     CyDeliveryMethods.init_record()
     CyFirstCategory.init_record()
+    CyShowEvent.init_cy_show(True)
 
 
 class ChoicesCommon(models.Model):
@@ -152,8 +153,9 @@ class CaiYiCloudApp(models.Model):
             elif event_type == 'event.distribution.change':
                 # 库存变更通知
                 event_id = event['event_id']
-                seat_change_vo_list = event['seat_change_vo_list']
-                is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
+                event_change_type = event['event_change_type']
+                content = event['content']
+                is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
         return is_success, error_msg
 
 
@@ -362,6 +364,56 @@ class CyShowEvent(models.Model):
     def sync_create_event(cls, event_id: str):
         from caiyicloud.tasks import notify_create_show_task
         notify_create_show_task.delay(event_id)
+        return True, None
+
+    @classmethod
+    def notify_update_record(cls, event_id: str):
+        cls.update_or_create_record(event_id)
+
+    @classmethod
+    def notify_update_session(cls, event_change_type: int, cy_sessions_list: list):
+        session_ids = []
+        for cy_data in cy_sessions_list:
+            session_ids.append(cy_data['sessionId'])
+        if event_change_type == 5:
+            CySession.objects.filter(cy_no__in=session_ids).update(state=4)
+        elif event_change_type in [1, 6]:
+            qs = CySession.objects.filter(cy_no__in=session_ids)
+            for cy_session in qs:
+                c_session = cy_session.c_session
+                c_session.set_status(SessionInfo.STATUS_OFF)
+                c_session.redis_show_date_copy()
+            qs.update(state=7)
+
+    @classmethod
+    def notify_update_ticket_type(cls, event_change_type: int, price_ids: list):
+        qs = CyTicketType.objects.filter(cy_no__in=price_ids)
+        if event_change_type in [2, 4]:
+            enabled = 0
+        else:
+            enabled = 1
+        for tf in qs:
+            tf.ticket_file.set_status(enabled)
+        qs.update(enabled=enabled)
+
+    @classmethod
+    def sync_change(cls, event_id: str, event_change_type: int, content: dict):
+        """
+        event_change_type
+        1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新
+        """
+        if event_change_type == 7:
+            from caiyicloud.tasks import notify_update_record
+            notify_update_record.delay(event_id)
+        elif event_change_type in [1, 5, 6]:
+            cy_sessions_list = content.get('sessions')
+            if cy_sessions_list:
+                from caiyicloud.tasks import notify_update_session
+                notify_update_session.delay(event_change_type, cy_sessions_list)
+        elif event_change_type in [2, 3, 4]:
+            price_ids = content.get('priceIds')
+            from caiyicloud.tasks import notify_update_ticket_type
+            notify_update_ticket_type.delay(event_change_type, price_ids)
         return True, None
 
     @classmethod
