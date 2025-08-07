@@ -23,9 +23,9 @@ def cy_update_stock_task():
 
 
 @shared_task
-def notify_create_show_task(event_id: str):
+def notify_create_show_task(event_ids: list):
     # 异步创建项目和场次
-    return CyShowEvent.notify_create_show_task(event_id)
+    return CyShowEvent.notify_create_show_task(event_ids)
 
 
 @shared_task

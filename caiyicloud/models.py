@@ -14,7 +14,7 @@ from django.db.transaction import atomic
 from caiyicloud.api import caiyi_cloud
 from ticket.models import ShowProject, ShowType, Venues, SessionInfo, TicketFile, TicketOrderRefund, TicketOrder, \
     TicketUserCode, ShowContentCategory, ShowContentCategorySecond, TicketColor, TicketWatchingNotice, \
-    TicketPurchaseNotice
+    TicketPurchaseNotice, SessionChangeRecord
 from common.config import IMAGE_FIELD_PREFIX
 from datetime import datetime, timedelta
 from django.db import models
@@ -344,26 +344,30 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
-        redis = get_pika_redis()
-        key = cls.init_event_pika_key()
-        has_change_event_list = redis.lrange(key, 0, -1) or []
         for event in event_list:
-            if is_refresh or event['id'] not in has_change_event_list:
-                cls.update_or_create_record(event['id'])
-                redis.lpush(key, event['id'])
+            cls.update_or_create_record(event['id'])
             CySession.init_cy_session(event['id'], is_refresh)
-        if is_refresh:
-            redis.delete(key)
+        # redis = get_pika_redis()
+        # key = cls.init_event_pika_key()
+        # has_change_event_list = redis.lrange(key, 0, -1) or []
+        # for event in event_list:
+        #     if is_refresh or event['id'] not in has_change_event_list:
+        #         cls.update_or_create_record(event['id'])
+        #         redis.lpush(key, event['id'])
+        #     CySession.init_cy_session(event['id'], is_refresh)
+        # if is_refresh:
+        #     redis.delete(key)
 
     @classmethod
-    def notify_create_show_task(cls, event_id: str):
-        cls.update_or_create_record(event_id)
-        CySession.init_cy_session(event_id, True)
+    def notify_create_show_task(cls, event_ids: list):
+        for event_id in event_ids:
+            cls.update_or_create_record(event_id)
+            CySession.init_cy_session(event_id, True)
 
     @classmethod
-    def sync_create_event(cls, event_id: str):
+    def sync_create_event(cls, event_ids: list):
         from caiyicloud.tasks import notify_create_show_task
-        notify_create_show_task.delay(event_id)
+        notify_create_show_task.delay(event_ids)
         return True, None
 
     @classmethod
@@ -402,11 +406,11 @@ class CyShowEvent(models.Model):
         event_change_type
         1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新
         """
+        cy_sessions_list = content.get('sessions') or []
         if event_change_type == 7:
             from caiyicloud.tasks import notify_update_record
             notify_update_record.delay(event_id)
         elif event_change_type in [1, 5, 6]:
-            cy_sessions_list = content.get('sessions')
             if cy_sessions_list:
                 from caiyicloud.tasks import notify_update_session
                 notify_update_session.delay(event_change_type, cy_sessions_list)
@@ -734,24 +738,39 @@ class CySession(models.Model):
             sessions_data = cy.sessions_list(event_id=event_id, page=page, page_size=page_size)
             if sessions_data.get('list'):
                 session_list += sessions_data['list']
-        redis = get_pika_redis()
-        key = get_redis_name('cyinitsessionkey')
-        has_change_session_list = redis.lrange(key, 0, -1) or []
-        tk_key = get_redis_name('cyinitticketkey')
-        has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
+        # redis = get_pika_redis()
+        # key = get_redis_name('cyinitsessionkey')
+        # has_change_session_list = redis.lrange(key, 0, -1) or []
+        # tk_key = get_redis_name('cyinitticketkey')
+        # has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
         for api_data in session_list:
             # 场次类型,0:普通场次;1:联票场次 只做普通场次
             if api_data['session_type'] == 0:
-                if is_refresh or api_data['id'] not in has_change_session_list:
-                    cls.update_or_create_record(cy_show, api_data)
-                    redis.lpush(key, api_data['id'])
+                cls.update_or_create_record(cy_show, api_data)
                 # 更新票档
-                if is_refresh or api_data['id'] not in has_change_ticket_list:
+                CyTicketType.update_or_create_record(api_data['id'])
+        #     if api_data['session_type'] == 0:
+        #         if is_refresh or api_data['id'] not in has_change_session_list:
+        #             cls.update_or_create_record(cy_show, api_data)
+        #             redis.lpush(key, api_data['id'])
+        #         # 更新票档
+        #         if is_refresh or api_data['id'] not in has_change_ticket_list:
+        #             CyTicketType.update_or_create_record(api_data['id'])
+        #             redis.lpush(tk_key, api_data['id'])
+        # if is_refresh:
+        #     redis.delete(key)
+        #     redis.delete(tk_key)
+
+    def refresh_session(self):
+        cy = caiyi_cloud()
+        sessions_data = cy.sessions_list(event_id=self.event.event_id, session_id=self.event_id)
+        if sessions_data.get('list'):
+            for api_data in sessions_data['list']:
+                # 场次类型,0:普通场次;1:联票场次 只做普通场次
+                if api_data['session_type'] == 0:
+                    self.update_or_create_record(self.event, api_data)
+                    # 更新票档
                     CyTicketType.update_or_create_record(api_data['id'])
-                    redis.lpush(tk_key, api_data['id'])
-        if is_refresh:
-            redis.delete(key)
-            redis.delete(tk_key)
 
     @classmethod
     @atomic
@@ -823,6 +842,14 @@ class CySession(models.Model):
         else:
             cy_session = cy_session_qs.first()
             session = cy_session.c_session
+            # 判断开始和结束时间是否变更
+            change_date = False
+            if start_time and session.start_at != start_time:
+                change_date = True
+            if end_time and session.end_at != end_time:
+                change_date = True
+            if change_date:
+                SessionChangeRecord.create(session, None, end_time, start_time)
             # SessionInfo.objects.filter(id=session.id).update(**session_data)
             cy_session_qs.update(**cls_data)
             for key, v in session_data.items():

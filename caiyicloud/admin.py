@@ -44,10 +44,20 @@ class CyVenueAdmin(AllOnlyViewAdmin):
     list_display = ['cy_no', 'venue', 'province_name', 'city_name']
 
 
+def refresh_event(modeladmin, request, queryset):
+    event_ids = list(queryset.values_list('event_id', flat=True))
+    CyShowEvent.sync_create_event(event_ids)
+    messages.success(request, '执行成功')
+
+
+refresh_event.short_description = '刷新项目所有场次'
+
+
 class CyShowEventAdmin(AllOnlyViewAdmin):
     list_display = ['event_id', 'show', 'category', 'show_type', 'seat_type', 'ticket_mode', 'state',
                     'expire_order_minute', 'updated_at']
     list_filter = ['state', 'show_type', 'updated_at']
+    actions = [refresh_event]
 
 
 class CyIdTypesAdmin(AllOnlyViewAdmin):
@@ -80,11 +90,26 @@ class CyTicketTypeInline(OnlyReadTabularInline):
     ticket_pack_desc.short_description = u'套票'
 
 
+def refresh_session(modeladmin, request, queryset):
+    if queryset.count() > 1:
+        raise AdminException('每次最多刷新一场')
+    inst = queryset.first()
+    try:
+        inst.refresh_session()
+    except Exception as e:
+        raise AdminException(e)
+    messages.success(request, '执行成功')
+
+
+refresh_session.short_description = '刷新场次'
+
+
 class CySessionAdmin(AllOnlyViewAdmin):
     list_display = ['cy_no', 'event', 'c_session', 'start_time', 'end_time', 'sale_time', 'state',
                     'session_type', 'require_id_on_ticket', 'limit_on_session', 'limit_on_event', 'updated_at']
     list_filter = ['start_time', 'state', 'updated_at']
     inlines = [CyTicketTypeInline]
+    actions = [refresh_session]
 
 
 class CyTicketCodeInline(OnlyReadTabularInline):

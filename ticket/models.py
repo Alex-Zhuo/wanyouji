@@ -1989,7 +1989,7 @@ class SessionChangeSaleTimeRecord(models.Model):
 
 
 class SessionChangeRecord(models.Model):
-    user = models.ForeignKey(User, verbose_name='操作用户', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, verbose_name='操作用户', on_delete=models.SET_NULL, null=True, blank=True)
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE)
     old_start_at = models.DateTimeField('旧开始时间', null=True, blank=True)
     new_start_at = models.DateTimeField('新开始时间', null=True, blank=True)
@@ -2005,13 +2005,15 @@ class SessionChangeRecord(models.Model):
         return str(self.id)
 
     @classmethod
-    def create(cls, session, user, new_end_at=None, new_start_at=None):
-        st, msg = SessionPushTiktokTask.create_record(session, '场次时间延长')
-        if session.is_ks_session:
-            # 重新推快手
-            session.ks_session.re_push()
-        if not st:
-            return st, msg
+    def create(cls, session, user=None, new_end_at=None, new_start_at=None):
+        # st, msg = SessionPushTiktokTask.create_record(session, '场次时间延长')
+        # if session.is_ks_session:
+        #     # 重新推快手
+        #     session.ks_session.re_push()
+        # if not st:
+        #     return st, msg
+        st = True
+        msg = None
         inst = cls.objects.create(session=session, user=user)
         fields = []
         fields_s = []

@@ -21,6 +21,7 @@ class HistoryChat(models.Model):
 
     class Meta:
         verbose_name_plural = verbose_name = '对话历史记录'
+        ordering = ['-pk']
 
     def __str__(self):
         return self.user.get_full_name()
