@@ -2485,8 +2485,8 @@ class ShowUser(UseNoAbstract):
 
     @classmethod
     def auth_cert_no(cls, name, id_card):
-        from qcloud import get_client
-        inst = get_client()
+        from qcloud import get_tencent
+        inst = get_tencent()
         ret = inst.check_cert_no(name, id_card)
         return ret
 

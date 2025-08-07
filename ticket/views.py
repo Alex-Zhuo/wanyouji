@@ -824,10 +824,11 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # 查看物流
         order = self.get_object()
         express_no = order.express_no
-        if order.express_comp_no in ['SFEXPRESS', 'ZTO']:
-            express_no = '{}:{}'.format(express_no, order.mobile[-4:])
-        from mall.express_api import query_express
-        succ, data = query_express(order.express_comp_no, express_no)
+        # if order.express_comp_no in ['SFEXPRESS', 'ZTO']:
+        #     express_no = '{}:{}'.format(express_no, order.mobile[-4:])
+        from qcloud import get_tencent
+        client = get_tencent()
+        succ, data = client.query_express(order.express_comp_no, express_no, order.mobile)
         return Response(data) if succ else Response(status=500, data=data)
 
     @action(methods=['get'], detail=True)
