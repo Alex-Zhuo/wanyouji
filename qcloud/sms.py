@@ -219,8 +219,5 @@ _alibaba = None
 
 
 def get_sms():
-    try:
-        from qcloud import get_tencent
-        return get_tencent()
-    except Exception as e:
-        raise ValueError(e)
+    from qcloud import get_tencent
+    return get_tencent()

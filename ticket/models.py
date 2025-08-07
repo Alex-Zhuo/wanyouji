@@ -6138,8 +6138,11 @@ class TicketGiveRecord(UseNoAbstract):
         hours = 2
         start_at = timezone.now() + timedelta(hours=hours)
         start_at_day = timezone.now() + timedelta(hours=24)
-        from qcloud.sms import get_sms
-        sms = get_sms()
+        try:
+            from qcloud.sms import get_sms
+            sms = get_sms()
+        except Exception as e:
+            return
         # log.error(start_at)
         two_qs = cls.objects.filter(push_message=False, session__start_at__lte=start_at, status=cls.STAT_FINISH)
         has_send_dict = dict()
