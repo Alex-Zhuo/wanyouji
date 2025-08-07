@@ -415,7 +415,7 @@ class CyShowEvent(models.Model):
         1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新8场次更新9票价更新10节目属性更新
         """
         cy_sessions_list = content.get('sessions') or []
-        if event_change_type == 7:
+        if event_change_type in [7, 10]:
             from caiyicloud.tasks import notify_update_record
             notify_update_record.delay(event_id)
         elif event_change_type in [1, 5, 6, 8]:
