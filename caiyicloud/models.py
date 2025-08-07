@@ -1297,7 +1297,7 @@ class CyOrder(models.Model):
                 ticket_obj = ticket.get('level')
                 if not ticket_obj:
                     raise CustomAPIException('下单失败，请重新选择')
-                if not hasattr(ticket_obj, 'cy_tf'):
+                if not ticket_obj.is_cy:
                     raise CustomAPIException('下单失败,彩艺票价未配置')
                 cy_tf = ticket_obj.cy_tf
                 if session.one_id_one_ticket or cy_tf.is_package_ticket:

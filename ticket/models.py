@@ -2121,6 +2121,10 @@ class TicketFile(models.Model):
     def __str__(self):
         return '{},{}'.format(self.session.id, str(self.session))
 
+    @property
+    def is_cy(self):
+        return hasattr(self, 'cy_tf')
+
     @classmethod
     def update_stock_from_redis(cls):
         close_old_connections()
@@ -2143,7 +2147,7 @@ class TicketFile(models.Model):
                 data = TicketFileCacheSerializer(self).data
                 data['origin_price'] = float(data['origin_price'])
                 data['price'] = float(data['price'])
-                if hasattr(self, 'cy_tf'):
+                if self.is_cy:
                     tp_qs = self.cy_tf.ticket_pack_list.all()
                     ticket_pack_list = []
                     if tp_qs:
@@ -2169,6 +2173,7 @@ class TicketFile(models.Model):
                 pika.hdel(name, key)
                 pika.hdel(tiktok_name, key)
                 pika.hdel(ks_name, key)
+                pika.hdel(xhs_name, key)
 
     def redis_stock(self, stock=None):
         # 初始化库存
