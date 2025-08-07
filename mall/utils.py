@@ -107,22 +107,24 @@ def qrcode_dir_pro():
     return dir, rel_url
 
 
-def qrcode_tk():
+def qrcode_tk(name: str = None):
     """
     二维码存放的文件目录、相对url(相对于media_root，不包含文件名)
     :return:
     """
     from django.conf import settings
-    rel_url = settings.MEDIA_URL + '/'.join(['ticket', 'qrcodes'])
-    return os.path.join(settings.MEDIA_ROOT, 'ticket', 'qrcodes'), rel_url, '/'.join(['ticket', 'qrcodes'])
+    if not name:
+        name = 'qrcodes'
+    rel_url = settings.MEDIA_URL + '/'.join(['ticket', name])
+    return os.path.join(settings.MEDIA_ROOT, 'ticket', name), rel_url, '/'.join(['ticket', name])
 
 
-def qrcode_dir_tk():
+def qrcode_dir_tk(name: str = None):
     """
     在qrcode_dir创建目录
     :return:
     """
-    dir, rel_url, img_dir = qrcode_tk()
+    dir, rel_url, img_dir = qrcode_tk(name)
     if not os.path.isdir(dir):
         os.makedirs(dir)
     return dir, rel_url, img_dir

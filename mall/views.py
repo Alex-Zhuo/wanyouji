@@ -455,7 +455,7 @@ class UserViewSet(viewsets.ModelViewSet):
         defaults = dict()
         from common.utils import secure_update
         if request.data.get('tiktok_avatar'):
-            dir, rel_url, img_dir = qrcode_dir_tk()
+            dir, rel_url, img_dir = qrcode_dir_tk('icon')
             filename = 'avatar_%s_v%s.png' % (request.user.share_code, 0)
             filepath = os.path.join(dir, filename)
             tiktok_avatar = request.data.get('tiktok_avatar')

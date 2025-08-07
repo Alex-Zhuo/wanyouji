@@ -897,7 +897,7 @@ class ShowProject(UseNoAbstract):
             return None
         url = 'pages/pagesKage/showDetail/showDetail'
         from mall.utils import qrcode_dir_tk
-        dir, rel_url, img_dir = qrcode_dir_tk()
+        dir, rel_url, img_dir = qrcode_dir_tk('wxa_code')
         filename = 'wxa_code_new{}_1_v{}.png'.format(self.pk, self.version)
         filepath = os.path.join(dir, filename)
         if not os.path.isfile(filepath) or not self.wxa_code:
@@ -919,7 +919,7 @@ class ShowProject(UseNoAbstract):
             return None
         url = 'pages/pagesKage/showDetail/showDetail'
         from mall.utils import qrcode_dir_tk
-        dir, rel_url, img_dir = qrcode_dir_tk()
+        dir, rel_url, img_dir = qrcode_dir_tk('show')
         from douyin import get_tiktok
         tk = get_tiktok()
         url = '{}?&id={}'.format(url, self.id)
