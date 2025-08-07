@@ -1963,6 +1963,10 @@ class SessionInfo(UseNoAbstract):
     def is_xhs_session(self):
         return hasattr(self, 'xhs_session')
 
+    @property
+    def is_cy_session(self):
+        return hasattr(self, 'cy_session')
+
 
 class SessionChangeSaleTimeRecord(models.Model):
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE)

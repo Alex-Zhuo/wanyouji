@@ -450,7 +450,7 @@ class ShowCommentAdmin(AjaxAdmin, OnlyViewAdmin):
 class TicketFileInline(RemoveDeleteTabularInline):
     model = TicketFile
     extra = 0
-    readonly_fields = [ 'color', 'origin_price', 'price', 'stock', 'sales', 'desc']
+    readonly_fields = ['color', 'origin_price', 'price', 'stock', 'sales', 'desc']
 
     def has_add_permission(self, request, obj):
         return False
@@ -832,11 +832,11 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     # inlines = [TicketFileInline, SessionChangeRecordInline,
     #            SessionChangeSaleTimeRecordInline, SessionPushTiktokTaskInline]
     inlines = [TicketFileInline, SessionChangeRecordInline]
-    search_fields = ['=show__title', '=session_level__product_id', '=show__id']
+    search_fields = ['=show__title', '=show__id', '=cy_session__cy_no']
     list_filter = ['has_seat', 'status', 'dy_status', 'push_status', 'show', 'tiktok_store', 'start_at', 'is_delete',
                    'pull_mz_status', 'is_paper', 'is_name_buy']
     list_per_page = 25
-    readonly_fields = ['product_id', 'plan_id', 'actual_amount', 'no']
+    readonly_fields = ['actual_amount', 'no', 'cy_no']
     exclude = ['is_price']
 
     def get_actions(self, request):
@@ -848,10 +848,15 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                 del actions['cancel_delete']
         return actions
 
-    def out_id(self, obj):
-        return obj.get_session_out_id()
+    def cy_no(self, obj):
+        return obj.cy_session.cy_no if obj.is_cy_session else ''
 
-    out_id.short_description = '商品ID'
+    cy_no.short_description = '彩艺云场次号'
+
+    # def out_id(self, obj):
+    #     return obj.get_session_out_id()
+    #
+    # out_id.short_description = '商品ID'
 
     def info(self, obj):
         config = get_config()
