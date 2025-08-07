@@ -379,7 +379,7 @@ class CyShowEvent(models.Model):
         session_ids = []
         for cy_data in cy_sessions_list:
             session_ids.append(cy_data['sessionId'])
-        if event_change_type == 5:
+        if event_change_type in [5, 8]:
             # 开始结束时间 会有通知的，改期了之后场次状态会变为未开售，这个时候会有通知，后面再改为开售的时候，也会有通知
             qs = CySession.objects.filter(cy_no__in=session_ids)
             for cy_session in qs:
@@ -396,28 +396,33 @@ class CyShowEvent(models.Model):
     def notify_update_ticket_type(cls, event_change_type: int, price_ids: list):
         qs = CyTicketType.objects.filter(cy_no__in=price_ids)
         if event_change_type in [2, 4]:
+            # 执行下架
             enabled = 0
+            for tf in qs:
+                tf.ticket_file.set_status(False)
+            qs.update(enabled=enabled)
         else:
-            enabled = 1
-        for tf in qs:
-            tf.ticket_file.set_status(enabled)
-        qs.update(enabled=enabled)
+            # 3, 9 刷新一次票档 。启动或者更新
+            session_no_list = list(qs.values_list('cy_session__cy_no', flat=True))
+            if session_no_list:
+                for session_no in set(session_no_list):
+                    CyTicketType.update_or_create_record(session_no)
 
     @classmethod
     def sync_change(cls, event_id: str, event_change_type: int, content: dict):
         """
         event_change_type
-        1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新
+        1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新8场次更新9票价更新10节目属性更新
         """
         cy_sessions_list = content.get('sessions') or []
         if event_change_type == 7:
             from caiyicloud.tasks import notify_update_record
             notify_update_record.delay(event_id)
-        elif event_change_type in [1, 5, 6]:
+        elif event_change_type in [1, 5, 6, 8]:
             if cy_sessions_list:
                 from caiyicloud.tasks import notify_update_session
                 notify_update_session.delay(event_change_type, cy_sessions_list)
-        elif event_change_type in [2, 3, 4]:
+        elif event_change_type in [2, 3, 4, 9]:
             price_ids = content.get('priceIds')
             from caiyicloud.tasks import notify_update_ticket_type
             notify_update_ticket_type.delay(event_change_type, price_ids)
@@ -746,12 +751,21 @@ class CySession(models.Model):
         # has_change_session_list = redis.lrange(key, 0, -1) or []
         # tk_key = get_redis_name('cyinitticketkey')
         # has_change_ticket_list = redis.lrange(tk_key, 0, -1) or []
+        cy_on_list = []
         for api_data in session_list:
             # 场次类型,0:普通场次;1:联票场次 只做普通场次
             if api_data['session_type'] == 0:
+                cy_no = api_data['id']
                 cls.update_or_create_record(cy_show, api_data)
                 # 更新票档
-                CyTicketType.update_or_create_record(api_data['id'])
+                CyTicketType.update_or_create_record(cy_no)
+                cy_on_list.append(cy_no)
+        if cy_on_list:
+            # 已删除的下架
+            qs = cls.objects.filter(event__event_id=event_id).exclude(cy_no__in=cy_on_list)
+            if qs:
+                for cy_session in qs:
+                    cy_session.set_off()
         #     if api_data['session_type'] == 0:
         #         if is_refresh or api_data['id'] not in has_change_session_list:
         #             cls.update_or_create_record(cy_show, api_data)
@@ -764,6 +778,12 @@ class CySession(models.Model):
         #     redis.delete(key)
         #     redis.delete(tk_key)
 
+    def set_off(self):
+        self.state = 7
+        self.save(update_fields=['state'])
+        self.c_session.set_status(SessionInfo.STATUS_OFF)
+        self.c_session.redis_show_date_copy()
+
     def refresh_session(self):
         cy = caiyi_cloud()
         sessions_data = cy.sessions_list(event_id=self.event.event_id, session_id=self.cy_no)
@@ -771,9 +791,10 @@ class CySession(models.Model):
             for api_data in sessions_data['list']:
                 # 场次类型,0:普通场次;1:联票场次 只做普通场次
                 if api_data['session_type'] == 0:
+                    cy_no = api_data['id']
                     self.update_or_create_record(self.event, api_data)
                     # 更新票档
-                    CyTicketType.update_or_create_record(api_data['id'])
+                    CyTicketType.update_or_create_record(cy_no)
 
     @classmethod
     @atomic
@@ -1053,6 +1074,7 @@ class CyTicketType(models.Model):
         if not cy.is_init:
             return
         cy_session = CySession.objects.filter(cy_no=cy_session_id).first()
+        tf_ids = []
         if cy_session:
             ticket_types_list = cy.ticket_types([cy_session_id])
             ticket_stock_list = cy.ticket_stock([cy_session_id])
@@ -1133,11 +1155,23 @@ class CyTicketType(models.Model):
                 # 改缓存
                 tf.redis_ticket_level_cache()
                 color_index += 1
+                tf_ids.append(tf.id)
             show = cy_session.event.show
             if show.price <= 0 or show.price > show_price:
                 show.price = show_price
                 show.save(update_fields=['price'])
                 show.shows_detail_copy_to_pika()
+            # 把已删除的下架
+            tf_qs = TicketFile.objects.filter(session_id=cy_session.c_session.id).exclude(id__in=tf_ids)
+            for inst in tf_qs:
+                if inst.is_cy:
+                    inst.cy_tf.set_off()
+                inst.set_status(False)
+
+    def set_off(self):
+        self.enabled = 0
+        self.sold_out_state = 2
+        self.save(update_fields=['enabled', 'sold_out_state'])
 
     @classmethod
     def get_seat_info(cls, biz_id):
