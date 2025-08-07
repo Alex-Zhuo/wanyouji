@@ -18,6 +18,8 @@ from alibabacloud_dysmsapi20170525 import models as dysmsapi_20170525_models
 from alibabacloud_tea_util import models as util_models
 from alibabacloud_tea_util.client import Client as UtilClient
 
+from qcloud import TencentCloudImpl
+
 logger = logging.getLogger(__name__)
 import json
 
@@ -32,17 +34,10 @@ class ISms:
         raise NotImplementedError()
 
 
-class QCloudSmsImpl(ISms):
-    def __init__(self):
-        conf = get_config().get('sms')
-        self.cred = credential.Credential(conf['SecretId'], conf['SecretKey'])
-        self.appid = conf.get('appid')
-        self.sign = conf.get('sign')
-        self.template = conf.get('template')
+class QCloudSmsImpl(TencentCloudImpl):
 
     def smsvrcode(self, data):
         try:
-            conf = get_config().get('sms')
             cred = self.cred
             # cred = credential.Credential(
             #     os.environ.get(""),
@@ -219,12 +214,10 @@ class AlibabacloudSmsImpl(ISms):
         return True
 
 
-_inst = None
+_tencent = None
 _alibaba = None
 
 
 def get_sms():
-    global _alibaba
-    if not _alibaba:
-        _alibaba = AlibabacloudSmsImpl()
-    return _alibaba
+    from qcloud import get_tencent
+    return get_tencent()

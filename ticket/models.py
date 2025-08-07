@@ -2485,8 +2485,8 @@ class ShowUser(UseNoAbstract):
 
     @classmethod
     def auth_cert_no(cls, name, id_card):
-        from alibaba import get_inst
-        inst = get_inst()
+        from qcloud import get_client
+        inst = get_client()
         ret = inst.check_cert_no(name, id_card)
         return ret
 
