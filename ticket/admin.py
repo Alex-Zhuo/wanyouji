@@ -451,6 +451,7 @@ class TicketFileInline(RemoveDeleteTabularInline):
     model = TicketFile
     extra = 0
     readonly_fields = ['color', 'origin_price', 'price', 'stock', 'sales', 'desc']
+    exclude = ['title']
 
     def has_add_permission(self, request, obj):
         return False
