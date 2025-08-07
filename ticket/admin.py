@@ -455,10 +455,10 @@ class TicketFileInline(RemoveDeleteTabularInline):
     def has_add_permission(self, request, obj):
         return False
 
-    def out_id(self, obj):
-        return obj.get_out_id()
-
-    out_id.short_description = u'商品ID(out_id)'
+    # def out_id(self, obj):
+    #     return obj.get_out_id()
+    #
+    # out_id.short_description = u'商品ID(out_id)'
 
 
 # @pysnooper.snoop(logger.debug)
@@ -985,7 +985,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            fields = ['out_id', 'start_at', 'end_at'] + self.readonly_fields
+            fields = ['start_at', 'end_at'] + self.readonly_fields
             if obj.is_delete:
                 fields = fields + ['is_delete']
             if obj.source_type == SessionInfo.SR_CY:
