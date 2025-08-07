@@ -380,7 +380,10 @@ class CyShowEvent(models.Model):
         for cy_data in cy_sessions_list:
             session_ids.append(cy_data['sessionId'])
         if event_change_type == 5:
-            CySession.objects.filter(cy_no__in=session_ids).update(state=4)
+            # 开始结束时间 会有通知的，改期了之后场次状态会变为未开售，这个时候会有通知，后面再改为开售的时候，也会有通知
+            qs = CySession.objects.filter(cy_no__in=session_ids)
+            for cy_session in qs:
+                cy_session.refresh_session()
         elif event_change_type in [1, 6]:
             qs = CySession.objects.filter(cy_no__in=session_ids)
             for cy_session in qs:
@@ -1660,3 +1663,31 @@ class CyOrderRefund(models.Model):
                 self.refund.set_fail('彩艺审核驳回')
             st = True
         return st, msg
+
+
+class CyEventLog(models.Model):
+    event = models.ForeignKey(CyShowEvent, verbose_name='节目', on_delete=models.PROTECT)
+    title = models.CharField('描述', max_length=100)
+    create_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '项目修改日志'
+        ordering = ['-pk']
+
+    @classmethod
+    def create_record(cls, event, title):
+        cls.objects.create(event=event, title=title)
+
+
+class CySessionLog(models.Model):
+    session = models.ForeignKey(CySession, verbose_name='场次', on_delete=models.PROTECT)
+    title = models.CharField('描述', max_length=100)
+    create_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '场次修改日志'
+        ordering = ['-pk']
+
+    @classmethod
+    def create_record(cls, session, title):
+        cls.objects.create(session=session, title=title)

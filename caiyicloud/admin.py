@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib import messages
 
 from caiyicloud.models import CaiYiCloudApp, CyCategory, CyVenue, CyShowEvent, CyDeliveryMethods, CyCheckInMethods, \
-    CyIdTypes, CySession, CyTicketType, CyFirstCategory, CyOrder, CyTicketCode, CyOrderRefund
+    CyIdTypes, CySession, CyTicketType, CyFirstCategory, CyOrder, CyTicketCode, CyOrderRefund, CyEventLog, CySessionLog
 from dj import technology_admin
 from dj_ext.permissions import TechnologyModelAdmin, OnlyViewAdmin, RemoveDeleteModelAdmin, OnlyReadTabularInline
 from dj_ext.exceptions import AdminException
@@ -128,6 +128,14 @@ class CyOrderRefundAdmin(AllOnlyViewAdmin):
     list_display = ['apply_id', 'refund', 'cy_order', 'status', 'error_msg']
 
 
+class CyEventLogAdmin(AllOnlyViewAdmin):
+    list_display = ['event', 'title', 'create_at']
+
+
+class CySessionLogAdmin(AllOnlyViewAdmin):
+    list_display = ['session', 'title', 'create_at']
+
+
 admin.site.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
 admin.site.register(CyFirstCategory, CyFirstCategoryAdmin)
 admin.site.register(CyCategory, CyCategoryAdmin)
@@ -139,6 +147,8 @@ admin.site.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 admin.site.register(CySession, CySessionAdmin)
 admin.site.register(CyOrder, CyOrderAdmin)
 admin.site.register(CyOrderRefund, CyOrderRefundAdmin)
+admin.site.register(CyEventLog, CyEventLogAdmin)
+admin.site.register(CySessionLog, CySessionLogAdmin)
 
 technology_admin.register(CaiYiCloudApp, CaiYiCloudAppAdmin)
 technology_admin.register(CyFirstCategory, CyFirstCategoryAdmin)
@@ -151,3 +161,5 @@ technology_admin.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 technology_admin.register(CySession, CySessionAdmin)
 technology_admin.register(CyOrder, CyOrderAdmin)
 technology_admin.register(CyOrderRefund, CyOrderRefundAdmin)
+technology_admin.register(CyEventLog, CyEventLogAdmin)
+technology_admin.register(CySessionLog, CySessionLogAdmin)
