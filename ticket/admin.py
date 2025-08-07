@@ -880,16 +880,16 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     def dy_info(self, obj):
         html = '<div style="width:300px"><p>门票有效期开始时间：{}</p>'.format(
             obj.valid_start_time.strftime('%Y-%m-%d %H:%M') if obj.valid_start_time else '')
-        html += '<p>抖音店铺：{}</p></div>'.format(obj.tiktok_store.name if obj.tiktok_store else '')
-        html += '<p>推送抖音状态：{}</p></div>'.format(obj.get_push_status_display())
-        html += '</br>'
-        if obj.is_ks_session:
-            html += '<p>快手poi：{}</p></div>'.format(str(obj.ks_session.poi))
-            html += '<p>推送快手状态：{}</p></div>'.format(obj.ks_session.get_push_status_display())
-            html += '<p>是否需要推送到快手：{}</p></div>'.format('是' if obj.ks_session.need_push else '否')
-        if obj.is_xhs_session:
-            html += '<p>推送小红书状态：{}</p></div>'.format(obj.xhs_session.get_push_status_display())
-            html += '<p>是否需要推送到小红书：{}</p></div>'.format('是' if obj.xhs_session.need_push else '否')
+        # html += '<p>抖音店铺：{}</p></div>'.format(obj.tiktok_store.name if obj.tiktok_store else '')
+        # html += '<p>推送抖音状态：{}</p></div>'.format(obj.get_push_status_display())
+        # html += '</br>'
+        # if obj.is_ks_session:
+        #     html += '<p>快手poi：{}</p></div>'.format(str(obj.ks_session.poi))
+        #     html += '<p>推送快手状态：{}</p></div>'.format(obj.ks_session.get_push_status_display())
+        #     html += '<p>是否需要推送到快手：{}</p></div>'.format('是' if obj.ks_session.need_push else '否')
+        # if obj.is_xhs_session:
+        #     html += '<p>推送小红书状态：{}</p></div>'.format(obj.xhs_session.get_push_status_display())
+        #     html += '<p>是否需要推送到小红书：{}</p></div>'.format('是' if obj.xhs_session.need_push else '否')
         return mark_safe(html)
 
     dy_info.short_description = '渠道信息'
@@ -915,11 +915,12 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
         #                 'style="margin-top:8px" alt={}>抖音下架</button><br>'.format(obj.id)
         start_at = obj.start_at.strftime('%Y-%m-%dT%H:%M') if obj.start_at else ''
         end_at = obj.end_at.strftime('%Y-%m-%dT%H:%M') if obj.end_at else ''
-        html += '<button type="button" class="el-button el-button--primary el-button--small item_copy_session" ' \
-                'style="margin-top:8px" alt={} start_at={} end_at={} has_seat={}>复制场次</button><br>'.format(obj.id,
-                                                                                                           start_at,
-                                                                                                           end_at,
-                                                                                                           obj.has_seat)
+        if not obj.is_cy_session:
+            html += '<button type="button" class="el-button el-button--primary el-button--small item_copy_session" ' \
+                    'style="margin-top:8px" alt={} start_at={} end_at={} has_seat={}>复制场次</button><br>'.format(obj.id,
+                                                                                                               start_at,
+                                                                                                               end_at,
+                                                                                                               obj.has_seat)
         if obj.source_type == SessionInfo.SR_DEFAULT:
             html += '<button type="button" class="el-button el-button--success el-button--small item_change_end_at" ' \
                     'style="margin-top:8px" alt={}>推迟/延后</button><br>'.format(obj.id)
@@ -973,7 +974,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                 raise AdminException('动态码不允许切回静态码,会造成之前的二维码无效')
         if obj.is_paper and not obj.express_template:
             raise AdminException('纸质票必须配置邮费模板')
-        if hasattr(obj, 'xhs_session') and obj.is_paper:
+        if obj.is_xhs_session and obj.is_paper:
             raise AdminException('小红书场次配置不支持纸质票功能')
         obj.show.change_session_end_at(obj.end_at)
         obj.venue_id = obj.show.venues_id
