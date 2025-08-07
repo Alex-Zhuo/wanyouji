@@ -763,7 +763,7 @@ class CySession(models.Model):
 
     def refresh_session(self):
         cy = caiyi_cloud()
-        sessions_data = cy.sessions_list(event_id=self.event.event_id, session_id=self.event_id)
+        sessions_data = cy.sessions_list(event_id=self.event.event_id, session_id=self.cy_no)
         if sessions_data.get('list'):
             for api_data in sessions_data['list']:
                 # 场次类型,0:普通场次;1:联票场次 只做普通场次
