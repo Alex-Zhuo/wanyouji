@@ -1093,8 +1093,8 @@ class SessionInfo(UseNoAbstract):
     express_days = models.IntegerField('开演前多少天下单可邮寄', default=0, help_text='单位/天，设置后开演前n天下单的可以邮寄，'
                                                                            '不足n天的需要现场取票入场')
     close_comment = models.BooleanField('是否关闭评论', default=False)
-    is_dy_code = models.BooleanField('是否动态码', default=True, help_text='勾选后需要填写动态有效时间才能有效,大于2小时才能分享核销码图片')
-    dc_expires_in = models.PositiveIntegerField('动态码有效时间', default=20, help_text='单位：分钟')
+    is_dy_code = models.BooleanField('是否动态码', default=False, help_text='勾选后需要填写动态有效时间才能有效,大于2小时才能分享核销码图片')
+    dc_expires_in = models.PositiveIntegerField('动态码有效时间', default=30, help_text='单位：分钟')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     actual_amount = models.DecimalField('总实收', max_digits=9, decimal_places=2, default=0)
