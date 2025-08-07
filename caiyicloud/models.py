@@ -1068,7 +1068,7 @@ class CyTicketType(models.Model):
             for ticket_type in ticket_types_list:
                 stock = 0
                 if ticket_type['category'] == 3:
-                    stock = 999
+                    stock = 99999
                 else:
                     if ticket_stock_dict.get(ticket_type['id']):
                         stock = int(ticket_stock_dict.get(ticket_type['id'])['inventory'])
