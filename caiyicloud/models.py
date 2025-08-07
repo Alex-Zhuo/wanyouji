@@ -149,7 +149,7 @@ class CaiYiCloudApp(models.Model):
             elif event_type == 'event.distribution.create':
                 # 项目分销创建通知
                 event_id = event['event_id']
-                is_success, error_msg = CyShowEvent.sync_create_event(event_id)
+                is_success, error_msg = CyShowEvent.sync_create_event([event_id])
             elif event_type == 'event.distribution.change':
                 # 库存变更通知
                 event_id = event['event_id']
