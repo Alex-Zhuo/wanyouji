@@ -149,7 +149,7 @@ class CaiYiCloudApp(models.Model):
             elif event_type == 'event.distribution.create':
                 # 节目分销创建通知
                 event_id = event['event_id']
-                is_success, error_msg = CyShowEvent.sync_create_event([event_id])
+                is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
             elif event_type == 'event.distribution.change':
                 # 库存变更通知
                 event_id = event['event_id']
@@ -360,16 +360,16 @@ class CyShowEvent(models.Model):
         #     redis.delete(key)
 
     @classmethod
-    def notify_create_show_task(cls, event_ids: list):
-        log_title = '节目创建回调'
+    def notify_create_show_task(cls, event_ids: list, log_title:str):
+        # log_title = '节目创建回调'
         for event_id in event_ids:
             cls.update_or_create_record(event_id, log_title)
             CySession.init_cy_session(event_id, log_title)
 
     @classmethod
-    def sync_create_event(cls, event_ids: list):
+    def sync_create_event(cls, event_ids: list, log_title:str):
         from caiyicloud.tasks import notify_create_show_task
-        notify_create_show_task.delay(event_ids)
+        notify_create_show_task.delay(event_ids, log_title)
         return True, None
 
     @classmethod

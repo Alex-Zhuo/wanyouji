@@ -46,7 +46,7 @@ class CyVenueAdmin(AllOnlyViewAdmin):
 
 def refresh_event(modeladmin, request, queryset):
     event_ids = list(queryset.values_list('event_id', flat=True))
-    CyShowEvent.sync_create_event(event_ids)
+    CyShowEvent.sync_create_event(event_ids, '后台刷新')
     messages.success(request, '执行成功')
 
 
