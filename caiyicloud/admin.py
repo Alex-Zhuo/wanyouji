@@ -46,11 +46,11 @@ class CyVenueAdmin(AllOnlyViewAdmin):
 
 def refresh_event(modeladmin, request, queryset):
     event_ids = list(queryset.values_list('event_id', flat=True))
-    CyShowEvent.sync_create_event(event_ids, '后台刷新')
+    CyShowEvent.sync_create_event(event_ids, '后台节目刷新')
     messages.success(request, '执行成功')
 
 
-refresh_event.short_description = '刷新项目所有场次'
+refresh_event.short_description = '刷新节目所有场次'
 
 
 class CyShowEventAdmin(AllOnlyViewAdmin):
@@ -95,7 +95,7 @@ def refresh_session(modeladmin, request, queryset):
         raise AdminException('每次最多刷新一场')
     inst = queryset.first()
     try:
-        inst.refresh_session('后台刷新')
+        inst.refresh_session('后台场次刷新')
     except Exception as e:
         raise AdminException(e)
     messages.success(request, '执行成功')
