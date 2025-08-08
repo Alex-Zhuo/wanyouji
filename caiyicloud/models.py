@@ -147,7 +147,7 @@ class CaiYiCloudApp(models.Model):
                 seat_change_vo_list = event['seat_change_vo_list']
                 is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
             elif event_type == 'event.distribution.create':
-                # 项目分销创建通知
+                # 节目分销创建通知
                 event_id = event['event_id']
                 is_success, error_msg = CyShowEvent.sync_create_event([event_id])
             elif event_type == 'event.distribution.change':
@@ -265,15 +265,15 @@ class CyShowEvent(models.Model):
         verbose_name='节目大类'
     )
     show_type = models.ForeignKey(CyCategory, verbose_name='节目分类', on_delete=models.SET_NULL, null=True)
-    event_id = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='项目ID')
-    std_id = models.CharField(max_length=64, verbose_name='中心项目ID')
+    event_id = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='节目ID')
+    std_id = models.CharField(max_length=64, verbose_name='中心节目ID')
     # 座位和票务信息
     SEAT_HAS = 1
     SEAT_NO = 0
     seat_type = models.PositiveSmallIntegerField(
         choices=[(SEAT_NO, '非选座'), (SEAT_HAS, '选座')],
         default=SEAT_NO,
-        verbose_name='项目座位类型'
+        verbose_name='节目座位类型'
     )
     MD_DEFAULT = 0
     MD_PRICE = 1
@@ -284,8 +284,8 @@ class CyShowEvent(models.Model):
         verbose_name='库存类型'
     )
     # 媒体信息
-    poster_url = models.URLField(verbose_name='项目海报地址', blank=True, null=True)
-    content_url = models.URLField(verbose_name='项目简介链接', blank=True, null=True)
+    poster_url = models.URLField(verbose_name='节目海报地址', blank=True, null=True)
+    content_url = models.URLField(verbose_name='节目简介链接', blank=True, null=True)
     # 状态信息
     state = models.PositiveSmallIntegerField(
         choices=[
@@ -329,7 +329,7 @@ class CyShowEvent(models.Model):
         return get_redis_name('cyiniteventkey')
 
     @classmethod
-    def init_cy_show(cls, is_refresh=False):
+    def init_cy_show(cls):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -344,9 +344,10 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
+        log_title = '初始化拉取'
         for event in event_list:
-            cls.update_or_create_record(event['id'])
-            CySession.init_cy_session(event['id'], is_refresh)
+            cls.update_or_create_record(event['id'], log_title)
+            CySession.init_cy_session(event['id'], log_title)
         # redis = get_pika_redis()
         # key = cls.init_event_pika_key()
         # has_change_event_list = redis.lrange(key, 0, -1) or []
@@ -360,9 +361,10 @@ class CyShowEvent(models.Model):
 
     @classmethod
     def notify_create_show_task(cls, event_ids: list):
+        log_title = '节目创建回调'
         for event_id in event_ids:
-            cls.update_or_create_record(event_id)
-            CySession.init_cy_session(event_id, True)
+            cls.update_or_create_record(event_id, log_title)
+            CySession.init_cy_session(event_id, log_title)
 
     @classmethod
     def sync_create_event(cls, event_ids: list):
@@ -372,7 +374,7 @@ class CyShowEvent(models.Model):
 
     @classmethod
     def notify_update_record(cls, event_id: str):
-        cls.update_or_create_record(event_id)
+        cls.update_or_create_record(event_id, '节目更新回调')
 
     @classmethod
     def notify_update_session(cls, event_change_type: int, cy_sessions_list: list):
@@ -382,8 +384,9 @@ class CyShowEvent(models.Model):
         if event_change_type in [5, 8]:
             # 开始结束时间 会有通知的，改期了之后场次状态会变为未开售，这个时候会有通知，后面再改为开售的时候，也会有通知
             qs = CySession.objects.filter(cy_no__in=session_ids)
+            log_title = '回调启用场次' if event_change_type == 5 else '回调刷新场次'
             for cy_session in qs:
-                cy_session.refresh_session()
+                cy_session.refresh_session(log_title)
         elif event_change_type in [1, 6]:
             qs = CySession.objects.filter(cy_no__in=session_ids)
             for cy_session in qs:
@@ -412,7 +415,7 @@ class CyShowEvent(models.Model):
     def sync_change(cls, event_id: str, event_change_type: int, content: dict):
         """
         event_change_type
-        1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7项目更新8场次更新9票价更新10节目属性更新
+        1场次删除2票价删除3票价启用4	票价禁用5	场次启用6	场次禁用7节目更新8场次更新9票价更新10节目属性更新
         """
         cy_sessions_list = content.get('sessions') or []
         if event_change_type in [7, 10]:
@@ -430,7 +433,7 @@ class CyShowEvent(models.Model):
 
     @classmethod
     @atomic
-    def update_or_create_record(cls, event_id: str):
+    def update_or_create_record(cls, event_id: str, log_title: str):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -476,6 +479,7 @@ class CyShowEvent(models.Model):
             for nt in event_detail['purchase_notices']:
                 TicketPurchaseNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
         show.shows_detail_copy_to_pika()
+        CyEventLog.create_record(cy_show, log_title)
         return cy_show
     # except Exception as e:
     #     log.error(e)
@@ -731,11 +735,11 @@ class CySession(models.Model):
                         redis.hdel(name, cy_no)
 
     @classmethod
-    def init_cy_session(cls, event_id: str, is_refresh=False):
+    def init_cy_session(cls, event_id: str, log_title: str):
         cy = caiyi_cloud()
         cy_show = CyShowEvent.objects.filter(event_id=event_id).first()
         if not cy_show:
-            cy_show = CyShowEvent.update_or_create_record(event_id)
+            cy_show = CyShowEvent.update_or_create_record(event_id, log_title)
         sessions_data = cy.sessions_list(event_id=event_id)
         page = 1
         page_size = 50
@@ -756,7 +760,7 @@ class CySession(models.Model):
             # 场次类型,0:普通场次;1:联票场次 只做普通场次
             if api_data['session_type'] == 0:
                 cy_no = api_data['id']
-                cls.update_or_create_record(cy_show, api_data)
+                cls.update_or_create_record(cy_show, api_data, log_title)
                 # 更新票档
                 CyTicketType.update_or_create_record(cy_no)
                 cy_on_list.append(cy_no)
@@ -784,7 +788,7 @@ class CySession(models.Model):
         self.c_session.set_status(SessionInfo.STATUS_OFF)
         self.c_session.redis_show_date_copy()
 
-    def refresh_session(self):
+    def refresh_session(self, log_title: str):
         cy = caiyi_cloud()
         sessions_data = cy.sessions_list(event_id=self.event.event_id, session_id=self.cy_no)
         if sessions_data.get('list'):
@@ -792,13 +796,13 @@ class CySession(models.Model):
                 # 场次类型,0:普通场次;1:联票场次 只做普通场次
                 if api_data['session_type'] == 0:
                     cy_no = api_data['id']
-                    self.update_or_create_record(self.event, api_data)
+                    self.update_or_create_record(self.event, api_data, log_title)
                     # 更新票档
                     CyTicketType.update_or_create_record(cy_no)
 
     @classmethod
     @atomic
-    def update_or_create_record(cls, cy_show: CyShowEvent, api_data: dict):
+    def update_or_create_record(cls, cy_show: CyShowEvent, api_data: dict, log_title: str):
         # 处理时间字段
         start_time = None
         end_time = None
@@ -879,6 +883,7 @@ class CySession(models.Model):
             for key, v in session_data.items():
                 setattr(session, key, v)
             session.save(update_fields=list(session_data.keys()))
+        CySessionLog.create_record(cy_session, log_title)
 
         # 修改多选
         id_types_list = api_data.get('id_types', [])
@@ -1705,7 +1710,7 @@ class CyEventLog(models.Model):
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '项目修改日志'
+        verbose_name_plural = verbose_name = '节目修改日志'
         ordering = ['-pk']
 
     @classmethod
