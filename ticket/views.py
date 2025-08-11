@@ -828,7 +828,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         #     express_no = '{}:{}'.format(express_no, order.mobile[-4:])
         from qcloud import get_tencent
         client = get_tencent()
-        succ, data = client.query_express(order.express_comp_no, express_no, order.mobile)
+        succ, data = client.query_express(order.id, express_no, order.mobile)
         return Response(data) if succ else Response(status=500, data=data)
 
     @action(methods=['get'], detail=True)

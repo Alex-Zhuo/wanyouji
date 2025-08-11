@@ -53,7 +53,7 @@ class TencentCloudImpl(object):
             resp = json.loads(resp.to_json_string())
             logger.debug(resp)
             if resp['Result'] in ["0", 0]:
-                    return True
+                return True
             return False
 
         except TencentCloudSDKException as err:
@@ -163,7 +163,7 @@ class TencentCloudImpl(object):
                 ret = self.cert_no_verify(cert_name, cert_no)
         return ret
 
-    def express_query(self, number: str, mobile: str = "", expressCode: str = ""):
+    def express_query(self, number: str, mobile: str = "", expressCode: str = "auto"):
         """
         number 快递单号
         mobile 查顺丰、中通时要输入寄件人或收件人手机号
@@ -180,7 +180,7 @@ class TencentCloudImpl(object):
         method = 'POST'
         # 请求头
         headers = {
-            'request-id': uuid.uuid1(),
+            'request-id': str(uuid.uuid1()),
             'Authorization': auth,
         }
         # 查询参数
@@ -205,40 +205,51 @@ class TencentCloudImpl(object):
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-        response = urlopen(request, context=ctx)
-        content = response.read()
-        if content:
-            return content.decode('utf-8')
+        try:
+            response = urlopen(request, context=ctx)
+            content = response.read()
+            if content:
+                return content.decode('utf-8')
+        except Exception as e:
+            logger.error(e)
         return
 
-    def query_express(self, express_code: str, number: str, mobile: str = ""):
+    def query_express(self, order_id, number: str, mobile: str = ""):
         """
         快递公司code
         """
         try:
             name = 'query_express'
-            key = '%s_%s' % (number, express_code)
+            key = '%s_%s' % (number, order_id)
             with get_pika_redis() as redis:
+                st = False
+                data = None
                 data = redis.hget(name, key)
                 if not data:
-                    content = self.express_query(number, mobile, express_code)
+                    content = self.express_query(number, mobile)
                     if content:
+                        content = json.loads(content)
                         if content['code'] == 200:
-                            if content['status'] in [1, 2]:
+                            data = content['data']
+                            if data['status'] in [1, 2]:
                                 timeout = 2 * 3600
-                            elif content['status'] == 3:
+                            elif data['status'] == 3:
                                 # 已签收,结果保存30天
                                 timeout = 30 * 24 * 3600
                             else:
                                 timeout = 6 * 24 * 3600
-                            redis.hset(name, key, json.dumps(content))
+                            redis.hset(name, key, json.dumps(data))
                         else:
                             logger.error('error express: %s, %s' % (key, content))
                             timeout = 30 * 3600
                             redis.hset(name, key, content['msg'])
                         redis.expire(key, int(timeout))
+                        st = True
+                    else:
+                        data = '接口获取失败'
                 else:
-                    return True, json.loads(data)
+                    data = json.loads(data)
+                return st, data
         except HTTPError as e:
             return False, dict(msg=u'请求快递服务异常')
         except ValueError:
