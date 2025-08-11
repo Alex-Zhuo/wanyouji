@@ -4,8 +4,8 @@ from tencentcloud.common import credential
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
-from tencentcloud.faceid.v20180301 import faceid_client, models
-from tencentcloud.sms.v20210111 import sms_client, models
+from tencentcloud.faceid.v20180301 import faceid_client, models as face_models
+from tencentcloud.sms.v20210111 import sms_client, models as sms_models
 import uuid, ssl, hmac, base64, hashlib
 from datetime import datetime as pydatetime
 from urllib.parse import urlencode
@@ -44,7 +44,7 @@ class TencentCloudImpl(object):
             client = faceid_client.FaceidClient(cred, "", clientProfile)
 
             # 实例化一个请求对象,每个接口都会对应一个request对象
-            req = models.IdCardVerificationRequest()
+            req = face_models.IdCardVerificationRequest()
             req.from_json_string(json.dumps(params))
 
             # 返回的resp是一个IdCardVerificationResponse的实例，与请求对象对应
@@ -52,9 +52,7 @@ class TencentCloudImpl(object):
             # 输出json格式的字符串回包
             resp = json.loads(resp.to_json_string())
             logger.debug(resp)
-            if resp.get('Response'):
-                data = resp['Response']
-                if data['Result'] in ["0", 0]:
+            if resp['Result'] in ["0", 0]:
                     return True
             return False
 
@@ -86,7 +84,7 @@ class TencentCloudImpl(object):
             # 你可以直接查询SDK源码确定SendSmsRequest有哪些属性可以设置
             # 属性可能是基本类型，也可能引用了另一个数据结构
             # 推荐使用IDE进行开发，可以方便的跳转查阅各个接口和数据结构的文档说明
-            req = models.SendSmsRequest()
+            req = sms_models.SendSmsRequest()
 
             # 基本类型的设置:
             # SDK采用的是指针风格指定参数，即使对于基本类型你也需要用指针来对参数赋值。
