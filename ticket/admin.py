@@ -244,7 +244,7 @@ def export_sessions(modeladmin, request, queryset, filter_unsent=False):
     ws.append(['编号', '节目名称', '开始时间', '场馆', '最低价格', '评分'])
     for session in queryset:
         show = session.show
-        show_at = show.start_at.strftime('%Y-%m-%d %H:%M:%S')
+        show_at = session.start_at.strftime('%Y-%m-%d %H:%M:%S')
         venue = show.venues
         rate = f"{random.uniform(2.0, 5.0):.1f}"
         data = [show.no, show.title, show_at, venue.name, str(show.price), rate]
