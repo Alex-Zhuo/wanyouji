@@ -1335,7 +1335,7 @@ def export_ticket_order_old(modeladmin, request, queryset):
             pay_desc = record.wx_pay_config.title
         if record.dy_pay_config:
             pay_desc = record.dy_pay_config.title
-        data = [str(record.user), record.name, record.mobile, record.show_express_address,
+        data = [str(record.user), record.mobile, record.show_express_address,
                 str(record.agent) if record.agent else None,
                 record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
                 record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply, record.amount,
@@ -1475,8 +1475,7 @@ def export_ticket_express(modeladmin, request, queryset, filter_unsent=False):
                 level_desc = snapshot['desc']
             else:
                 level_desc += snapshot['desc']
-        data = [str(record.user), record.name, record.mobile, record.show_express_address, seat_desc, level_desc,
-                record.order_no,
+        data = [str(record.user), record.mobile, record.show_express_address, seat_desc, level_desc, record.order_no,
                 record.receipt.payno, record.multiply, record.amount, record.card_jc_amount, record.actual_amount,
                 record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
                 record.express_name, record.express_no, record.express_comp_no]

@@ -194,6 +194,7 @@ class ShowContentCategory(models.Model):
     en_title = models.CharField(max_length=50, verbose_name='分类英文名称', null=True)
     color_code = models.CharField('色号', help_text='16进制色号', max_length=15, null=True)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='从小到大排序,首页展示前5项')
+    is_display = models.BooleanField('是否显示', default=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目大类'
@@ -3135,13 +3136,13 @@ class TicketOrder(models.Model):
 
     @classmethod
     def export_fields(cls):
-        return [u'下单用户', '姓名', '联系电话', '详细地址', '推荐人', '付款类型', '微信/抖音商户', '演出场次座位', '票档描述', '订单号',
+        return [u'下单用户',  '联系电话', '详细地址', '推荐人', '付款类型', '微信/抖音商户', '演出场次座位', '票档描述', '订单号',
                 '商户订单号', '微信(抖音)支付单号', '数量', '订单总价', '剧场会员卡支付数额', '实际支付金额', '邮费', '状态', '演出名称',
                 '下单时间', '支付时间', '开演时间', '带货场景', '达人抖音昵称', '达人抖音号', '计划ID', '计划类型', '演出场馆']
 
     @classmethod
     def export_express_fields(cls):
-        return ['下单用户', '姓名', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
+        return ['下单用户',  '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
 
     @property
@@ -4546,6 +4547,26 @@ class TicketUserCode(models.Model):
         ordering = ['-pk']
 
     random_code_len = 4
+
+    def get_export_data(self, venue):
+        seat_desc = ''
+        level_desc = ''
+        if self.session_seat:
+            ss = self.session_seat.seat_desc(venue)
+            if not seat_desc:
+                seat_desc = ss
+            else:
+                seat_desc += ',{}'.format(ss)
+        else:
+            if not seat_desc:
+                seat_desc = '无座'
+            else:
+                seat_desc += ',无座'
+        snapshot = json.loads(tu.snapshot)
+        if not level_desc:
+            level_desc = snapshot['desc']
+        else:
+            level_desc += snapshot['desc']
 
     def cy_check(self, check_at):
         self.status = self.STATUS_CHECK
