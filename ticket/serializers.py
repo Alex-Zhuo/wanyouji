@@ -1724,7 +1724,7 @@ class ShowAiSerializer(serializers.ModelSerializer):
 class ShowIndexSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowProject
-        fields = ['no', 'logo_mobile', 'price']
+        fields = ['no', 'logo_mobile', 'price', 'title']
 
 
 class ShowContentCategoryHomeSerializer(serializers.ModelSerializer):
