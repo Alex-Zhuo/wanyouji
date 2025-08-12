@@ -14,6 +14,7 @@ import logging
 from caches import get_pika_redis
 import json, requests
 from urllib.error import HTTPError
+from streaming.utils import create_streaming_response, api_response_stream_generator
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,9 @@ class TencentCloudImpl(object):
         self.template = conf.get('template')
         self.express_secret_key = conf['express_secret_key']
         self.express_secret_id = conf['express_secret_id']
+        self.agent_token = conf['agent_token']
+        self.assistant_id = conf['assistant_id']
+        self.agent_url = conf['agent_url']
 
     def cert_no_verify(self, cert_name: str, cert_no: str):
         try:
@@ -256,6 +260,40 @@ class TencentCloudImpl(object):
             return False, dict(msg=u'请求快递服务异常')
         except (requests.Timeout):
             return False, dict(msg=u'请求快递服务超时')
+
+    def agent_request(self, method: str, user_id: int, content: str, params: dict=None):
+        """POST请求 - 流式调用外部API"""
+        api_url = self.agent_url
+        headers = {
+            'X-Source': 'openapi',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.agent_token)
+        }
+        data = {
+            "assistant_id": self.assistant_id,
+            "user_id": str(user_id),
+            "stream": True,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": content
+                        }
+                    ]
+                }
+            ]
+        }
+        generator = api_response_stream_generator(
+            api_url=api_url,
+            method=method,
+            headers=headers,
+            data=data,
+            params=params
+        )
+
+        return create_streaming_response(generator, 'text/plain; charset=utf-8')
 
 
 _tent_xun = None

@@ -637,7 +637,6 @@ class ReceiptViewset(BaseReceiptViewset):
     #     return super(ReceiptViewset, self).pay(request, pk)
 
 
-
 class UserAddressViewSet(SerializerSelector, viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer

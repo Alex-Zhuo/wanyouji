@@ -4,7 +4,8 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 
 from ai_agent.models import DefaultQuestions, HistoryChat
-from ai_agent.serializers import DefaultQuestionsSerializer,  HistoryChatSerializer, HistoryChatCreateSerializerSerializer
+from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatSerializer, \
+    HistoryChatCreateSerializerSerializer
 from home.views import ReturnNoDetailViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
@@ -19,6 +20,13 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     permission_classes = [IsPermittedUser]
     serializer_class = DefaultQuestionsSerializer
     http_method_names = ['get']
+
+    @action(methods=['post', 'get'], detail=False)
+    def post_question(self, request):
+        from qcloud import get_tencent
+        client = get_tencent()
+        content = request.data.get('question') or request.GET.get('question')
+        return client.agent_request('POST', request.user.id, content)
 
 
 class HistoryChatViewSet(ReturnNoDetailViewSet):
