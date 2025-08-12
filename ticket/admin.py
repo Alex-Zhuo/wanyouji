@@ -29,6 +29,7 @@ import json
 from decimal import Decimal
 from dj_ext.middlewares import get_request
 from caches import run_with_lock
+import random
 
 # from kuaishou_wxa.models import KsGoodsConfig, KsGoodsImage, KsOrderSettleRecord
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
@@ -232,6 +233,27 @@ class TicketWatchingNoticeInline(admin.TabularInline):
 # class XhsShowInline(admin.TabularInline):
 #     model = XhsShow
 #     extra = 0
+
+def export_sessions(modeladmin, request, queryset, filter_unsent=False):
+    from openpyxl import Workbook
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="shows{}.xlsx"'.format(
+        timezone.now().strftime('%Y%m%d%H%M'))
+    wb = Workbook()
+    ws = wb.active
+    ws.append(['编号', '节目名称', '开始时间', '场馆', '最低价格', '评分'])
+    for session in queryset:
+        show = session.show
+        show_at = show.start_at.strftime('%Y-%m-%d %H:%M:%S')
+        venue = show.venues
+        rate = f"{random.uniform(2.0, 5.0):.1f}"
+        data = [show.no, show.title, show_at, venue.name, str(show.price), rate]
+        ws.append(data)
+    wb.save(response)
+    return response
+
+
+export_sessions.short_description = u'导出场次数据'
 
 
 class ShowProjectAdmin(RemoveDeleteModelAdmin):
@@ -827,7 +849,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     #            set_sale_off, close_comment]
     actions = [set_on_session, set_off_session, 'change_end_at', 'copy_session', set_delete,
                cancel_delete,
-               set_sale_off, close_comment]
+               set_sale_off, close_comment, export_sessions]
     # autocomplete_fields = ['show', 'tiktok_store', 'main_session']
     autocomplete_fields = ['show', 'main_session']
     # inlines = [TicketFileInline, SessionChangeRecordInline,
