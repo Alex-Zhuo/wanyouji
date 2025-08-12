@@ -578,8 +578,6 @@ def gen_good_share_code(url, good, save_to):
 
 
 def gen_get_qr_scene(user_id, save_to, bg, nickname=None, avatar_url=None, wxa_code=None, is_img=False):
-    from mp.wechat_client import get_mp_client
-    client = get_mp_client()
     if not wxa_code:
         from mp.wechat_client import get_mp_client
         client = get_mp_client()
