@@ -1,4 +1,4 @@
-# yum install gcc libffi-devel python3-devel openssl-devel -y
+# sudo apt-get install libmysqlclient-dev
 Django==3.0
 PyYAML==5.4.1
 mysqlclient==2.0.3
