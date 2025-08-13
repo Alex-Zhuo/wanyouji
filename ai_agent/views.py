@@ -21,7 +21,7 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     serializer_class = DefaultQuestionsSerializer
     http_method_names = ['get']
 
-    @action(methods=['post', 'get'], detail=False)
+    @action(methods=['post', 'get'], detail=False, http_method_names=['post'])
     def post_question(self, request):
         from qcloud import get_tencent
         client = get_tencent()
