@@ -29,8 +29,10 @@ class TencentCloudImpl(object):
         self.appid = conf.get('appid')
         self.sign = conf.get('sign')
         self.template = conf.get('template')
+        # 快递
         self.express_secret_key = conf['express_secret_key']
         self.express_secret_id = conf['express_secret_id']
+        # 腾讯智能体配置
         self.agent_token = conf['agent_token']
         self.assistant_id = conf['assistant_id']
         self.agent_url = conf['agent_url']
