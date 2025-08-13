@@ -1,7 +1,6 @@
 # coding: utf-8
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework import viewsets
 
 from ai_agent.models import DefaultQuestions, HistoryChat
 from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatSerializer, \
@@ -11,8 +10,19 @@ from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
 from restframework_ext.permissions import IsPermittedUser
 import logging
+from rest_framework import views
 
 log = logging.getLogger(__name__)
+
+
+class AgentAi(views.APIView):
+    permission_classes = [IsPermittedUser]
+
+    def post(self, request):
+        from qcloud import get_tencent
+        client = get_tencent()
+        content = request.data.get('question') or request.GET.get('question')
+        return client.agent_request('POST', request.user.id, content)
 
 
 class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
@@ -21,12 +31,12 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     serializer_class = DefaultQuestionsSerializer
     http_method_names = ['get']
 
-    @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
-    def post_question(self, request):
-        from qcloud import get_tencent
-        client = get_tencent()
-        content = request.data.get('question') or request.GET.get('question')
-        return client.agent_request('POST', request.user.id, content)
+    # @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
+    # def post_question(self, request):
+    #     from qcloud import get_tencent
+    #     client = get_tencent()
+    #     content = request.data.get('question') or request.GET.get('question')
+    #     return client.agent_request('POST', request.user.id, content)
 
 
 class HistoryChatViewSet(ReturnNoDetailViewSet):
