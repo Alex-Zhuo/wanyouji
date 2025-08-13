@@ -231,6 +231,7 @@ class TencentCloudImpl(object):
             with get_pika_redis() as redis:
                 st = False
                 data = redis.hget(name, key)
+                logger.error(data)
                 if not data:
                     content = self.express_query(number, mobile)
                     if content:
