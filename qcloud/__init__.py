@@ -171,6 +171,7 @@ class TencentCloudImpl(object):
 
     def express_query(self, number: str, mobile: str = "", expressCode: str = "auto"):
         """
+        https://market.cloud.tencent.com/products/28085?keyword=%E5%BF%AB%E9%80%92
         number 快递单号
         mobile 查顺丰、中通时要输入寄件人或收件人手机号
         expressCode 快递代号 自动识别请传 auto
@@ -229,7 +230,6 @@ class TencentCloudImpl(object):
             key = '%s_%s' % (number, order_id)
             with get_pika_redis() as redis:
                 st = False
-                data = None
                 data = redis.hget(name, key)
                 if not data:
                     content = self.express_query(number, mobile)
