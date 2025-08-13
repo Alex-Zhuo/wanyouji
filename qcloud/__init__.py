@@ -299,7 +299,7 @@ class TencentCloudImpl(object):
             params=params
         )
 
-        return create_streaming_response(generator, 'text/plain; charset=utf-8')
+        return create_streaming_response(generator, 'text/event-stream')
 
 
 _tent_xun = None
