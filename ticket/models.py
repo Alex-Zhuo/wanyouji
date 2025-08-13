@@ -3136,13 +3136,13 @@ class TicketOrder(models.Model):
 
     @classmethod
     def export_fields(cls):
-        return [u'下单用户',  '联系电话', '详细地址', '推荐人', '付款类型', '微信/抖音商户', '演出场次座位', '票档描述', '订单号',
+        return [u'下单用户', '联系电话', '详细地址', '推荐人', '付款类型', '微信/抖音商户', '演出场次座位', '票档描述', '订单号',
                 '商户订单号', '微信(抖音)支付单号', '数量', '订单总价', '剧场会员卡支付数额', '实际支付金额', '邮费', '状态', '演出名称',
                 '下单时间', '支付时间', '开演时间', '带货场景', '达人抖音昵称', '达人抖音号', '计划ID', '计划类型', '演出场馆']
 
     @classmethod
     def export_express_fields(cls):
-        return ['下单用户',  '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
+        return ['下单用户', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
 
     @property
@@ -4279,22 +4279,9 @@ class TicketOrder(models.Model):
                 pay_desc = record.dy_pay_config.title
             tu_qs = TicketUserCode.objects.filter(order=record)
             for tu in tu_qs:
-                if tu.session_seat:
-                    ss = tu.session_seat.seat_desc(record.venue)
-                    if not seat_desc:
-                        seat_desc = ss
-                    else:
-                        seat_desc += ',{}'.format(ss)
-                else:
-                    if not seat_desc:
-                        seat_desc = '无座'
-                    else:
-                        seat_desc += ',无座'
-                snapshot = json.loads(tu.snapshot)
-                if not level_desc:
-                    level_desc = snapshot['desc']
-                else:
-                    level_desc += snapshot['desc']
+                seat_desc_t, level_desc_t = tu.get_export_data()
+                seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
+                level_desc = level_desc + level_desc_t if level_desc else level_desc_t
             data = [str(record.user), record.name, record.mobile, record.show_express_address,
                     str(record.agent) if record.agent else None,
                     record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
@@ -4548,25 +4535,22 @@ class TicketUserCode(models.Model):
 
     random_code_len = 4
 
+    @property
+    def is_cy_code(self):
+        return hasattr(self, 'cy_code')
+
     def get_export_data(self, venue):
-        seat_desc = ''
-        level_desc = ''
         if self.session_seat:
-            ss = self.session_seat.seat_desc(venue)
-            if not seat_desc:
-                seat_desc = ss
+            if self.is_cy_code:
+                snapshot = json.loads(self.cy_code.snapshot)
+                seat_desc = snapshot.get('seat')
             else:
-                seat_desc += ',{}'.format(ss)
+                seat_desc = self.session_seat.seat_desc(venue)
         else:
-            if not seat_desc:
-                seat_desc = '无座'
-            else:
-                seat_desc += ',无座'
-        snapshot = json.loads(tu.snapshot)
-        if not level_desc:
-            level_desc = snapshot['desc']
-        else:
-            level_desc += snapshot['desc']
+            seat_desc = '无座'
+        snapshot = json.loads(self.snapshot)
+        level_desc = snapshot['desc']
+        return seat_desc, level_desc
 
     def cy_check(self, check_at):
         self.status = self.STATUS_CHECK

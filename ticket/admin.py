@@ -1336,22 +1336,9 @@ def export_ticket_order_old(modeladmin, request, queryset):
         level_desc = ''
         tu_qs = TicketUserCode.objects.filter(order=record)
         for tu in tu_qs:
-            if tu.session_seat:
-                ss = tu.session_seat.seat_desc(record.venue)
-                if not seat_desc:
-                    seat_desc = ss
-                else:
-                    seat_desc += ',{}'.format(ss)
-            else:
-                if not seat_desc:
-                    seat_desc = '无座'
-                else:
-                    seat_desc += ',无座'
-            snapshot = json.loads(tu.snapshot)
-            if not level_desc:
-                level_desc = snapshot['desc']
-            else:
-                level_desc += snapshot['desc']
+            seat_desc_t, level_desc_t = tu.get_export_data()
+            seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
+            level_desc = level_desc + level_desc_t if level_desc else level_desc_t
         pay_desc = ''
         if record.wx_pay_config:
             pay_desc = record.wx_pay_config.title
@@ -1384,7 +1371,7 @@ class TicketUserCodeInline(ChangeAndViewStackedInline):
     exclude = ['snapshot', 'level_id', 'product_id', 'source_type', 'tiktok_check']
 
     def cy_code_info(self, obj):
-        if hasattr(obj, 'cy_code'):
+        if obj.is_cy_code:
             cy_code = obj.cy_code
             html = '<p>票ID：{}</p>'.format(cy_code.ticket_id)
             html += '<p>票号：{}</p>'.format(cy_code.ticket_no)
@@ -1481,22 +1468,9 @@ def export_ticket_express(modeladmin, request, queryset, filter_unsent=False):
         level_desc = ''
         tu_qs = TicketUserCode.objects.filter(order=record)
         for tu in tu_qs:
-            if tu.session_seat:
-                ss = tu.session_seat.seat_desc(record.venue)
-                if not seat_desc:
-                    seat_desc = ss
-                else:
-                    seat_desc += ',{}'.format(ss)
-            else:
-                if not seat_desc:
-                    seat_desc = '无座'
-                else:
-                    seat_desc += ',无座'
-            snapshot = json.loads(tu.snapshot)
-            if not level_desc:
-                level_desc = snapshot['desc']
-            else:
-                level_desc += snapshot['desc']
+            seat_desc_t, level_desc_t = tu.get_export_data()
+            seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
+            level_desc = level_desc + level_desc_t if level_desc else level_desc_t
         data = [str(record.user), record.mobile, record.show_express_address, seat_desc, level_desc, record.order_no,
                 record.receipt.payno, record.multiply, record.amount, record.card_jc_amount, record.actual_amount,
                 record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
