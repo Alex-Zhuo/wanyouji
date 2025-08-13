@@ -646,6 +646,7 @@ class SessionInfoViewSet(SerializerSelector, DetailPKtoNoViewSet):
         ret = s.create(s.validated_data)
         return Response(ret)
 
+
 # 后台用的接口
 class TicketFileViewSet(SerializerSelector, ReturnNoDetailViewSet):
     queryset = TicketFile.objects.none()
@@ -829,7 +830,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         from qcloud import get_tencent
         client = get_tencent()
         succ, data = client.query_express(order.id, express_no, order.mobile)
-        return Response(data) if succ else Response(status=500, data=data)
+        if succ:
+            return Response(data)
+        else:
+            raise CustomAPIException(data)
 
     @action(methods=['get'], detail=True)
     def express_finish(self, request, pk):
@@ -884,7 +888,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # log.debug(request.META)
         try:
             order = TicketOrder.objects.get(order_no=order_no, user_id=request.user.id)
-            if order.channel_type==TicketOrder.SR_DEFAULT:
+            if order.channel_type == TicketOrder.SR_DEFAULT:
                 data = TicketOrderDetailNewSerializer(order, context={'request': request}).data
             else:
                 data = CyTicketOrderDetailSerializer(order, context={'request': request}).data

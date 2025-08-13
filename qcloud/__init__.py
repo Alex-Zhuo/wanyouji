@@ -231,13 +231,14 @@ class TencentCloudImpl(object):
             with get_pika_redis() as redis:
                 st = False
                 data = redis.hget(name, key)
-                logger.error(data)
+                data = None
                 if not data:
                     content = self.express_query(number, mobile)
                     if content:
                         content = json.loads(content)
                         if content['code'] == 200:
                             data = content['data']
+                            data['code'] = 200
                             if data['status'] in [1, 2]:
                                 timeout = 2 * 3600
                             elif data['status'] == 3:
@@ -249,13 +250,15 @@ class TencentCloudImpl(object):
                         else:
                             logger.error('error express: %s, %s' % (key, content))
                             timeout = 30 * 3600
-                            redis.hset(name, key, content['msg'])
+                            redis.hset(name, key, json.dumps(dict(code=content['code'], msg=content['msg'])))
                         redis.expire(key, int(timeout))
                         st = True
                     else:
                         data = '接口获取失败'
                 else:
                     data = json.loads(data)
+                    if data['code'] == 200:
+                        st = True
                 return st, data
         except HTTPError as e:
             return False, dict(msg=u'请求快递服务异常')
@@ -264,7 +267,7 @@ class TencentCloudImpl(object):
         except (requests.Timeout):
             return False, dict(msg=u'请求快递服务超时')
 
-    def agent_request(self, method: str, user_id: int, content: str, params: dict=None):
+    def agent_request(self, method: str, user_id: int, content: str, params: dict = None):
         """POST请求 - 流式调用外部API"""
         api_url = self.agent_url
         headers = {
