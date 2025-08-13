@@ -273,7 +273,6 @@ class TencentCloudImpl(object):
         headers = {
             'X-Source': 'openapi',
             'Content-Type': 'application/json',
-            'Transfer-Encoding': 'chunked-Type',
             'Authorization': 'Bearer {}'.format(self.agent_token)
         }
         data = {
