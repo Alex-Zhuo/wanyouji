@@ -742,6 +742,9 @@ class ShowProject(UseNoAbstract):
         cate_qs = ShowContentCategory.objects.all()
         for inst in cate_qs:
             inst.show_content_copy_to_pika()
+        s_cate_qs = ShowContentCategorySecond.objects.all()
+        for inst in s_cate_qs:
+            inst.show_content_second_copy_to_pika()
         venues_qs = Venues.objects.all()
         for inst in venues_qs:
             inst.venues_detail_copy_to_pika()
