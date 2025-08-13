@@ -15,16 +15,6 @@ from rest_framework import views
 log = logging.getLogger(__name__)
 
 
-class AgentAi(views.APIView):
-    permission_classes = [IsPermittedUser]
-
-    def post(self, request):
-        from qcloud import get_tencent
-        client = get_tencent()
-        content = request.data.get('question') or request.GET.get('question')
-        return client.agent_request('POST', request.user.id, content)
-
-
 class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     queryset = DefaultQuestions.objects.filter(is_use=True)
     permission_classes = [IsPermittedUser]
