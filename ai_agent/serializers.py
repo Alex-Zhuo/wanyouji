@@ -27,8 +27,8 @@ class HistoryChatCreateSerializerSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        log.error(validated_data['content'])
-        log.error(type(validated_data['content']))
+        # log.error(validated_data['content'])
+        # log.error(type(validated_data['content']))
         HistoryChat.objects.create(user=request.user, content=validated_data['content'])
 
     class Meta:
