@@ -126,7 +126,7 @@ class UserCommissionMonthRecordAdmin(OnlyViewAdmin):
 
 
 class UserAccountAdmin(ChangeAndViewAdmin):
-    search_fields = ['user__first_name', 'user__last_name', '=user__mobile']
+    search_fields = ['=user__id', '=user__mobile']
     list_display = ['user', 'mobile', 'commission_balance', 'flag', 'level', 'parent', 'venue_display']
     list_filter = ['level', 'flag']
     exclude = ['version']
