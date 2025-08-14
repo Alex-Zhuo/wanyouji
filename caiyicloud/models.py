@@ -448,7 +448,7 @@ class CyShowEvent(models.Model):
         logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
                          venues=venue, lat=venue.lat,
-                         lng=venue.lng,
+                         lng=venue.lng, source_type=ShowProject.SR_CY,
                          city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
                          # status=cls.get_show_status(event_detail['state']),
                          status=ShowProject.STATUS_OFF,

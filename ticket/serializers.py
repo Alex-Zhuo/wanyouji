@@ -774,7 +774,7 @@ class ShowProjectDetailSerializer(ShowProjectSerializer):
         fields = ['id', 'no', 'title', 'lat', 'lng', 'content', 'notice', 'display_order', 'is_test', 'status', 'cate',
                   'venues', 'show_type', 'is_recommend', 'dy_show_date', 'price', 'sale_time', 'session_end_at',
                   'origin_amount', 'logo_mobile', 'date', 'sessions', 'can_buy', 'is_collect', 'images',
-                  'sale_time_timestamp']
+                  'sale_time_timestamp', 'source_type']
 
 
 class SessionInfoStaffSerializer(PKtoNoSerializer):

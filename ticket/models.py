@@ -571,6 +571,10 @@ class ShowProject(UseNoAbstract):
     dy_show_date = models.CharField('本地演出日期', max_length=100, help_text='抖音用例如2024-01-01至2024-06-30', null=True,
                                     blank=True, editable=False)
     price = models.DecimalField('最低价格', max_digits=13, decimal_places=2, default=0, help_text='实际支付价格,用于展示和排序')
+    SR_DEFAULT = 1
+    SR_CY = 2
+    SR_CHOICES = ((SR_DEFAULT, U'自建'), (SR_CY, '彩艺云'))
+    source_type = models.SmallIntegerField(u'渠道类型', choices=SR_CHOICES, default=SR_DEFAULT)
     # cert_type = models.ManyToManyField(CertificateType, verbose_name='支持的证件类型')
     name_limit_num = models.IntegerField('每个证件限购数量', default=1, help_text='实名制售票', editable=False)
     order_limit_num = models.IntegerField('每个订单限购数量', default=1, help_text='购票限制，0表示不限购', editable=False)
@@ -777,7 +781,7 @@ class ShowProject(UseNoAbstract):
             domain = config.get('template_url')
             show_dict = model_to_dict(self)
             pop_list = ['no', 'title', 'lat', 'lng', 'content', 'display_order', 'is_test', 'status', 'cate',
-                        'venues', 'show_type', 'is_recommend', 'dy_show_date']
+                        'venues', 'show_type', 'is_recommend', 'dy_show_date', 'source_type']
             show_cache = dict()
             for key in pop_list:
                 if show_dict.get(key):
