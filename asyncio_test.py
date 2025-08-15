@@ -52,7 +52,7 @@ async def main():
                 if min_ms == 0 or min_ms > elapsed_ms:
                     min_ms = elapsed_ms
             avg = ms_total / num
-            print(f'平均响应时间:{avg},最长响应时间:{max_ms},最短响应时间:{min_ms},成功响应:{success},失败请求:{fail}')
+            print(f'平均响应时间:{avg}ms,最长响应时间:{max_ms}ms,最短响应时间:{min_ms}ms,成功响应:{success},失败请求:{fail}')
 
 
 asyncio.run(main())
