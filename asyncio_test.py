@@ -20,7 +20,7 @@ async def fetch(session, url):
     async with session.get(url) as response:
         ret = await response.text()
         status = response.status
-        return ret.text, status
+        return ret, status
 
 
 async def main():
