@@ -26,7 +26,13 @@ async def fetch(session, url):
 async def main():
     async with aiohttp.ClientSession() as session:
         async with get_pika_redis() as redis:
-            for i in list(range(0, 100)):
+            num = 10000
+            ms_total = 0
+            success = 0
+            fail = 0
+            max_ms = 0
+            min_ms = 0
+            for i in list(range(0, num)):
                 token = await redis.lindex('test_token', i)
                 st = False
                 start_time = time.time()
@@ -35,7 +41,18 @@ async def main():
                     st = True
                 end_time = time.time()
                 elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
-                print('{},{}'.format(elapsed_ms, st))
+                ms_total += elapsed_ms
+                # print('{},{}'.format(elapsed_ms, st))
+                if st:
+                    success += 1
+                else:
+                    fail += 1
+                if elapsed_ms > max_ms:
+                    max_ms = elapsed_ms
+                if min_ms == 0 or min_ms > elapsed_ms:
+                    min_ms = elapsed_ms
+            avg = ms_total / num
+            print(f'平均响应时间:{avg},最长响应时间:{max_ms},最短响应时间:{min_ms},成功响应:{success},失败请求:{fail}')
 
 
 asyncio.run(main())
