@@ -25,7 +25,7 @@ def get_queue_size():
     key = get_redis_name('app-limit-queue-size')
     qs = r.get(key)
     if not qs:
-        r.set(key, 20)
+        r.set(key, 2000)
     try:
         ret = int(qs)
     except:
@@ -38,7 +38,7 @@ def get_max_wait():
     key = get_redis_name('app-limit-max-wait')
     qs = r.get(key)
     if not qs:
-        r.set(key, 3)
+        r.set(key, 5)
     try:
         ret = int(qs)
     except:
