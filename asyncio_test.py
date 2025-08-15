@@ -31,11 +31,11 @@ async def fetch(session, url):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        redis = await get_pika_redis()
-        tasks = []
-        for i in list(range(0, 100)):
-            token = await redis.lindex('test_token', i)
-            tasks.append(fetch(session, f"http:127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
+        async with get_pika_redis() as redis:
+            tasks = []
+            for i in list(range(0, 100)):
+                token = await redis.lindex('test_token', i)
+                tasks.append(fetch(session, f"http:127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
         # responses = await asyncio.gather(*tasks)
 
 
