@@ -36,6 +36,9 @@ class TencentCloudImpl(object):
         self.agent_token = conf['agent_token']
         self.assistant_id = conf['assistant_id']
         self.agent_url = conf['agent_url']
+        # 心情智能体
+        self.mood_agent_token = conf['mood_agent_token']
+        self.mood_assistant_id = conf['mood_assistant_id']
 
     def cert_no_verify(self, cert_name: str, cert_no: str):
         try:
@@ -267,7 +270,7 @@ class TencentCloudImpl(object):
         except (requests.Timeout):
             return False, dict(msg=u'请求快递服务超时')
 
-    def agent_request(self, method: str, user_id: int, content: str, params: dict = None):
+    def agent_request_stream(self, method: str, user_id: int, content: str, params: dict = None):
         """POST请求 - 流式调用外部API"""
         api_url = self.agent_url
         headers = {
@@ -300,6 +303,39 @@ class TencentCloudImpl(object):
         )
 
         return create_streaming_response(generator, 'text/event-stream')
+
+    def agent_mood_request(self, user_id: int, content: str, params: dict = None):
+        """POST请求 - 流式调用外部API"""
+        api_url = self.agent_url
+        headers = {
+            'X-Source': 'openapi',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.mood_agent_token)
+        }
+        data = {
+            "assistant_id": self.mood_assistant_id,
+            "user_id": str(user_id),
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": content
+                        }
+                    ]
+                }
+            ]
+        }
+        try:
+            resp = requests.post(api_url, headers=headers, params=params, json=data)
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data['choices'][0]['message']['content']
+        except Exception as e:
+            logger.error(e)
+            return False, '情绪判断失败'
+        return True, int(content)
 
 
 _tent_xun = None

@@ -10,7 +10,7 @@ from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
 from restframework_ext.permissions import IsPermittedUser
 import logging
-from rest_framework import views
+from restframework_ext.exceptions import CustomAPIException
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,17 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
         from qcloud import get_tencent
         client = get_tencent()
         content = request.data.get('question') or request.GET.get('question')
-        return client.agent_request('POST', request.user.id, content)
+        return client.agent_request_stream('POST', request.user.id, content)
+
+    @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
+    def post_mood(self, request):
+        from qcloud import get_tencent
+        client = get_tencent()
+        content = request.data.get('question') or request.GET.get('question')
+        st, data = client.agent_mood_request(request.user.id, content)
+        if not st:
+            raise CustomAPIException(data)
+        return Response(dict(code=data))
 
 
 class HistoryChatViewSet(ReturnNoDetailViewSet):
