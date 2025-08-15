@@ -18,26 +18,24 @@ async def get_pika_redis():
 
 async def fetch(session, url):
     async with session.get(url) as response:
-        start_time = time.time()
-        st = False
         ret = await response.text()
         status = response.status
-        if 200 <= status < 300:
-            st = True
-        end_time = time.time()
-        elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
-        print('{},{}'.format(elapsed_ms, st))
-        return status
+        return ret.text, status
 
 
 async def main():
     async with aiohttp.ClientSession() as session:
         async with get_pika_redis() as redis:
-            tasks = []
             for i in list(range(0, 100)):
                 token = await redis.lindex('test_token', i)
-                tasks.append(fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
-        await asyncio.gather(*tasks)
+                st = False
+                start_time = time.time()
+                data, status = await fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}")
+                if 200 <= status < 300:
+                    st = True
+                end_time = time.time()
+                elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
+                print('{},{}'.format(elapsed_ms, st))
 
 
 asyncio.run(main())
