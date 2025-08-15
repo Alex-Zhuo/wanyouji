@@ -17,10 +17,13 @@ async def get_pika_redis():
 
 
 async def fetch(session, url):
+    start_time = time.time()
     async with session.get(url) as response:
         ret = await response.text()
         status = response.status
-        return ret, status
+        end_time = time.time()
+        elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
+        return ret, status, elapsed_ms
 
 
 async def main():
@@ -35,16 +38,13 @@ async def main():
             tasks = []
             for i in list(range(0, num)):
                 token = await redis.lindex('test_token', i)
-                st = False
-                start_time = time.time()
                 tasks.append(fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
             responses = await asyncio.gather(*tasks)
             for ret in responses:
                 status = ret[1]
                 if 200 <= status < 300:
                     st = True
-                end_time = time.time()
-                elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
+                elapsed_ms = ret[2]
                 ms_total += elapsed_ms
                 # print('{},{}'.format(elapsed_ms, st))
                 if st:
