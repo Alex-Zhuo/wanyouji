@@ -92,7 +92,7 @@ App功能模块如下：
  ├── shopping_points // 代理模块  
  ├── statistical // 数据统计模块  
  ├── ticket // 票务模块  
- ├── xiaoghongshu // 快手接入模块（无效）  
+ ├── xiaoghongshu // 小红书接入模块（无效）  
   
  
 
