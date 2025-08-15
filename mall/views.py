@@ -824,86 +824,86 @@ class AgreementRecordViewSet(ReturnNoDetailViewSet):
         AgreementRecord.create(request.user, 1)
         return Response()
 
-
-class TheaterCardUserRecordViewSet(ReturnNoDetailViewSet):
-    serializer_class = TheaterCardUserRecordSerializer
-    queryset = TheaterCardUserRecord.objects.none()
-    permission_classes = [IsPermittedUser]
-    http_method_names = ['get']
-    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-
-    def list(self, request, *args, **kwargs):
-        inst = TheaterCardUserRecord.objects.filter(user_id=request.user.id).first()
-        if inst:
-            data = self.serializer_class(inst, context={'request': request}).data
-        else:
-            data = dict(amount=0)
-        return Response(data)
-
-
-class TheaterCardUserDetailViewSet(ReadOnlyModelViewSet):
-    serializer_class = TheaterCardUserDetailSerializer
-    queryset = TheaterCardUserDetail.objects.all()
-    permission_classes = [IsPermittedUser]
-    http_method_names = ['get']
-    pagination_class = StandardResultsSetPagination
-    filter_backends = (
-        filter_backend_hook(
-            lambda filter_inst, request, qs: qs.filter(
-                user_id=request.user.pk),
-            'UserIdFilterBackend'),)
-
-    #
-    # def list(self, request, *args, **kwargs):
-    #     qs = self.queryset.filter(user_id=request.user.id)
-    #     page = self.paginate_queryset(qs)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
-
-    @action(methods=['get'], detail=False)
-    def order_cards(self, request):
-        qs = TheaterCardUserDetail.get_old_cards(request.user.id)
-        data = TheaterCardUserDetailOrderSerializer(qs, many=True, context={'request': request}).data
-        return Response(data)
-
-
-class TheaterCardViewSet(ReturnNoDetailViewSet):
-    serializer_class = TheaterCardSerializer
-    queryset = TheaterCard.objects.filter(is_open=True)
-    permission_classes = []
-    http_method_names = ['get']
-
-    def list(self, request, *args, **kwargs):
-        qs = TheaterCard.objects.filter(is_open=True).first()
-        return Response(self.serializer_class(qs, context={'request': request}).data)
-
-
-class TheaterCardOrderViewSet(SerializerSelector, viewsets.ModelViewSet):
-    queryset = TheaterCardOrder.objects.all()
-    serializer_class = TheaterCardOrderSerializer
-    # serializer_class_create = TheaterCardOrderCreateSerializer
-    permission_classes = [IsPermittedUser]
-    http_method_names = ['get', 'post']
-    pagination_class = StandardResultsSetPagination
-    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-
-    def create(self, request, *args, **kwargs):
-        if not hasattr(request, 'current_action'):
-            request.current_action = 'create'
-        s = TheaterCardOrderCreateSerializer(data=request.data, context={'request': request})
-        s.is_valid(True)
-        obj = s.create(s.validated_data)
-        return Response(data=dict(order_no=obj.order_no, receipt_id=obj.receipt.payno))
-
-
-class TheaterCardChangeRecordViewSet(ReturnNoDetailViewSet):
-    serializer_class = TheaterCardChangeRecordSerializer
-    queryset = TheaterCardChangeRecord.objects.all()
-    permission_classes = [IsPermittedUser]
-    http_method_names = ['get']
-    pagination_class = StandardResultsSetPagination
-    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-    #
-    # def list(self, request, *args, **kwargs):
-    #     qs = self.queryset.filter(user_id=request.user.id)
-    #     page = self.paginate_queryset(qs)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+#
+# class TheaterCardUserRecordViewSet(ReturnNoDetailViewSet):
+#     serializer_class = TheaterCardUserRecordSerializer
+#     queryset = TheaterCardUserRecord.objects.none()
+#     permission_classes = [IsPermittedUser]
+#     http_method_names = ['get']
+#     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+#
+#     def list(self, request, *args, **kwargs):
+#         inst = TheaterCardUserRecord.objects.filter(user_id=request.user.id).first()
+#         if inst:
+#             data = self.serializer_class(inst, context={'request': request}).data
+#         else:
+#             data = dict(amount=0)
+#         return Response(data)
+#
+#
+# class TheaterCardUserDetailViewSet(ReadOnlyModelViewSet):
+#     serializer_class = TheaterCardUserDetailSerializer
+#     queryset = TheaterCardUserDetail.objects.all()
+#     permission_classes = [IsPermittedUser]
+#     http_method_names = ['get']
+#     pagination_class = StandardResultsSetPagination
+#     filter_backends = (
+#         filter_backend_hook(
+#             lambda filter_inst, request, qs: qs.filter(
+#                 user_id=request.user.pk),
+#             'UserIdFilterBackend'),)
+#
+#     #
+#     # def list(self, request, *args, **kwargs):
+#     #     qs = self.queryset.filter(user_id=request.user.id)
+#     #     page = self.paginate_queryset(qs)
+#     #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+#
+#     @action(methods=['get'], detail=False)
+#     def order_cards(self, request):
+#         qs = TheaterCardUserDetail.get_old_cards(request.user.id)
+#         data = TheaterCardUserDetailOrderSerializer(qs, many=True, context={'request': request}).data
+#         return Response(data)
+#
+#
+# class TheaterCardViewSet(ReturnNoDetailViewSet):
+#     serializer_class = TheaterCardSerializer
+#     queryset = TheaterCard.objects.filter(is_open=True)
+#     permission_classes = []
+#     http_method_names = ['get']
+#
+#     def list(self, request, *args, **kwargs):
+#         qs = TheaterCard.objects.filter(is_open=True).first()
+#         return Response(self.serializer_class(qs, context={'request': request}).data)
+#
+#
+# class TheaterCardOrderViewSet(SerializerSelector, viewsets.ModelViewSet):
+#     queryset = TheaterCardOrder.objects.all()
+#     serializer_class = TheaterCardOrderSerializer
+#     # serializer_class_create = TheaterCardOrderCreateSerializer
+#     permission_classes = [IsPermittedUser]
+#     http_method_names = ['get', 'post']
+#     pagination_class = StandardResultsSetPagination
+#     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+#
+#     def create(self, request, *args, **kwargs):
+#         if not hasattr(request, 'current_action'):
+#             request.current_action = 'create'
+#         s = TheaterCardOrderCreateSerializer(data=request.data, context={'request': request})
+#         s.is_valid(True)
+#         obj = s.create(s.validated_data)
+#         return Response(data=dict(order_no=obj.order_no, receipt_id=obj.receipt.payno))
+#
+#
+# class TheaterCardChangeRecordViewSet(ReturnNoDetailViewSet):
+#     serializer_class = TheaterCardChangeRecordSerializer
+#     queryset = TheaterCardChangeRecord.objects.all()
+#     permission_classes = [IsPermittedUser]
+#     http_method_names = ['get']
+#     pagination_class = StandardResultsSetPagination
+#     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+#     #
+#     # def list(self, request, *args, **kwargs):
+#     #     qs = self.queryset.filter(user_id=request.user.id)
+#     #     page = self.paginate_queryset(qs)
+#     #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)

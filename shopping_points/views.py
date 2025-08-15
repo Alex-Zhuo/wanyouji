@@ -93,11 +93,11 @@ class CommissionWithdrawViewSet(WithdrawViewSetMixin, ModelViewSet):
         return Response(data=dict(total=total, actual=actual, fee=fee))
 
 
-class PointWithdrawViewSet(WithdrawViewSetMixin, ReturnNoneViewSet):
-    serializer_class = PointWithdrawSerializer
-    queryset = PointWithdraw.objects.all()
-    permission_classes = [IsPermittedUser]
-    filter_backends = [OwnerFilterBackend.new('account__user')]
+# class PointWithdrawViewSet(WithdrawViewSetMixin, ReturnNoneViewSet):
+#     serializer_class = PointWithdrawSerializer
+#     queryset = PointWithdraw.objects.all()
+#     permission_classes = [IsPermittedUser]
+#     filter_backends = [OwnerFilterBackend.new('account__user')]
 
 
 class UserAccountViewSet(ReadOnlyModelViewSet, ReturnNoneViewSet):
@@ -255,6 +255,11 @@ class UserCommissionChangeRecordViewSet(ReadOnlyModelViewSet, ReturnNoDetailView
             status__in=(UserCommissionChangeRecord.STATUS_INVALID,)).aggregate(sum=Sum('amount'))['sum'] or 0
         return Response(res)
 
+class ReceiptAccountViewSet(ModelViewSet):
+    queryset = ReceiptAccount.objects.all()
+    serializer_class = ReceiptAccountSerializer
+    permission_classes = [IsPermittedUser]
+    filter_backends = [OwnerFilterBackend.new('account__user')]
 
 class UserCommissionMonthRecordViewSet(ReadOnlyModelViewSet, ReturnNoDetailViewSet):
     permission_classes = [IsPermittedCommissionMonthUser]
@@ -311,60 +316,55 @@ class UserCommissionMonthRecordViewSet(ReadOnlyModelViewSet, ReturnNoDetailViewS
     #     return Response(data)
 
 
-class UserPointChangeRecordViewSet(ReadOnlyModelViewSet):
-    permission_classes = [IsPermittedUser]
-    serializer_class = UserPointChangeRecordSerializer
-    queryset = UserPointChangeRecord.objects.all().order_by('-create_at')
-    filter_backends = [OwnerFilterBackend.new('account__user')]
-    filter_fields = ('status', 'source_type')
-    pagination_class = StandardResultsSetPagination
+# class UserPointChangeRecordViewSet(ReadOnlyModelViewSet):
+#     permission_classes = [IsPermittedUser]
+#     serializer_class = UserPointChangeRecordSerializer
+#     queryset = UserPointChangeRecord.objects.all().order_by('-create_at')
+#     filter_backends = [OwnerFilterBackend.new('account__user')]
+#     filter_fields = ('status', 'source_type')
+#     pagination_class = StandardResultsSetPagination
 
 
-class ReceiptAccountViewSet(ModelViewSet):
-    queryset = ReceiptAccount.objects.all()
-    serializer_class = ReceiptAccountSerializer
-    permission_classes = [IsPermittedUser]
-    filter_backends = [OwnerFilterBackend.new('account__user')]
 
 
-class TransferBalanceRecordViewSet(SerializerSelector, viewsets.ModelViewSet):
-    queryset = TransferBalanceRecord.objects.all()
-    serializer_class = TransferBalanceRecordSerializer
-    serializer_class_retrieve = TransferBalanceRecordDetailSerializer
-    permission_classes = [IsPermittedUser]
-    pagination_class = DefaultNoPagePagination
-    http_method_names = ['get', 'post']
+# class TransferBalanceRecordViewSet(SerializerSelector, viewsets.ModelViewSet):
+#     queryset = TransferBalanceRecord.objects.all()
+#     serializer_class = TransferBalanceRecordSerializer
+#     serializer_class_retrieve = TransferBalanceRecordDetailSerializer
+#     permission_classes = [IsPermittedUser]
+#     pagination_class = DefaultNoPagePagination
+#     http_method_names = ['get', 'post']
+#
+#     def get_queryset(self):
+#         qs = super(TransferBalanceRecordViewSet, self).get_queryset()
+#         user = self.request.user
+#         return qs.filter(models.Q(source__user=user) | models.Q(to__user=user))
+#
+#     def update(self, request, *args, **kwargs):
+#         return Response(status=400)
+#
+#     @action(methods=['put'], detail=True)
+#     def confirm(self, request, pk):
+#         """
+#         确认转赠。仅是修改状态
+#         :param request:
+#         :param pk:
+#         :return:
+#         """
+#         o = self.get_object()
+#         if o.to and o.to.user == self.request.user:
+#             o.confirm()
+#             return Response()
+#         else:
+#             return Response(status=403)
 
-    def get_queryset(self):
-        qs = super(TransferBalanceRecordViewSet, self).get_queryset()
-        user = self.request.user
-        return qs.filter(models.Q(source__user=user) | models.Q(to__user=user))
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=400)
-
-    @action(methods=['put'], detail=True)
-    def confirm(self, request, pk):
-        """
-        确认转赠。仅是修改状态
-        :param request:
-        :param pk:
-        :return:
-        """
-        o = self.get_object()
-        if o.to and o.to.user == self.request.user:
-            o.confirm()
-            return Response()
-        else:
-            return Response(status=403)
-
-
-class ServiceConfigViewSet(ReturnNoDetailViewSet):
-    serializer_class = ServiceConfigSerializer
-    queryset = ServiceConfig.objects.all()
-    pagination_class = DefaultNoPagePagination
-    http_method_names = ['get']
-
-    def list(self, request, *args, **kwargs):
-        inst = ServiceConfig.get()
-        return Response(self.serializer_class(inst).data)
+#
+# class ServiceConfigViewSet(ReturnNoDetailViewSet):
+#     serializer_class = ServiceConfigSerializer
+#     queryset = ServiceConfig.objects.all()
+#     pagination_class = DefaultNoPagePagination
+#     http_method_names = ['get']
+#
+#     def list(self, request, *args, **kwargs):
+#         inst = ServiceConfig.get()
+#         return Response(self.serializer_class(inst).data)

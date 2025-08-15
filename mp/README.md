@@ -17,9 +17,7 @@
  
  WxAuthViewSet 微信小程序登录   
  LpViewSet 微信小程序手机号绑定  
- BasicConfigViewSet 基础配置接口    
- TikTokViewSet 抖音登录接口    
- DouYinImagesViewSet 抖音证件接口    
+ BasicConfigViewSet 基础配置接口      
  MpClientView 公众号接口封装    
  MpWebView 公众号登录  
  MpApi 公众号回调配置方法   

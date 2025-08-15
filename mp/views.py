@@ -499,47 +499,127 @@ OOsm92mSJIoI459xQicV5VZ1gT3ibaQlBFn4x5xn5tw/132', u'watermark': {u'timestamp': 1
         return Response()
 
 
-class TikTokViewSet(viewsets.ViewSet):
-    permission_classes = []
+class LpViewSet(viewsets.ViewSet):
+    # permission_classes = [IsPermittedUserLP]
+    permission_classes = [IsPermittedUser]
 
-    @action(methods=['post'], permission_classes=[], detail=False)
-    def login(self, request):
+    @action(methods=['post'], detail=False)
+    def push_mobile(self, request):
         """
-        code2Session 通过code换取openid和unionid
+        decrypted:
+        {
+          "phoneNumber": "13580006666",
+          "purePhoneNumber": "13580006666",
+          "countryCode": "86",
+          "watermark": {
+            "appid": "APPID",
+            "timestamp": TIMESTAMP
+          }
+        }
+        :return:
         """
-        code = request.data.get('code')
-        share_code = request.data.get('share_code')
-        from douyin import get_tiktok
-        # from mp.models import SystemDouYinMP
-        # dou_yin = SystemDouYinMP.get()
-        client = get_tiktok()
-        if not code:
-            logger.error('code为空')
-            raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
+
+        encryptedData, iv = map(request.data.get, ['encryptedData', 'iv'])
+        session_key = request.user.session_key
+        logger.error(request.data)
+        logger.error(session_key)
+        if not session_key:
+            return Response(status=401, data=dict(error='小程序没有登陆'))
+        """
+        {
+          "phoneNumber": "13580006666",
+          "purePhoneNumber": "13580006666",
+          "countryCode": "86",
+          "watermark": {
+            "appid": "APPID",
+            "timestamp": TIMESTAMP
+          }
+        }
+        """
         try:
-            info = client.get_openid(code)
+            data = get_wxa_client().decrypt_phone(encryptedData, iv, session_key)
         except Exception as e:
-            logger.error('{},{},抖音绑定失败'.format(code, e))
-            raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
-        if not info.get('openid') or not info.get('unionid'):
-            raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
-        try:
-            user = User.objects.filter(openid_tiktok=info['openid']).first()
-            if not user:
-                user_name = 'tk{}'.format(User.gen_username())
-                user = User.objects.create(username=user_name, openid_tiktok=info['openid'])
-        except Exception as e:
-            raise CustomAPIException('重复登录')
-        if not user.session_key_tiktok or not user.unionid_tiktok:
-            fields = ['session_key_tiktok', 'unionid_tiktok']
-            user.unionid_tiktok = info['unionid']
-            user.session_key_tiktok = info['session_key']
-            user.save(update_fields=fields)
-        # resp = Response()
-        # user.login_user(request, resp)
-        if share_code:
-            user.bind_parent(share_code)
-        return Response(user.biz_get_info_dict())
+            # 因为session_key 过期所以无法解析，需要重新登陆刷新
+            from mall.user_cache import token_share_code_cache_delete
+            from restframework_ext.permissions import get_token
+            token = get_token(request)
+            token_share_code_cache_delete(token)
+            raise CustomAPIException('无法解析手机,请稍后再试')
+        # logger.info(data)
+        if data['purePhoneNumber']:
+            request.user.combine_user(data['purePhoneNumber'], source_type=1, request=request)
+            # 登录赠送等级
+            # request.user.account.login_give()
+        return Response(data=dict(mobile=data['purePhoneNumber'], id=self.request.user.id))
+        # except Exception as e:
+        #     logger.exception(e)
+        #     return Response(status=400, data=dict(error="无法解析手机"))
+
+
+class BasicConfigViewSet(ModelViewSet):
+    serializer_class = BasicConfigSerializer
+    queryset = BasicConfig.objects.all()
+    http_method_names = ['get']
+
+    @action(methods=['get'], detail=False, permission_classes=[])
+    def get_sms_url(self, request):
+        from mp.wechat_client import get_wxa_client
+        from caches import get_redis, sms_url
+        redis = get_redis()
+        wxa = get_wxa_client()
+        url = redis.get(sms_url)
+        if not url:
+            try:
+                data = wxa.generate_urllink('pages/index/index', None)
+                if data['errcode'] == 0:
+                    url = data['url_link']
+                    redis.set(sms_url, url)
+                    redis.expire(sms_url, 60 * 60 * 24 * 20)
+            except Exception as e:
+                pass
+        return Response(url)
+#
+# class TikTokViewSet(viewsets.ViewSet):
+#     permission_classes = []
+#
+#     @action(methods=['post'], permission_classes=[], detail=False)
+#     def login(self, request):
+#         """
+#         code2Session 通过code换取openid和unionid
+#         """
+#         code = request.data.get('code')
+#         share_code = request.data.get('share_code')
+#         from douyin import get_tiktok
+#         # from mp.models import SystemDouYinMP
+#         # dou_yin = SystemDouYinMP.get()
+#         client = get_tiktok()
+#         if not code:
+#             logger.error('code为空')
+#             raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
+#         try:
+#             info = client.get_openid(code)
+#         except Exception as e:
+#             logger.error('{},{},抖音绑定失败'.format(code, e))
+#             raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
+#         if not info.get('openid') or not info.get('unionid'):
+#             raise CustomAPIException('抖音绑定失败,解析错误,稍后再试')
+#         try:
+#             user = User.objects.filter(openid_tiktok=info['openid']).first()
+#             if not user:
+#                 user_name = 'tk{}'.format(User.gen_username())
+#                 user = User.objects.create(username=user_name, openid_tiktok=info['openid'])
+#         except Exception as e:
+#             raise CustomAPIException('重复登录')
+#         if not user.session_key_tiktok or not user.unionid_tiktok:
+#             fields = ['session_key_tiktok', 'unionid_tiktok']
+#             user.unionid_tiktok = info['unionid']
+#             user.session_key_tiktok = info['session_key']
+#             user.save(update_fields=fields)
+#         # resp = Response()
+#         # user.login_user(request, resp)
+#         if share_code:
+#             user.bind_parent(share_code)
+#         return Response(user.biz_get_info_dict())
 
 #
 # class OpenWeixinView(views.APIView):
@@ -651,88 +731,8 @@ class TikTokViewSet(viewsets.ViewSet):
 #             return HttpResponseRedirect(redirect_uri)
 
 
-class LpViewSet(viewsets.ViewSet):
-    # permission_classes = [IsPermittedUserLP]
-    permission_classes = [IsPermittedUser]
-
-    @action(methods=['post'], detail=False)
-    def push_mobile(self, request):
-        """
-        decrypted:
-        {
-          "phoneNumber": "13580006666",
-          "purePhoneNumber": "13580006666",
-          "countryCode": "86",
-          "watermark": {
-            "appid": "APPID",
-            "timestamp": TIMESTAMP
-          }
-        }
-        :return:
-        """
-
-        encryptedData, iv = map(request.data.get, ['encryptedData', 'iv'])
-        session_key = request.user.session_key
-        logger.error(request.data)
-        logger.error(session_key)
-        if not session_key:
-            return Response(status=401, data=dict(error='小程序没有登陆'))
-        """
-        {
-          "phoneNumber": "13580006666",
-          "purePhoneNumber": "13580006666",
-          "countryCode": "86",
-          "watermark": {
-            "appid": "APPID",
-            "timestamp": TIMESTAMP
-          }
-        }
-        """
-        try:
-            data = get_wxa_client().decrypt_phone(encryptedData, iv, session_key)
-        except Exception as e:
-            # 因为session_key 过期所以无法解析，需要重新登陆刷新
-            from mall.user_cache import token_share_code_cache_delete
-            from restframework_ext.permissions import get_token
-            token = get_token(request)
-            token_share_code_cache_delete(token)
-            raise CustomAPIException('无法解析手机,请稍后再试')
-        # logger.info(data)
-        if data['purePhoneNumber']:
-            request.user.combine_user(data['purePhoneNumber'], source_type=1, request=request)
-            # 登录赠送等级
-            # request.user.account.login_give()
-        return Response(data=dict(mobile=data['purePhoneNumber'], id=self.request.user.id))
-        # except Exception as e:
-        #     logger.exception(e)
-        #     return Response(status=400, data=dict(error="无法解析手机"))
-
-
-class BasicConfigViewSet(ModelViewSet):
-    serializer_class = BasicConfigSerializer
-    queryset = BasicConfig.objects.all()
-    http_method_names = ['get']
-
-    @action(methods=['get'], detail=False, permission_classes=[])
-    def get_sms_url(self, request):
-        from mp.wechat_client import get_wxa_client
-        from caches import get_redis, sms_url
-        redis = get_redis()
-        wxa = get_wxa_client()
-        url = redis.get(sms_url)
-        if not url:
-            try:
-                data = wxa.generate_urllink('pages/index/index', None)
-                if data['errcode'] == 0:
-                    url = data['url_link']
-                    redis.set(sms_url, url)
-                    redis.expire(sms_url, 60 * 60 * 24 * 20)
-            except Exception as e:
-                pass
-        return Response(url)
-
-
-class DouYinImagesViewSet(ModelViewSet):
-    serializer_class = DouYinImagesSerializer
-    queryset = DouYinImages.objects.all()
-    http_method_names = ['get']
+#
+# class DouYinImagesViewSet(ModelViewSet):
+#     serializer_class = DouYinImagesSerializer
+#     queryset = DouYinImages.objects.all()
+#     http_method_names = ['get']

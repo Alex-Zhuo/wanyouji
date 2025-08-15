@@ -8,6 +8,8 @@
  ├── models.py // django model文件，数据库表格和model层相关方法            
  ├── view.py // django view 视图层  
  
+ OpenScreenMediaViewSet 首页开屏接口
+ 
   
  
 

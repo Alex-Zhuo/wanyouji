@@ -1,5 +1,5 @@
 # About
-找搭子管理
+Ai管理
 # Director  
  ├── __init__.py // django 应用注册   
  ├── migrations // django model模型数据库迁移   
@@ -9,6 +9,9 @@
  ├── serializers.py // django序列化，相当于controller 控制器层       
  ├── url.py // 接口路由配置     
  ├── view.py // django view 视图层  
+ 
+DefaultQuestionsViewSet   调用agent接口  
+HistoryChatViewSet 提交聊天历史记录接口  
  
   
  

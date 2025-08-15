@@ -29,11 +29,6 @@
  MembershipCardViewSet   年度会员卡设置接口   
  MemberCardRecordViewSet   年度会员卡订单接口  
  AgreementRecordViewSet  用户协议隐私记录接口  
- TheaterCardUserRecordViewSet  用户剧场会员卡接口    
- TheaterCardUserDetailViewSet  剧场会员卡用户记录接口  
- TheaterCardViewSet  剧场会员卡设置接口  
- TheaterCardOrderViewSet  剧场会员卡订单接口  
- TheaterCardChangeRecordViewSet  剧场会员卡余额明细接口  
   
  
 

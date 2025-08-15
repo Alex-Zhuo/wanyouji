@@ -7,8 +7,6 @@
 ├── admins   
 │   ├── app.py // 用于控制后台菜单排序   
 
-├── alibaba // 接入阿里的身份证接口功能   
-
 ├── caches // redis（pika）缓存应用  
 
 ├── common // 通用方法封装  
@@ -44,7 +42,7 @@
 
 ├── home // 后台首页数据展示   
  
-├── maizuo // 抖音平台接入（无效）  
+├── maizuo // 麦座模块（无效）  
 │   ├── __init__.py // 麦座同步座位功能  
 │   ├── login.py // 麦座自动登录  
 │   ├── install_guide.txt // 安装指引    
@@ -52,6 +50,7 @@
 ├── push // 公众号模板消息接入
 
 ├── qcloud // 短信接入功能  
+│   ├── __init__.py // 腾讯业务接口接入
 │   ├── consts.py // 短信验证码    
 │   ├── requests.py // 短信相关通用方法  
 │   ├── sms.py // 腾讯和阿里短信调用方法  
@@ -69,6 +68,9 @@
 
 ├── simpleui // simpleui后台模板目录  
 ├── static // django静态文件目录  
+├── streaming // 流式响应  
+│   ├── utils.py //   通用方法        
+│   ├── view.py // 调用用例         
 ├── templates // django模板文件目录   
 ├── deploy-requirements.txt // 环境依赖包   
 ├── requirements.txt // 环境依赖包  
@@ -78,6 +80,7 @@
 
 
 App功能模块如下：  
+ ├── ai_agent // AI模块  
  ├── coupon // 消费券模块  
  ├── express // 邮费模板模块   
  ├── group_activity // 找搭子模块   
