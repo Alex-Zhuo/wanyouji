@@ -22,9 +22,10 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['post', 'get'], detail=False, permission_classes=[])
     def cy_notify(self, request):
-        log.error(request.data)
+        # 彩艺回调处理
+        log.debug(request.data)
         # log.error(request.body)
-        log.error(request.META)
+        log.debug(request.META)
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         # return JsonResponse(ret)
@@ -39,6 +40,7 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_url(self, request):
+        # 获取座位h5
         s = CySeatUrlSerializer(data=request.data, context=dict(request=request))
         s.is_valid(True)
         ret = s.create(s.validated_data)
@@ -46,6 +48,7 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
     def get_seat_info(self, request):
+        # 获取h5选座座位信息
         biz_id = request.GET.get('biz_id')
         if not biz_id:
             raise CustomAPIException('获取已选择信息失败')

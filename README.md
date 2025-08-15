@@ -81,6 +81,7 @@
 
 App功能模块如下：  
  ├── ai_agent // AI模块  
+ ├── caiyicloud // 彩艺模块  
  ├── coupon // 消费券模块  
  ├── express // 邮费模板模块   
  ├── group_activity // 找搭子模块   
