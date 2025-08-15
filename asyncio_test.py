@@ -27,6 +27,7 @@ async def fetch(session, url):
         end_time = time.time()
         elapsed_ms = int((end_time - start_time) * 1000)  # 计算时间差ms
         print('{},{}'.format(elapsed_ms, st))
+        return status
 
 
 async def main():
@@ -36,7 +37,7 @@ async def main():
             for i in list(range(0, 100)):
                 token = await redis.lindex('test_token', i)
                 tasks.append(fetch(session, f"http:127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
-        # responses = await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
 
 
 asyncio.run(main())
