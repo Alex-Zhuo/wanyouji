@@ -22,7 +22,8 @@ def generate_payload():
 
 async def fetch(session: aiohttp.ClientSession, url: str, payload: dict):
     try:
-        async with session.post(url, data=payload, timeout=ClientTimeout(total=1200)) as response:
+        # async with session.post(url, data=payload, timeout=ClientTimeout(total=1200)) as response:
+        async with session.get(url, timeout=ClientTimeout(total=1200)) as response:
             return await response.json()
     except Exception as e:
         print(f"请求异常: {e}")
