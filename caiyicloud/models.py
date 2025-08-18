@@ -24,6 +24,7 @@ from decimal import Decimal
 from caches import get_redis_name, get_pika_redis, run_with_lock
 from common.utils import get_timestamp
 import os
+import pysnooper
 
 log = logging.getLogger(__name__)
 """
@@ -96,6 +97,7 @@ class CaiYiCloudApp(models.Model):
     def get(cls):
         return cls.objects.first()
 
+    @pysnooper.snoop(log.error)
     @classmethod
     def due_notify(cls, data):
         event_type_list = ['order.issue.ticket', 'order.ticket.refund', 'order.ticket.status.update',
@@ -360,14 +362,14 @@ class CyShowEvent(models.Model):
         #     redis.delete(key)
 
     @classmethod
-    def notify_create_show_task(cls, event_ids: list, log_title:str):
+    def notify_create_show_task(cls, event_ids: list, log_title: str):
         # log_title = '节目创建回调'
         for event_id in event_ids:
             cls.update_or_create_record(event_id, log_title)
             CySession.init_cy_session(event_id, log_title)
 
     @classmethod
-    def sync_create_event(cls, event_ids: list, log_title:str):
+    def sync_create_event(cls, event_ids: list, log_title: str):
         from caiyicloud.tasks import notify_create_show_task
         notify_create_show_task.delay(event_ids, log_title)
         return True, None
