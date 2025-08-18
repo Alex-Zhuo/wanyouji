@@ -936,10 +936,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # redis-cli
         # set app-limit-queue-size 50 并发数
         # set app-limit-max-wait 1 等待时间
-        log.warning(f" noseat_order_new,{request.user.username}")
+        log.warning(f"noseat_order_new,{request.user.username}")
         with try_queue('make-order', get_queue_size(), get_max_wait()) as got:
             if got:
-                # log.warning(f" got the queue,{request.user.username}")
+                log.warning(f" got the queue,{request.user.username}")
                 # time.sleep(10)
                 # log.warning(f" got the queue, and sleep over")
                 # log.warning(request.data)
@@ -952,7 +952,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 s = create_serializer(data=request.data, context={'request': request})
                 s.is_valid(True)
                 order, prepare_order, pay_end_at, ks_order_info, xhs_order_info = s.create(s.validated_data)
-                # log.warning(f"got the queue and exec over")
+                log.warning(f"got the queue and exec over")
             else:
                 log.warning(f" can't the queue")
                 raise CustomAPIException('手慢了，当前抢票人数较多，请稍后重试')
