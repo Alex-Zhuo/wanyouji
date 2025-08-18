@@ -117,11 +117,11 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     def before_create(self, session, is_ks, validated_data, is_xhs=False):
         user = validated_data['user']
-        from caches import run_with_lock
-        user_key = 'user_key_{}'.format(user.id)
-        with run_with_lock(user_key, 5) as got:
-            if not got:
-                raise CustomAPIException('请勿重复下单')
+        # from caches import run_with_lock
+        # user_key = 'user_key_{}'.format(user.id)
+        # with run_with_lock(user_key, 5) as got:
+        #     if not got:
+        #         raise CustomAPIException('请勿重复下单')
         q_session = None
         if is_ks:
             if not session.is_ks_session:
