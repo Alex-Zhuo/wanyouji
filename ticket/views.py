@@ -759,7 +759,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         if status:
             qs = qs.filter(status=int(status))
         if kw:
-            qs = qs.filter(Q(order_no=kw) | Q(name__contains=kw) | Q(title__contains=kw))
+            qs = qs.filter(Q(order_no=kw) | Q(title__contains=kw))
         page = self.paginate_queryset(qs)
         return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
 
