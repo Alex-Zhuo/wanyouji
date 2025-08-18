@@ -18,7 +18,10 @@ async def get_pika_redis():
 
 async def fetch(session, url):
     start_time = time.time()
-    async with session.get(url) as response:
+    data = {"pay_type": 7, "multiply": 1, "amount": 22, "actual_amount": 22, "mobile": "15577150426",
+            "session_id": "e5a1942ff1d44fc3be86d3748a96c8d6", "ticket_list": [{"level_id": 192, "multiply": 1}],
+            "channel_type": 1}
+    async with session.post(url, data=data) as response:
         ret = await response.text()
         status = response.status
         end_time = time.time()
@@ -29,7 +32,7 @@ async def fetch(session, url):
 async def main():
     async with aiohttp.ClientSession() as session:
         async with get_pika_redis() as redis:
-            num = 10000
+            num = 2000
             ms_total = 0
             success = 0
             fail = 0
@@ -38,11 +41,14 @@ async def main():
             tasks = []
             for i in list(range(0, num)):
                 token = await redis.lindex('test_token', i)
-                tasks.append(fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
+                # tasks.append(fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
+                tasks.append(fetch(session, f"http://127.0.0.1:8168/api/show/order/noseat_order_new/?Actoken={token}"))
             responses = await asyncio.gather(*tasks)
             for ret in responses:
                 status = ret[1]
-                if 200 <= status < 300:
+                data = ret[0]
+                print(data)
+                if 200 <= status < 300 and data.get('order_id'):
                     st = True
                 elapsed_ms = ret[2]
                 ms_total += elapsed_ms
