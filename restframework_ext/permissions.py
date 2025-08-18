@@ -148,6 +148,7 @@ def get_token(request):
     """
     获取缓存的用户
     """
+    log.debug(request.META)
     return request.GET.get('Actoken') or request.META.get('HTTP_ACTOKEN')
 
 
