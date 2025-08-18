@@ -174,8 +174,8 @@ class WeiXinLPAuthentication(SessionAuthenticationExt):
             # token获取user，没有则登陆，登录后会刷新缓存
             from mall.user_cache import token_to_cache_user
             user = token_to_cache_user(actoken)
-            log.error(actoken)
-            log.error(user)
+            # log.error(actoken)
+            # log.error(user)
             # if not user:
             #     from django.contrib.auth import get_user_model
             #     user = get_user_model().verify_by_token(actoken)

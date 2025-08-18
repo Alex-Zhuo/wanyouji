@@ -937,6 +937,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 log.warning(f" got the queue")
                 # time.sleep(10)
                 log.warning(f" got the queue, and sleep over")
+                log.warning(request.data)
                 channel_type = self.request.data.get('channel_type')
                 create_serializer = ticket_order_dispatch(TicketOrder.TY_NO_SEAT, channel_type)
                 s = create_serializer(data=request.data, context={'request': request})
