@@ -103,8 +103,8 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             if not inst:
                 inst = SessionInfo.objects.get(no=value)
                 cache.set(key, inst, 120)
-            else:
-                log.warning('session_order_cache')
+            # else:
+            #     log.warning('session_order_cache')
             if not inst.show.can_buy:
                 raise CustomAPIException('演出已停止购买')
             if not inst.can_buy:
