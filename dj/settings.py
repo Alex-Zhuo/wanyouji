@@ -115,7 +115,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ('*')
 WSGI_APPLICATION = 'dj.wsgi.application'
-CSRF_TRUSTED_ORIGINS = ['https://uuu.kafei.chat/','https://szpw.yonp.top/']
+CSRF_TRUSTED_ORIGINS = ['https://uuu.kafei.chat', 'https://szpw.yonp.top']
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
