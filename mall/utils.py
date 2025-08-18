@@ -15,7 +15,7 @@ def randomstrwithdatetime(tail_length=6):
     :return:
     """
     now = timezone.now()
-    return '%s%s' % (now.strftime('%Y%m%d%H%M%S'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
+    return '%s%s' % (now.strftime('%Y%m%d%H%M%S%f'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
 
 
 def random_theater_card_no(tail_length=6):
@@ -24,7 +24,7 @@ def random_theater_card_no(tail_length=6):
     :return:
     """
     now = timezone.now()
-    return 'No%s%s' % (now.strftime('%Y%m%d%H%M%S'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
+    return 'No%s%s' % (now.strftime('%Y%m%d%H%M%S%f'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
 
 
 def random_theater_order_no(tail_length=6):
@@ -33,7 +33,7 @@ def random_theater_order_no(tail_length=6):
     :return:
     """
     now = timezone.now()
-    return 'TC%s%s' % (now.strftime('%Y%m%d%H%M%S'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
+    return 'TC%s%s' % (now.strftime('%Y%m%d%H%M%S%f'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
 
 
 def randomstrwithdatetime_card(tail_length=6):
@@ -42,7 +42,7 @@ def randomstrwithdatetime_card(tail_length=6):
     :return:
     """
     now = timezone.now()
-    return 'C%s%s' % (now.strftime('%Y%m%d%H%M%S'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
+    return 'C%s%s' % (now.strftime('%Y%m%d%H%M%S%f'), ''.join(sample(list(map(str, range(0, 10))), tail_length)))
 
 
 def randomstrwithdatetime_so(tail_length=6):
