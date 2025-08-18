@@ -48,6 +48,7 @@ async def main():
             for ret in responses:
                 status = ret[1]
                 data = ret[0]
+                st = False
                 print(data)
                 if 200 <= status < 300 and data.get('order_id'):
                     st = True
