@@ -30,7 +30,8 @@ def random_string(length=16):
 
 
 class CaiYiCloudAbstract(object):
-    API_BASE_URL = 'https://openapi-qad.caiyicloud.com/'
+    API_BASE_URL = 'https://openapi.caiyicloud.com/'
+    API_BASE_URL_TEST = 'https://openapi-qad.caiyicloud.com/'
 
     def _request(self, method, url_or_endpoint, params=None, data=None, headers=None, **kwargs):
         uri = self.API_BASE_URL
