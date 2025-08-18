@@ -153,11 +153,12 @@ class CaiYiCloudApp(models.Model):
                 event_id = event['event_id']
                 is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
             elif event_type == 'event.distribution.change':
-                # 库存变更通知
+                # 节目变化
                 event_id = event['event_id']
                 event_change_type = event['event_change_type']
                 content = event['content']
-                is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
+                if content:
+                    is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
         return is_success, error_msg
 
 
