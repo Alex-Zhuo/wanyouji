@@ -910,7 +910,11 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 log.warning(f" got the queue")
                 # time.sleep(10)
                 log.warning(f" got the queue, and sleep over")
-                channel_type = self.request.data.get('channel_type')
+                channel_type = request.data.get('channel_type')
+                if channel_type:
+                    channel_type = int(channel_type)
+                else:
+                    raise CustomAPIException('订单类型错误')
                 create_serializer = ticket_order_dispatch(TicketOrder.TY_HAS_SEAT, channel_type)
                 s = create_serializer(data=request.data, context={'request': request})
                 s.is_valid(True)
@@ -938,7 +942,11 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 # time.sleep(10)
                 log.warning(f" got the queue, and sleep over")
                 log.warning(request.data)
-                channel_type = self.request.data.get('channel_type')
+                channel_type = request.data.get('channel_type')
+                if channel_type:
+                    channel_type = int(channel_type)
+                else:
+                    raise CustomAPIException('订单类型错误')
                 create_serializer = ticket_order_dispatch(TicketOrder.TY_NO_SEAT, channel_type)
                 s = create_serializer(data=request.data, context={'request': request})
                 s.is_valid(True)
