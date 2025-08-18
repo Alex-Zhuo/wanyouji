@@ -936,9 +936,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # redis-cli
         # set app-limit-queue-size 50 并发数
         # set app-limit-max-wait 1 等待时间
+        log.warning(f" noseat_order_new,{request.user.username}")
         with try_queue('make-order', get_queue_size(), get_max_wait()) as got:
             if got:
-                log.warning(f" got the queue,{request.user.username}")
+                # log.warning(f" got the queue,{request.user.username}")
                 # time.sleep(10)
                 # log.warning(f" got the queue, and sleep over")
                 # log.warning(request.data)
