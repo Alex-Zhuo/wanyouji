@@ -31,6 +31,8 @@ class CaiYiViewSet(viewsets.ViewSet):
         # return JsonResponse(ret)
         data = request.data
         is_success, error_msg = CaiYiCloudApp.due_notify(data)
+        log.debug(ret)
+        log.debug(ret_error)
         if is_success:
             return JsonResponse(ret)
         else:
