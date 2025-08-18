@@ -50,9 +50,12 @@ async def main():
                 status = ret[1]
                 data = ret[0]
                 st = False
-                data = json.loads(data)
-                if 200 <= status < 300 and data.get('order_id'):
-                    st = True
+                try:
+                    data = json.loads(data)
+                    if 200 <= status < 300 and data.get('order_id'):
+                        st = True
+                except Exception as e:
+                    print(data)
                 elapsed_ms = ret[2]
                 ms_total += elapsed_ms
                 # print('{},{}'.format(elapsed_ms, st))
