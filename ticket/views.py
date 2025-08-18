@@ -938,10 +938,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         # set app-limit-max-wait 1 等待时间
         with try_queue('make-order', get_queue_size(), get_max_wait()) as got:
             if got:
-                log.warning(f" got the queue")
+                log.warning(f" got the queue,{request.user.username}")
                 # time.sleep(10)
-                log.warning(f" got the queue, and sleep over")
-                log.warning(request.data)
+                # log.warning(f" got the queue, and sleep over")
+                # log.warning(request.data)
                 channel_type = request.data.get('channel_type')
                 if channel_type:
                     channel_type = int(channel_type)
