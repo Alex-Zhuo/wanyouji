@@ -306,7 +306,7 @@ class ShowPerformerBanner(models.Model):
 
 
 class ShowType(models.Model):
-    name = models.CharField('类型名称', max_length=20)
+    name = models.CharField('类型名称', max_length=20, unique=True)
     SOURCE_MUSIC = 1
     SOURCE_DRAMA = 2
     SOURCE_QY = 3
@@ -325,7 +325,7 @@ class ShowType(models.Model):
     cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
                                    blank=True, on_delete=models.SET_NULL, help_text='彩艺云用才选')
     is_use = models.BooleanField('是否启用', default=True)
-    slug = models.CharField('标识', null=True, blank=True, max_length=15)
+    slug = models.CharField('标识', null=True, blank=True, max_length=15,unique=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
