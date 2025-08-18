@@ -148,7 +148,6 @@ def get_token(request):
     """
     获取缓存的用户
     """
-    log.debug(request.META)
     return request.GET.get('Actoken') or request.META.get('HTTP_ACTOKEN')
 
 
@@ -161,7 +160,7 @@ class WeiXinLPAuthentication(SessionAuthenticationExt):
         """
         user = getattr(request._request, 'user', None)
         actoken = get_token(request)
-        # log.error(actoken)
+        log.error(request.META)
         if not user or user.is_anonymous:
             if request.META.get('HTTP_AUTH_ORIGIN') == 'lp':
                 # 设定请求类型, 1=小程序,
