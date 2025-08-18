@@ -275,9 +275,10 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.error(q)
         return ret
 
-    @method_decorator(cache_page(30, key_prefix=PREFIX))
+    #  @method_decorator(cache_page(30, key_prefix=PREFIX))
     @action(methods=['get'], detail=False)
     def home_page(self, request):
+        log.error(request.META)
         qs = ShowContentCategory.objects.filter(is_display=True)[:5]
         data = ShowContentCategoryHomeSerializer(qs, many=True, context={'request': request}).data
         return Response(data)
