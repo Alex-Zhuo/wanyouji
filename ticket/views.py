@@ -754,6 +754,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         kw = request.GET.get('kw')
         status = request.GET.get('status') or None
         qs = self.queryset.filter(user=request.user)
+        log.error(request.user.id)
         if status:
             qs = qs.filter(status=int(status))
         if kw:
