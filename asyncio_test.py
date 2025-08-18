@@ -3,6 +3,7 @@ import asyncio
 import time
 import aioredis
 import contextlib
+import json
 
 
 @contextlib.asynccontextmanager
@@ -49,7 +50,7 @@ async def main():
                 status = ret[1]
                 data = ret[0]
                 st = False
-                print(data)
+                data = json.loads(data)
                 if 200 <= status < 300 and data.get('order_id'):
                     st = True
                 elapsed_ms = ret[2]
