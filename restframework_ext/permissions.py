@@ -160,7 +160,6 @@ class WeiXinLPAuthentication(SessionAuthenticationExt):
         """
         user = getattr(request._request, 'user', None)
         actoken = get_token(request)
-        log.error(request.META)
         if not user or user.is_anonymous:
             if request.META.get('HTTP_AUTH_ORIGIN') == 'lp':
                 # 设定请求类型, 1=小程序,
@@ -175,6 +174,8 @@ class WeiXinLPAuthentication(SessionAuthenticationExt):
             # token获取user，没有则登陆，登录后会刷新缓存
             from mall.user_cache import token_to_cache_user
             user = token_to_cache_user(actoken)
+            log.error(actoken)
+            log.error(user)
             # if not user:
             #     from django.contrib.auth import get_user_model
             #     user = get_user_model().verify_by_token(actoken)
