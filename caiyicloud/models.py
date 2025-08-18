@@ -97,8 +97,8 @@ class CaiYiCloudApp(models.Model):
     def get(cls):
         return cls.objects.first()
 
-    @pysnooper.snoop(log.error)
     @classmethod
+    @pysnooper.snoop(log.error)
     def due_notify(cls, data):
         event_type_list = ['order.issue.ticket', 'order.ticket.refund', 'order.ticket.status.update',
                            'ticket.stock.sync', 'event.distribution.create', 'event.distribution.change']
