@@ -18,12 +18,12 @@ async def get_pika_redis():
 
 
 async def fetch(session, url):
-    start_time = time.time()
     data = {"pay_type": 7, "multiply": 1, "amount": 22, "actual_amount": 22, "mobile": "15577150426",
             "session_id": "e5a1942ff1d44fc3be86d3748a96c8d6", "ticket_list": [{"level_id": 192, "multiply": 1}],
             "channel_type": 1}
     headers = dict()
     async with session.post(url, json=data, headers=headers) as response:
+        start_time = time.time()
         ret = await response.text()
         status = response.status
         end_time = time.time()

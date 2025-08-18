@@ -2318,7 +2318,7 @@ class TicketFile(models.Model):
     #             raise CustomAPIException('下单失败,库存不足')
     #     else:
     #         raise CustomAPIException('抢购失败,请稍后再试')
-    @pysnooper.snoop(log.debug)
+    # @pysnooper.snoop(log.debug)
     def change_stock(self, mul):
         levels_upd = []
         levels_upd.append((self.pk, mul, 0))
