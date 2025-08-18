@@ -43,7 +43,7 @@ async def main():
             for i in list(range(0, num)):
                 token = await redis.lindex('test_token', i)
                 # tasks.append(fetch(session, f"http://127.0.0.1:8168/api/users/new_info/?Actoken={token}"))
-                tasks.append(fetch(session, f"http://127.0.0.1:8168/api/show/order/noseat_order_new/?Actoken={token}"))
+                tasks.append(fetch(session, f"http://172.16.0.12/api/show/order/noseat_order_new/?Actoken={token}"))
             responses = await asyncio.gather(*tasks)
             for ret in responses:
                 status = ret[1]
