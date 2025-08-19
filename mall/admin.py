@@ -59,9 +59,9 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     list_display = (
         'id', 'username', 'mobile', 'last_name', 'first_name', 'flag',
         'parent', 'new_parent_cache', 'new_parent_at_cache', 'has_lock_seat', 'is_active', 'agree_member',
-        'agree_privacy',
-        'date_joined',
-        'share_code', 'follow', 'unionid', 'lp_openid', 'openid', 'unionid_tiktok', 'openid_tiktok')
+        'agree_privacy', 'agree_agent', 'date_joined', 'share_code', 'follow', 'unionid', 'lp_openid', 'openid',
+        'unionid_tiktok',
+        'openid_tiktok')
     non_superuser_list_display = ('username', 'first_name')
     add_fieldsets = (
         (None, {
@@ -73,7 +73,9 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     superuser_changeform_fieldsets = (
         (None,
          {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile', 'flag')}),
-        (_('Permissions'), {'fields': ('has_lock_seat', 'is_active', 'is_staff', 'is_superuser', 'groups')}),
+        (_('Permissions'), {'fields': ('agree_member',
+                                       'agree_privacy', 'agree_agent', 'is_active', 'is_staff', 'is_superuser',
+                                       'groups')}),
         (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
     )
     # 技术人员账号不能修改密码
