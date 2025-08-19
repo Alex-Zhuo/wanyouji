@@ -243,8 +243,10 @@ class BasicConfig(models.Model):
                                          validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
     realname_agreement = models.FileField('实名须知', upload_to=f'{FILE_FIELD_PREFIX}/basic', help_text='只能上传pdf或word',
                                           null=True, blank=True,
-                                          validators=[
-                                              FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
+                                          validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
+    agent_agreement = models.FileField('Ai智能体协议', upload_to=f'{FILE_FIELD_PREFIX}/basic', help_text='只能上传pdf或word',
+                                       null=True, blank=True,
+                                       validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
     withdraw_min = models.IntegerField('最低提现金额', default=100)
     auto_cancel_minutes = models.IntegerField('自动关闭订单分钟数', default=5, help_text='订单创建时间开始多少分钟后未支付自动取消订单，解锁位置',
                                               validators=[auto_cancel_minutes_limit])
@@ -329,7 +331,8 @@ class DouYinPayConfig(models.Model):
 class DouYinImages(models.Model):
     basic = models.ForeignKey(BasicConfig, verbose_name=u'商城基本配置', null=True, on_delete=models.SET_NULL)
     title = models.CharField('名称', max_length=20)
-    image = models.ImageField(u'图片', upload_to=f'{IMAGE_FIELD_PREFIX}/mp/basic', validators=[validate_image_file_extension])
+    image = models.ImageField(u'图片', upload_to=f'{IMAGE_FIELD_PREFIX}/mp/basic',
+                              validators=[validate_image_file_extension])
 
     class Meta:
         verbose_name_plural = verbose_name = u'抖音主体证件'

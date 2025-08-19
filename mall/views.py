@@ -815,6 +815,11 @@ class AgreementRecordViewSet(ReturnNoDetailViewSet):
     http_method_names = ['get']
 
     @action(methods=['get'], detail=False)
+    def agent(self, request):
+        AgreementRecord.create(request.user, 3)
+        return Response()
+
+    @action(methods=['get'], detail=False)
     def privacy(self, request):
         AgreementRecord.create(request.user, 2)
         return Response()

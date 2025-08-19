@@ -326,7 +326,7 @@ class BasicConfigSerializer(ModelSerializer):
     class Meta:
         model = BasicConfig
         fields = ['mall_name', 'wx_share_title', 'wx_share_desc', 'wx_share_img', 'venue_mobile', 'custom_work_at',
-                  'service_agreement', 'realname_agreement', 'platform_mobile', 'withdraw_min',
+                  'service_agreement', 'realname_agreement', 'agent_agreement', 'platform_mobile', 'withdraw_min',
                   'business_img', 'dy_images', 'auto_cancel_minutes']
 
 

@@ -118,8 +118,9 @@ class User(AbstractUser):
     new_parent = models.ForeignKey('self', verbose_name=u'最新推荐人', null=True, blank=True, related_name='+',
                                    on_delete=models.SET_NULL)
     new_parent_at = models.DateTimeField('被推荐时间', null=True, blank=True)
-    agree_member = models.BooleanField('是否已签署用户协议', default=False)
-    agree_privacy = models.BooleanField('是否已签署隐私政策', default=False)
+    agree_member = models.BooleanField('已签署用户协议', default=False)
+    agree_privacy = models.BooleanField('已签署隐私政策', default=False)
+    agree_agent = models.BooleanField('已开启Ai智能体服务', default=False)
     has_delete = models.BooleanField('是否有删除权限', default=False)
     has_add = models.BooleanField('是否有增加权限', default=False)
     has_change = models.BooleanField('是否有修改权限', default=False)
@@ -1838,6 +1839,7 @@ class AgreementRecord(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.CASCADE)
     agree_member = models.BooleanField('已签署用户协议', default=False)
     agree_privacy = models.BooleanField('已签署隐私政策', default=False)
+    agree_agent = models.BooleanField('已开启Ai智能体服务', default=False)
     create_at = models.DateTimeField('授权时间', auto_now_add=True)
 
     class Meta:
@@ -1855,11 +1857,16 @@ class AgreementRecord(models.Model):
             inst.save(update_fields=['agree_member'])
             user.agree_member = True
             user.save(update_fields=['agree_member'])
-        else:
+        elif auth_type == 2:
             inst.agree_privacy = True
             inst.save(update_fields=['agree_privacy'])
             user.agree_privacy = True
             user.save(update_fields=['agree_privacy'])
+        else:
+            inst.agree_agent = True
+            inst.save(update_fields=['agree_agent'])
+            user.agree_agent = True
+            user.save(update_fields=['agree_agent'])
         return inst
 
 
