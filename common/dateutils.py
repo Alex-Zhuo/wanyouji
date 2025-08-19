@@ -16,6 +16,17 @@ def get_next_month():
     return datetime(year=year, month=month, day=1)
 
 
+def get_last_month():
+    td = timezone.now()
+    year, month, day = td.year, td.month, td.day
+    if month == 1:
+        month = 12
+        year = year - 1
+    else:
+        month = month - 1
+    return datetime(year=year, month=month, day=1)
+
+
 def quarter_of_date(_date):
     return _date.year, (_date.month / 3 + (1 if _date.month % 3 else 0))
 
