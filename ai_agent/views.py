@@ -1,7 +1,7 @@
 # coding: utf-8
 from rest_framework.response import Response
 from rest_framework.decorators import action
-
+from django.utils.decorators import method_decorator
 from ai_agent.models import DefaultQuestions, HistoryChat
 from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatSerializer, \
     HistoryChatCreateSerializerSerializer
@@ -11,8 +11,11 @@ from restframework_ext.pagination import DefaultNoPagePagination
 from restframework_ext.permissions import IsPermittedUser
 import logging
 from restframework_ext.exceptions import CustomAPIException
+from django.views.decorators.cache import cache_page
+from caches import get_prefix
 
 log = logging.getLogger(__name__)
+PREFIX = get_prefix()
 
 
 class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
@@ -20,6 +23,10 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     permission_classes = [IsPermittedUser]
     serializer_class = DefaultQuestionsSerializer
     http_method_names = ['get']
+
+    @method_decorator(cache_page(60, key_prefix=PREFIX))
+    def list(self, request, *args, **kwargs):
+        return Response(self.serializer_class(self.queryset, context={'request': request}).data)
 
     @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
     def post_question(self, request):
