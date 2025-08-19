@@ -395,6 +395,7 @@ class CyShowEvent(models.Model):
     @classmethod
     def notify_update_session(cls, event_change_type: int, cy_sessions_list: list):
         session_ids = []
+        log.debug(cy_sessions_list)
         for cy_data in cy_sessions_list:
             session_ids.append(cy_data['sessionId'])
         if event_change_type in [5, 8]:
