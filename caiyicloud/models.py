@@ -397,7 +397,7 @@ class CyShowEvent(models.Model):
         session_ids = []
         log.debug(cy_sessions_list)
         for cy_data in cy_sessions_list:
-            session_ids.append(cy_data['sessionId'])
+            session_ids.append(cy_data['session_id'])
         if event_change_type in [5, 8]:
             # 开始结束时间 会有通知的，改期了之后场次状态会变为未开售，这个时候会有通知，后面再改为开售的时候，也会有通知
             qs = CySession.objects.filter(cy_no__in=session_ids)
