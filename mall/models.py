@@ -1850,24 +1850,27 @@ class AgreementRecord(models.Model):
 
     @classmethod
     def create(cls, user, auth_type):
-        auth_type = int(auth_type)
-        inst, _ = cls.objects.get_or_create(user=user)
-        if auth_type == 1:
-            inst.agree_member = True
-            inst.save(update_fields=['agree_member'])
-            user.agree_member = True
-            user.save(update_fields=['agree_member'])
-        elif auth_type == 2:
-            inst.agree_privacy = True
-            inst.save(update_fields=['agree_privacy'])
-            user.agree_privacy = True
-            user.save(update_fields=['agree_privacy'])
-        else:
-            inst.agree_agent = True
-            inst.save(update_fields=['agree_agent'])
-            user.agree_agent = True
-            user.save(update_fields=['agree_agent'])
-        return inst
+        agree_key = get_redis_name(f'agree_key_{auth_type}_{user.id}')
+        from caches import run_with_lock
+        with run_with_lock(agree_key, 2) as got:
+            if got:
+                auth_type = int(auth_type)
+                inst, _ = cls.objects.get_or_create(user=user)
+                if auth_type == 1:
+                    inst.agree_member = True
+                    inst.save(update_fields=['agree_member'])
+                    user.agree_member = True
+                    user.save(update_fields=['agree_member'])
+                elif auth_type == 2:
+                    inst.agree_privacy = True
+                    inst.save(update_fields=['agree_privacy'])
+                    user.agree_privacy = True
+                    user.save(update_fields=['agree_privacy'])
+                else:
+                    inst.agree_agent = True
+                    inst.save(update_fields=['agree_agent'])
+                    user.agree_agent = True
+                    user.save(update_fields=['agree_agent'])
 
 
 class TheaterCard(models.Model):
