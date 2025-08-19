@@ -68,6 +68,7 @@ class MoodImageViewSet(ReturnNoDetailViewSet):
     permission_classes = [IsPermittedUser]
     serializer_class = MoodImageSerializer
     http_method_names = ['get']
+    filter_backends = [DjangoFilterBackend]
     filter_fields = ['code']
 
 
