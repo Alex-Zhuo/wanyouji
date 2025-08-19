@@ -24,7 +24,7 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
     serializer_class = DefaultQuestionsSerializer
     http_method_names = ['get']
 
-    # @method_decorator(cache_page(60, key_prefix=PREFIX))
+    @method_decorator(cache_page(60, key_prefix=PREFIX))
     def list(self, request, *args, **kwargs):
         return Response(self.serializer_class(self.queryset, many=True, context={'request': request}).data)
 
