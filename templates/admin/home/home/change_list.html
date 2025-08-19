@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据面板</title>
 {% block css %}
-<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/css/dataPanel.css' %}?_=1.0.8">
+<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/css/dataPanel.css' %}?_=1.0.9">
 <link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/elementui/theme-chalk/index.css' %}?_=1.0.3">
 {% endblock %}
 </head>
@@ -74,17 +74,15 @@
                         </div>
                         <div class="data_flex_item">
                             <div>
-                                <div>抖音总票房</div>
-                                <img src="{% static '/admin/simpleui-x/img/tiktok.png' %}" alt="">
+                                <div>本月总票房</div>
                             </div>
-                            <div style="color: #4095E5;" v-html="detail.dy_amount">{{detail.dy_amount}}</div>
+                            <div style="color: #4095E5;" v-if="detail && detail.month_header" v-html="detail.month_header.month"></div>
                         </div>
                         <div class="data_flex_item">
                             <div>
-                                <div>微信总票房</div>
-                                <img src="{% static '/admin/simpleui-x/img/wechat.png' %}" alt="">
+                                <div>上月总票房</div>
                             </div>
-                            <div style="color: #4095E5;" v-html="detail.wx_amount"></div>
+                            <div style="color: #4095E5;" v-if="detail && detail.month_header" v-html="detail.month_header.last_month"></div>
                         </div>
                     </div> 
                 </div>
@@ -270,12 +268,6 @@
                 axios.get('/api/stl/data/')
                 .then(response => {
                     this.detail = response.data
-                    let orderFrom = [
-                        { value: response.data.wx_order_num, name: '微信小程序' },
-                        { value: response.data.dy_order_num, name: '抖音小程序' },
-                        { value: response.data.dy_live_order_num, name: '直播间' },
-                        { value: response.data.dy_video_order_num, name: '短视频' },
-                    ]
                     let monthTitle = '每月票房/元'
                     let monthxAxis = []
                     let monthData = []
@@ -291,7 +283,6 @@
                     }
                     this.buildData('order_num')
                     setTimeout(()=>{
-                        this.initOrderChart(orderFrom)
                         this.initStatisticsChart(monthData, monthTitle, monthxAxis)
                     },100)
                     this.loading = false
@@ -299,44 +290,6 @@
                 .catch(error => {
                     this.loading = false
                 })
-            },
-            initOrderChart(data){
-                var chartDom = document.getElementById('orderChart');
-                var myChart = echarts.init(chartDom);
-                var option;
-                option = {
-                    tooltip: {
-                        trigger: 'item'
-                    },
-                    legend: {
-                        top: '3%',
-                        left: 'center'
-                    },
-                    series: [
-                        {
-                        name: '来源',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        avoidLabelOverlap: false,
-                        label: {
-                            show: false,
-                            position: 'center'
-                        },
-                        emphasis: {
-                            label: {
-                            show: true,
-                            fontSize: 20,
-                            fontWeight: 'bold'
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data
-                        }
-                    ]
-                };
-                option && myChart.setOption(option);
             },
             initCityOrderChart(data, title, xAxis){
                 if(!this.cityChart){
