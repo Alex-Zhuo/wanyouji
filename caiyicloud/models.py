@@ -334,7 +334,7 @@ class CyShowEvent(models.Model):
         return get_redis_name('cyiniteventkey')
 
     @classmethod
-    def init_cy_show(cls):
+    def init_cy_show(cls, log_title=None):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -349,7 +349,8 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
-        log_title = '初始化拉取'
+        if not log_title:
+            log_title = '初始化拉取'
         for event in event_list:
             cls.update_or_create_record(event['id'], log_title)
             CySession.init_cy_session(event['id'], log_title)
@@ -376,6 +377,16 @@ class CyShowEvent(models.Model):
         from caiyicloud.tasks import notify_create_show_task
         notify_create_show_task.delay(event_ids, log_title)
         return True, None
+
+    @classmethod
+    def pull_all_event(cls, log_title: str):
+        from caiyicloud.tasks import pull_all_event_task
+        pull_all_event_task.delay(log_title)
+        return True, None
+
+    @classmethod
+    def pull_all_event_task(cls, log_title: str):
+        cls.init_cy_show(log_title)
 
     @classmethod
     def notify_update_record(cls, event_id: str):
