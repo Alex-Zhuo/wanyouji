@@ -38,15 +38,10 @@ class TotalStatisticalSerializer(serializers.ModelSerializer):
     month_data = serializers.SerializerMethodField()
     day_data = serializers.SerializerMethodField()
     other_data = serializers.SerializerMethodField()
+    month_header = serializers.SerializerMethodField()
 
-    def get_city_data(self, obj):
-        qs = CityStatistical.objects.filter(order_num__gt=0).order_by('-order_num')[:7]
-        data = CityStatisticalSerializer(qs, many=True).data
-        return data
-
-    def get_month_data(self, obj):
-        qs = MonthSales.objects.filter(order_num__gt=0).order_by('-year', '-month')[:6]
-        data = MonthSalesSerializer(qs, many=True).data
+    def get_month_header(self, obj):
+        data = dict()
         now = timezone.now()
         year = now.year
         month = now.month
@@ -58,6 +53,16 @@ class TotalStatisticalSerializer(serializers.ModelSerializer):
         last_obj = MonthSales.objects.filter(year=last_year, month=last_month).first()
         data['month'] = now_obj.total_amount if now_obj else 0
         data['last_month'] = last_obj.total_amount if last_obj else 0
+        return data
+
+    def get_city_data(self, obj):
+        qs = CityStatistical.objects.filter(order_num__gt=0).order_by('-order_num')[:7]
+        data = CityStatisticalSerializer(qs, many=True).data
+        return data
+
+    def get_month_data(self, obj):
+        qs = MonthSales.objects.filter(order_num__gt=0).order_by('-year', '-month')[:6]
+        data = MonthSalesSerializer(qs, many=True).data
         return data
 
     def get_day_data(self, obj):
