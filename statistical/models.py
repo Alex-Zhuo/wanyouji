@@ -104,19 +104,19 @@ class TotalStatistical(models.Model):
             super_card_num = redis.get(stl_super_card_num) or 0
             inst.super_card_num = int(super_card_num)
             super_amount = redis.get(stl_super_amount) or 0
-            inst.super_amount = Decimal(super_amount)
+            inst.super_amount = float(super_amount)
             super_order_num = redis.get(stl_super_order_num) or 0
             inst.super_order_num = int(super_order_num)
             super_rest_amount = redis.get(stl_super_rest_amount) or 0
-            inst.super_rest_amount = Decimal(super_rest_amount)
+            inst.super_rest_amount = float(super_rest_amount)
             year_card_num = redis.get(stl_year_card_num) or 0
             inst.year_card_num = int(year_card_num)
             session_num = redis.get(stl_session_num) or 0
             inst.session_num = int(session_num)
             dy_amount = redis.get(stl_dy_amount) or 0
-            inst.dy_amount = Decimal(dy_amount)
+            inst.dy_amount = float(dy_amount)
             wx_amount = redis.get(stl_wx_amount) or 0
-            inst.wx_amount = Decimal(wx_amount)
+            inst.wx_amount = float(wx_amount)
             dy_live_order_num = redis.get(stl_dy_live_order_num) or 0
             inst.dy_live_order_num = int(dy_live_order_num)
             dy_video_order_num = redis.get(stl_dy_video_order_num) or 0
@@ -128,17 +128,17 @@ class TotalStatistical(models.Model):
             refund_num = redis.get(stl_refund_num) or 0
             inst.refund_num = int(refund_num)
             stl_refund_amount = redis.get(stl_refund_amount) or 0
-            inst.refund_amount = Decimal(stl_refund_amount)
+            inst.refund_amount = float(stl_refund_amount)
             agent_num = redis.get(stl_agent_num) or 0
             inst.agent_num = int(agent_num)
             withdraw_amount = redis.get(stl_withdraw_amount) or 0
-            inst.withdraw_amount = Decimal(withdraw_amount)
+            inst.withdraw_amount = float(withdraw_amount)
             total_award_amount = redis.get(stl_total_award_amount) or 0
             share_award_amount = redis.get(stl_share_award_amount) or 0
             group_award_amount = redis.get(stl_group_award_amount) or 0
-            inst.total_award_amount = Decimal(total_award_amount)
-            inst.share_award_amount = Decimal(share_award_amount)
-            inst.group_award_amount = Decimal(group_award_amount)
+            inst.total_award_amount = float(total_award_amount)
+            inst.share_award_amount = float(share_award_amount)
+            inst.group_award_amount = float(group_award_amount)
             inst.save(update_fields=[f.name for f in TotalStatistical._meta.fields if f.name not in ['id']])
 
     @classmethod
