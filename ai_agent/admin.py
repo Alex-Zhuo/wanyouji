@@ -1,5 +1,5 @@
 # coding=utf-8
-from ai_agent.models import HistoryChat, DefaultQuestions
+from ai_agent.models import HistoryChat, DefaultQuestions, MoodImage
 from django.contrib import admin
 from dj import technology_admin
 from dj_ext.permissions import OnlyViewAdmin, OnlyReadTabularInline
@@ -38,8 +38,14 @@ class HistoryChatAdmin(OnlyViewAdmin):
     # chat.short_description = '对话记录'
 
 
+class MoodImageAdmin(admin.ModelAdmin):
+    list_display = ['title', 'image', 'code']
+
+
 admin.site.register(DefaultQuestions, DefaultQuestionsAdmin)
 admin.site.register(HistoryChat, HistoryChatAdmin)
+admin.site.register(MoodImage, MoodImageAdmin)
 
 technology_admin.register(DefaultQuestions, DefaultQuestionsAdmin)
 technology_admin.register(HistoryChat, HistoryChatAdmin)
+technology_admin.register(MoodImage, MoodImageAdmin)

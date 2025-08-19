@@ -2,9 +2,9 @@
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils.decorators import method_decorator
-from ai_agent.models import DefaultQuestions, HistoryChat
+from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage
 from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatSerializer, \
-    HistoryChatCreateSerializerSerializer
+    HistoryChatCreateSerializerSerializer, MoodImageSerializer
 from home.views import ReturnNoDetailViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
@@ -60,3 +60,11 @@ class HistoryChatViewSet(ReturnNoDetailViewSet):
         s.is_valid(True)
         s.create(s.validated_data)
         return Response()
+
+
+class MoodImageViewSet(ReturnNoDetailViewSet):
+    queryset = MoodImage.objects.all()
+    permission_classes = [IsPermittedUser]
+    serializer_class = MoodImageSerializer
+    http_method_names = ['get']
+    filter_fields = ['code']

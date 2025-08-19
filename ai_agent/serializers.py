@@ -5,7 +5,7 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 
-from ai_agent.models import DefaultQuestions, HistoryChat
+from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage
 
 log = logging.getLogger(__name__)
 
@@ -34,3 +34,9 @@ class HistoryChatCreateSerializerSerializer(serializers.ModelSerializer):
     class Meta:
         model = HistoryChat
         fields = ['content']
+
+
+class MoodImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MoodImage
+        fields = ['image', 'code']

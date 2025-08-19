@@ -1,6 +1,9 @@
 # coding=utf-8
+from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.conf import settings
+
+from common.config import IMAGE_FIELD_PREFIX
 
 
 class DefaultQuestions(models.Model):
@@ -25,3 +28,14 @@ class HistoryChat(models.Model):
 
     def __str__(self):
         return self.user.get_full_name()
+
+
+class MoodImage(models.Model):
+    title = models.CharField('名称', max_length=10)
+    image = models.ImageField('图片', upload_to=f'{IMAGE_FIELD_PREFIX}/agent/img',
+                              validators=[validate_image_file_extension])
+    code = models.PositiveSmallIntegerField(verbose_name='code', unique=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = 'Ai智能体情绪动图'
+
