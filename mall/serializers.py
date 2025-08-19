@@ -134,7 +134,7 @@ class UserInfoNewSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ['avatar', 'subscribe', 'first_name', 'last_name', 'token', 'nickname', 'share_code', 'mobile',
-                  'flag', 'uid']
+                  'flag', 'uid', 'agree_member', 'agree_privacy', 'agree_agent']
 
 
 class SetUserMobileSerializer(serializers.ModelSerializer):
@@ -639,7 +639,7 @@ class MemberCardRecordCreateSerializer(serializers.ModelSerializer):
 class AgreementRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgreementRecord
-        fields = ['agree_member', 'agree_privacy', 'create_at']
+        fields = ['agree_member', 'agree_privacy', 'create_at', 'agree_agent']
 
 
 class TheaterCardTicketLevelSerializer(serializers.ModelSerializer):

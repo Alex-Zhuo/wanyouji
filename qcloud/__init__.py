@@ -115,10 +115,32 @@ class TencentCloudImpl(object):
             # 下发手机号码，采用 e.164 标准，+[国家或地区码][手机号]
             # 示例如：+8613711112222， 其中前面有一个+号 ，86为国家码，13711112222为手机号，最多不要超过200个手机号
             req.PhoneNumberSet = ["+86{}".format(data['mobile'])]
-            # 模板 ID: 必须填写已审核通过的模板 ID。模板ID可登录 [短信控制台] 查看
-            req.TemplateID = self.template
             # 模板参数: 若无模板参数，则设置为空
-            req.TemplateParamSet = [data['code'], data['timeout']]
+            template_code = None
+            template_param = None
+            if data.get('biz'):
+                if data['biz'] == 'mz':
+                    template_code = self.template_mz_code
+                    template_param = [data['name'], data['reason']]
+                elif data['biz'] == 'lock_seat':
+                    template_code = self.template_ticket_code
+                    data['name'] = data['name'].replace('【', '')
+                    data['name'] = data['name'].replace('】', '')
+                    name = '{}...'.format(data['name'][:10]) if len(data['name']) > 10 else data['name']
+                    template_param = [name, data['number'], data['time']]
+            else:
+                if data.get('code'):
+                    template_code = self.template_login_code
+                    template_param = [data['code']]
+                else:
+                    template_code = self.template
+                    data['name'] = data['name'].replace('【', '')
+                    data['name'] = data['name'].replace('】', '')
+                    name = '{}...'.format(data['name'][:10]) if len(data['name']) > 10 else data['name']
+                    template_param = [name, data['number'], data['time']]
+            # 模板 ID: 必须填写已审核通过的模板 ID。模板ID可登录 [短信控制台] 查看
+            req.TemplateID = template_code
+            req.TemplateParamSet = template_param
 
             # 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的。
             # 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应。
