@@ -208,6 +208,8 @@ class CyCategory(ChoicesCommon):
             show_type.show_type_copy_to_pika()
         cc, create = ShowContentCategory.objects.get_or_create(title=first_cate.name)
         if create:
+            cc.display_order = 99
+            cc.save(update_fields=['display_order'])
             cc.show_content_copy_to_pika()
         show_second_cate, create = ShowContentCategorySecond.objects.get_or_create(cate=cc, show_type=show_type)
         if create:
