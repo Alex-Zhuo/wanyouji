@@ -47,6 +47,17 @@ class TotalStatisticalSerializer(serializers.ModelSerializer):
     def get_month_data(self, obj):
         qs = MonthSales.objects.filter(order_num__gt=0).order_by('-year', '-month')[:6]
         data = MonthSalesSerializer(qs, many=True).data
+        now = timezone.now()
+        year = now.year
+        month = now.month
+        from common.dateutils import get_last_month
+        last_month = get_last_month()
+        now_obj = MonthSales.objects.filter(year=year, month=month).first()
+        last_year = last_month.year
+        last_month = last_month.month
+        last_obj = MonthSales.objects.filter(year=last_year, month=last_month).first()
+        data['month'] = now_obj.total_amount if now_obj else 0
+        data['last_month'] = last_obj.total_amount if last_obj else 0
         return data
 
     def get_day_data(self, obj):
@@ -74,6 +85,7 @@ class TotalStatisticalSerializer(serializers.ModelSerializer):
     class Meta:
         model = TotalStatistical
         fields = '__all__'
+
 
 # 后台用的不用改no
 class SessionSearchListSerializer(serializers.ModelSerializer):
