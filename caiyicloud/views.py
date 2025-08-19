@@ -25,19 +25,19 @@ class CaiYiViewSet(viewsets.ViewSet):
         # 彩艺回调处理
         log.debug(request.data)
         # log.error(request.body)
-        log.debug(request.META)
+        # log.debug(request.META)
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         # return JsonResponse(ret)
         data = request.data
         is_success, error_msg = CaiYiCloudApp.due_notify(data)
-        log.debug(ret)
-        log.debug(ret_error)
         if is_success:
+            log.debug(ret)
             return JsonResponse(ret)
         else:
             if error_msg:
                 ret_error['msg'] = error_msg
+            log.debug(ret_error)
             return JsonResponse(ret_error)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
