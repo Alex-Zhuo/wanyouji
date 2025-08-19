@@ -1850,7 +1850,7 @@ class AgreementRecord(models.Model):
 
     @classmethod
     def create(cls, user, auth_type):
-        agree_key = get_redis_name(f'agree_key_{auth_type}')
+        agree_key = get_redis_name(f'agree_key_{auth_type}_{user.id}')
         from caches import run_with_lock
         with run_with_lock(agree_key, 2) as got:
             if got:
