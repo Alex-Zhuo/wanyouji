@@ -1,4 +1,5 @@
 # coding: utf-8
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils.decorators import method_decorator
@@ -74,5 +75,6 @@ class ImageResourceViewSet(ReturnNoDetailViewSet):
     queryset = ImageResource.objects.filter(status=ImageResource.STATUS_ON)
     serializer_class = ImageResourceSerializer
     permission_classes = []
+    filter_backends = [DjangoFilterBackend]
     filter_fields = ('code',)
     http_method_names = ['get']
