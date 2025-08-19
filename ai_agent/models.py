@@ -39,3 +39,33 @@ class MoodImage(models.Model):
     class Meta:
         verbose_name_plural = verbose_name = 'Ai智能体情绪动图'
 
+
+class ImageResource(models.Model):
+    code = models.IntegerField('资源编号', unique=True)
+    name = models.CharField('名称', max_length=30)
+    STATUS_ON = 1
+    STATUS_OFF = 0
+    STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
+    status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_ON)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '图片资源'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return '%s:%s' % (self.code, self.name)
+
+    def set_status(self, status):
+        self.status = status
+        self.save(update_fields=['status'])
+
+
+class ImageResourceItem(models.Model):
+    resource = models.ForeignKey(ImageResource, verbose_name='所属资源', related_name='items', on_delete=models.CASCADE)
+    url = models.CharField('链接', null=True, blank=True, max_length=100)
+    image = models.ImageField('图片', null=True, blank=True, upload_to=f'{IMAGE_FIELD_PREFIX}/agent/res',
+                              validators=[validate_image_file_extension])
+
+    class Meta:
+        verbose_name_plural = verbose_name = '资源项'
+        ordering = ['-pk']

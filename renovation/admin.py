@@ -76,5 +76,6 @@ class OpenScreenMediaAdmin(admin.ModelAdmin):
 
 admin.site.register(MediaType, MediaTypeAdmin)
 admin.site.register(OpenScreenMedia, OpenScreenMediaAdmin)
+
 technology_admin.register(MediaType, MediaTypeAdmin)
 technology_admin.register(OpenScreenMedia, OpenScreenMediaAdmin)

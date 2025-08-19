@@ -13,6 +13,7 @@ Ai管理
 DefaultQuestionsViewSet   调用agent接口  
 HistoryChatViewSet 提交聊天历史记录接口  
 MoodImageViewSet 心情图片接口      
+MoodImageViewSet AI图片资源接口  
  
   
  

@@ -5,7 +5,7 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 
-from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage
+from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage, ImageResource, ImageResourceItem
 
 log = logging.getLogger(__name__)
 
@@ -40,3 +40,21 @@ class MoodImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = MoodImage
         fields = ['image', 'code']
+
+
+class ImageResourceItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageResourceItem
+        fields = ['url', 'image']
+
+
+class ImageResourceSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
+    def get_items(self, obj):
+        items = ImageResourceItem.objects.filter(resource_id=obj.id)
+        return ImageResourceItemSerializer(items, many=True, context=self.context).data
+
+    class Meta:
+        model = ImageResource
+        fields = ['code', 'name', 'items']

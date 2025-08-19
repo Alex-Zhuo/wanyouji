@@ -2,9 +2,9 @@
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils.decorators import method_decorator
-from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage
+from ai_agent.models import DefaultQuestions, HistoryChat, MoodImage, ImageResource
 from ai_agent.serializers import DefaultQuestionsSerializer, HistoryChatSerializer, \
-    HistoryChatCreateSerializerSerializer, MoodImageSerializer
+    HistoryChatCreateSerializerSerializer, MoodImageSerializer, ImageResourceSerializer
 from home.views import ReturnNoDetailViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import DefaultNoPagePagination
@@ -68,3 +68,11 @@ class MoodImageViewSet(ReturnNoDetailViewSet):
     serializer_class = MoodImageSerializer
     http_method_names = ['get']
     filter_fields = ['code']
+
+
+class ImageResourceViewSet(ReturnNoDetailViewSet):
+    queryset = ImageResource.objects.filter(status=ImageResource.STATUS_ON)
+    serializer_class = ImageResourceSerializer
+    permission_classes = []
+    filter_fields = ('code',)
+    http_method_names = ['get']

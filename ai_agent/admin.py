@@ -1,8 +1,8 @@
 # coding=utf-8
-from ai_agent.models import HistoryChat, DefaultQuestions, MoodImage
+from ai_agent.models import HistoryChat, DefaultQuestions, MoodImage, ImageResource, ImageResourceItem
 from django.contrib import admin
 from dj import technology_admin
-from dj_ext.permissions import OnlyViewAdmin, OnlyReadTabularInline
+from dj_ext.permissions import OnlyViewAdmin, OnlyReadTabularInline, ChangeAndViewAdmin
 import json
 from django.utils.safestring import mark_safe
 from datetime import datetime
@@ -42,10 +42,44 @@ class MoodImageAdmin(admin.ModelAdmin):
     list_display = ['title', 'image', 'code']
 
 
+def set_on(modeladmin, request, queryset):
+    for inst in queryset:
+        inst.set_status(ImageResource.STATUS_ON)
+
+
+set_on.short_description = u'上架'
+
+
+def set_off(modeladmin, request, queryset):
+    for inst in queryset:
+        inst.set_status(ImageResource.STATUS_OFF)
+
+
+set_off.short_description = u'下架'
+
+
+class ImageResourceItemInlineAdmin(admin.TabularInline):
+    model = ImageResourceItem
+    extra = 0
+
+
+class ImageResourceAdmin(ChangeAndViewAdmin):
+    list_display = ['name', 'code', 'status']
+    inlines = [ImageResourceItemInlineAdmin]
+    actions = [set_on, set_off]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['code']
+        return []
+
+
 admin.site.register(DefaultQuestions, DefaultQuestionsAdmin)
 admin.site.register(HistoryChat, HistoryChatAdmin)
 admin.site.register(MoodImage, MoodImageAdmin)
+admin.site.register(ImageResource, ImageResourceAdmin)
 
 technology_admin.register(DefaultQuestions, DefaultQuestionsAdmin)
 technology_admin.register(HistoryChat, HistoryChatAdmin)
 technology_admin.register(MoodImage, MoodImageAdmin)
+technology_admin.register(ImageResource, ImageResourceAdmin)
