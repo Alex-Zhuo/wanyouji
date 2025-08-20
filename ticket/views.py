@@ -1104,7 +1104,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             timestamp = get_timestamp(start_at)
             filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 1)))
             filepath = os.path.join(dir, filename)
-            if not os.path.isfile(filepath):
+            if not os.path.isfile(filepath) or True:
                 # log.error(filepath)
                 from common.qrutils import order_code_img_new
                 header = '{}开演'.format(start_at.strftime('%H:%M'))
