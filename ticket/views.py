@@ -406,7 +406,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             nn = show.pk
         filename = 'show_{}_{}_13v{}.png'.format(nn, user.id, show.version)
         filepath = os.path.join(dir, filename)
-        log.error(filename)
+        # log.error(filename)
         if not os.path.isfile(filepath):
             url = 'pages/pagesKage/showDetail/showDetail'
             is_img = False
@@ -1102,7 +1102,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             from common.utils import get_timestamp
             start_at = obj.order.session.start_at
             timestamp = get_timestamp(start_at)
-            filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 1)))
+            filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 3)))
             filepath = os.path.join(dir, filename)
             if not os.path.isfile(filepath):
                 # log.error(filepath)
@@ -1117,7 +1117,8 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 venue = obj.order.venue.name
                 if len(title) > 12:
                     venue = '{}...'.format(title[:12])
-                order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                # log.debug(ret)
                 obj.change_share_code_img(filepath)
             url = request.build_absolute_uri('/'.join([rel_url, filename]))
             return Response(data=dict(url=url))

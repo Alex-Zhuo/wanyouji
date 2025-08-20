@@ -208,6 +208,8 @@ class CyCategory(ChoicesCommon):
             show_type.show_type_copy_to_pika()
         cc, create = ShowContentCategory.objects.get_or_create(title=first_cate.name)
         if create:
+            cc.display_order = 99
+            cc.save(update_fields=['display_order'])
             cc.show_content_copy_to_pika()
         show_second_cate, create = ShowContentCategorySecond.objects.get_or_create(cate=cc, show_type=show_type)
         if create:
@@ -332,7 +334,7 @@ class CyShowEvent(models.Model):
         return get_redis_name('cyiniteventkey')
 
     @classmethod
-    def init_cy_show(cls):
+    def init_cy_show(cls, log_title=None):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -347,7 +349,8 @@ class CyShowEvent(models.Model):
             event_data = cy.get_events(page=page, page_size=page_size)
             if event_data.get('list'):
                 event_list += event_data['list']
-        log_title = '初始化拉取'
+        if not log_title:
+            log_title = '初始化拉取'
         for event in event_list:
             cls.update_or_create_record(event['id'], log_title)
             CySession.init_cy_session(event['id'], log_title)
@@ -376,14 +379,25 @@ class CyShowEvent(models.Model):
         return True, None
 
     @classmethod
+    def pull_all_event(cls, log_title: str):
+        from caiyicloud.tasks import pull_all_event_task
+        pull_all_event_task.delay(log_title)
+        return True, None
+
+    @classmethod
+    def pull_all_event_task(cls, log_title: str):
+        cls.init_cy_show(log_title)
+
+    @classmethod
     def notify_update_record(cls, event_id: str):
         cls.update_or_create_record(event_id, '节目更新回调')
 
     @classmethod
     def notify_update_session(cls, event_change_type: int, cy_sessions_list: list):
         session_ids = []
+        log.debug(cy_sessions_list)
         for cy_data in cy_sessions_list:
-            session_ids.append(cy_data['sessionId'])
+            session_ids.append(cy_data['session_id'])
         if event_change_type in [5, 8]:
             # 开始结束时间 会有通知的，改期了之后场次状态会变为未开售，这个时候会有通知，后面再改为开售的时候，也会有通知
             qs = CySession.objects.filter(cy_no__in=session_ids)
@@ -709,15 +723,22 @@ class CySession(models.Model):
         session_dict = dict()
         with get_pika_redis() as redis:
             for seat in seat_change_vo_list:
-                cy_session = session_dict.get(seat['session_id'])
-                if not cy_session:
-                    cy_session = CySession.objects.filter(cy_no=seat['session_id']).first()
-                    if cy_session:
-                        session_dict[seat['session_id']] = cy_session
-                # 无座才要
-                if cy_session and cy_session.event.seat_type == CyShowEvent.SEAT_NO:
-                    if not redis.hget(name, seat['session_id']):
-                        redis.hset(name, seat['session_id'], event_id)
+                lock_key = get_redis_name('cy_sync_stock_sn_{}'.format(seat['session_id']))
+                if redis.setnx(lock_key, 1):
+                    # 同一场次3分钟内更新库存一次
+                    try:
+                        redis.expire(lock_key, 180)
+                        cy_session = session_dict.get(seat['session_id'])
+                        if not cy_session:
+                            cy_session = CySession.objects.filter(cy_no=seat['session_id']).first()
+                            if cy_session:
+                                session_dict[seat['session_id']] = cy_session
+                        # 无座才要
+                        if cy_session and cy_session.event.seat_type == CyShowEvent.SEAT_NO:
+                            if not redis.hget(name, seat['session_id']):
+                                redis.hset(name, seat['session_id'], event_id)
+                    except Exception as e:
+                        redis.delete(lock_key)
         return True, None
 
     @classmethod

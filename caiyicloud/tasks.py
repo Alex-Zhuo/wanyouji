@@ -21,6 +21,9 @@ def confirm_order_task():
 def cy_update_stock_task():
     return CySession.cy_update_stock_task()
 
+@shared_task
+def pull_all_event_task(log_title:str):
+    return CyShowEvent.pull_all_event_task(log_title)
 
 @shared_task
 def notify_create_show_task(event_ids: list, log_title: str):

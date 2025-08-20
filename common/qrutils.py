@@ -928,3 +928,4 @@ def order_code_img_new(code_path, header, date_at, title, seat, code, venue, sav
         deadline_str = '有效期至:{}'.format(deadline_at)
         draw_text_align_new(draw, deadline_str, 200 * 2, 5, (0, 0, 0), font, 420 * 2, 68.5 * 2 - 25)
     bg.save(save_to)
+    return bg_path

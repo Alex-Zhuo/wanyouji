@@ -65,7 +65,7 @@ class ShowContentCategorySecondInline(admin.TabularInline):
 
 
 class ShowContentCategoryAdmin(RemoveDeleteModelAdmin, SaveSignalAdmin):
-    list_display = ['id', 'title', 'display_order']
+    list_display = ['id', 'title', 'display_order', 'is_display']
     search_fields = ['title']
     inlines = [ShowContentCategorySecondInline]
     list_editable = ['display_order']
