@@ -1117,7 +1117,8 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 venue = obj.order.venue.name
                 if len(title) > 12:
                     venue = '{}...'.format(title[:12])
-                order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                log.debug(ret)
                 obj.change_share_code_img(filepath)
             url = request.build_absolute_uri('/'.join([rel_url, filename]))
             return Response(data=dict(url=url))

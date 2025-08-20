@@ -904,7 +904,6 @@ def order_code_img_new(code_path, header, date_at, title, seat, code, venue, sav
     bg_path = 'ticket/images/ticket_code.png'
     if deadline_at:
         bg_path = 'ticket/images/ticket_code_new.png'
-    print(bg_path)
     bg = Image.open(os.path.join(settings.BASE_DIR, bg_path))
     bg = merge_image(bg, child, (141, 153 * 2))
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'mall/images/simsun-bold.ttf'), 56)
@@ -929,3 +928,4 @@ def order_code_img_new(code_path, header, date_at, title, seat, code, venue, sav
         deadline_str = '有效期至:{}'.format(deadline_at)
         draw_text_align_new(draw, deadline_str, 200 * 2, 5, (0, 0, 0), font, 420 * 2, 68.5 * 2 - 25)
     bg.save(save_to)
+    return bg_path
