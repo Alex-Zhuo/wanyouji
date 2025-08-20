@@ -1102,7 +1102,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             from common.utils import get_timestamp
             start_at = obj.order.session.start_at
             timestamp = get_timestamp(start_at)
-            filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 2)))
+            filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 3)))
             filepath = os.path.join(dir, filename)
             if not os.path.isfile(filepath):
                 # log.error(filepath)
