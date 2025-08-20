@@ -723,15 +723,22 @@ class CySession(models.Model):
         session_dict = dict()
         with get_pika_redis() as redis:
             for seat in seat_change_vo_list:
-                cy_session = session_dict.get(seat['session_id'])
-                if not cy_session:
-                    cy_session = CySession.objects.filter(cy_no=seat['session_id']).first()
-                    if cy_session:
-                        session_dict[seat['session_id']] = cy_session
-                # 无座才要
-                if cy_session and cy_session.event.seat_type == CyShowEvent.SEAT_NO:
-                    if not redis.hget(name, seat['session_id']):
-                        redis.hset(name, seat['session_id'], event_id)
+                lock_key = get_redis_name('cy_sync_stock_sn_{}'.format(seat['session_id']))
+                if redis.setnx(lock_key, 1):
+                    # 同一场次3分钟内更新库存一次
+                    try:
+                        redis.expire(lock_key, 180)
+                        cy_session = session_dict.get(seat['session_id'])
+                        if not cy_session:
+                            cy_session = CySession.objects.filter(cy_no=seat['session_id']).first()
+                            if cy_session:
+                                session_dict[seat['session_id']] = cy_session
+                        # 无座才要
+                        if cy_session and cy_session.event.seat_type == CyShowEvent.SEAT_NO:
+                            if not redis.hget(name, seat['session_id']):
+                                redis.hset(name, seat['session_id'], event_id)
+                    except Exception as e:
+                        redis.delete(lock_key)
         return True, None
 
     @classmethod
