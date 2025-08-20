@@ -904,6 +904,7 @@ def order_code_img_new(code_path, header, date_at, title, seat, code, venue, sav
     bg_path = 'ticket/images/ticket_code.png'
     if deadline_at:
         bg_path = 'ticket/images/ticket_code_new.png'
+    print(bg_path)
     bg = Image.open(os.path.join(settings.BASE_DIR, bg_path))
     bg = merge_image(bg, child, (141, 153 * 2))
     font = ImageFont.truetype(os.path.join(settings.BASE_DIR, 'mall/images/simsun-bold.ttf'), 56)
