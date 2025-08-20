@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.utils import timezone
-
+from DjangoUeditor.models import UEditorField
 from common.config import FILE_FIELD_PREFIX, IMAGE_FIELD_PREFIX
 from express.models import Division
 from mall.models import User, validate_positive_int_gen, Receipt, TheaterCardUserRecord, TheaterCardTicketLevel, \
@@ -325,7 +325,7 @@ class ShowType(models.Model):
     cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
                                    blank=True, on_delete=models.SET_NULL, help_text='彩艺云用才选')
     is_use = models.BooleanField('是否启用', default=True)
-    slug = models.CharField('标识', null=True, blank=True, max_length=15,unique=True)
+    slug = models.CharField('标识', null=True, blank=True, max_length=15, unique=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
@@ -597,7 +597,10 @@ class ShowProject(UseNoAbstract):
                                                limit_choices_to=models.Q(qualification_type=5005),
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
-    content = models.TextField('节目介绍', null=True)
+    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/",
+                           filePath=f"{FILE_FIELD_PREFIX}/show/",
+                           upload_settings={"imageMaxSize": 1204000},
+                           settings={}, command=None, null=True)
     notice = models.TextField('购票须知', null=True, editable=False)
     other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
     STATUS_ON = 1

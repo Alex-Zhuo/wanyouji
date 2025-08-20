@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'import_export',
     'nested_admin',
     'rest_framework',
+    'DjangoUeditor',
     'qcloud',
     'express',
     'mall',
