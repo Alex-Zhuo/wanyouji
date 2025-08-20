@@ -837,7 +837,7 @@ def show_share_wxa_code(wxa_code, save_to, show, flag_path=None, is_img=False):
     h = show.logo_mobile.height % 510
     w = show.logo_mobile.width % 375
     if h or w:
-        gimg.resize((width, height), Image.ANTIALIAS)
+        gimg = gimg.resize((width, height), Image.ANTIALIAS)
     else:
         gimg.thumbnail((width, height))
     bg = Image.open(os.path.join(settings.BASE_DIR, 'mall/images/share_show.jpg'))
