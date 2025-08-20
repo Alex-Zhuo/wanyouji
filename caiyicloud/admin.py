@@ -60,9 +60,11 @@ def pull_all_event(modeladmin, request, queryset):
 
 pull_all_event.short_description = '拉取所有项目'
 
+
 def pull_new_event(modeladmin, request, queryset):
     CyShowEvent.pull_new_event('后台执行拉新拉取')
     messages.success(request, '执行成功,刷新中')
+
 
 pull_all_event.short_description = '拉取新项目'
 
@@ -71,7 +73,7 @@ class CyShowEventAdmin(AllOnlyViewAdmin):
     list_display = ['event_id', 'show', 'category', 'show_type', 'seat_type', 'ticket_mode', 'state',
                     'expire_order_minute', 'updated_at']
     list_filter = ['state', 'show_type', 'updated_at']
-    actions = [refresh_event, pull_all_event]
+    actions = [refresh_event, pull_new_event, pull_all_event]
 
 
 class CyIdTypesAdmin(AllOnlyViewAdmin):
