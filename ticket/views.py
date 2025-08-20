@@ -404,7 +404,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             nn = 'xhs{}'.format(show.pk)
         else:
             nn = show.pk
-        filename = 'show_{}_{}_13v{}.png'.format(nn, user.id, show.version)
+        filename = 'show_{}_{}_1v{}.png'.format(nn, user.id, show.version)
         filepath = os.path.join(dir, filename)
         # log.error(filename)
         if not os.path.isfile(filepath):

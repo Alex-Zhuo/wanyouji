@@ -832,7 +832,12 @@ def show_share_wxa_code(wxa_code, save_to, show, flag_path=None, is_img=False):
     else:
         from restframework_ext.exceptions import CustomAPIException
         raise CustomAPIException('没有封面')
-    gimg.thumbnail((375 * 2, 510 * 2))
+    width = 375 * 2
+    height = 510 * 2
+    if show.logo_mobile.height < height or show.logo_mobile.width < width:
+        gimg.resize((width, height), Image.ANTIALIAS)
+    else:
+        gimg.thumbnail((width, height))
     bg = Image.open(os.path.join(settings.BASE_DIR, 'mall/images/share_show.jpg'))
     bg = merge_image(bg, gimg, (0, 0))
     bg = merge_image(bg, child, (248 * 2, 529 * 2))
