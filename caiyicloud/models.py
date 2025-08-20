@@ -334,7 +334,7 @@ class CyShowEvent(models.Model):
         return get_redis_name('cyiniteventkey')
 
     @classmethod
-    def init_cy_show(cls, log_title=None):
+    def init_cy_show(cls, log_title=None, is_new=False):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -352,8 +352,12 @@ class CyShowEvent(models.Model):
         if not log_title:
             log_title = '初始化拉取'
         for event in event_list:
-            cls.update_or_create_record(event['id'], log_title)
-            CySession.init_cy_session(event['id'], log_title)
+            has_event = False
+            if is_new:
+                has_event = cls.objects.filter(event_id=event['id']).exists()
+            if not has_event:
+                cls.update_or_create_record(event['id'], log_title)
+                CySession.init_cy_session(event['id'], log_title)
         # redis = get_pika_redis()
         # key = cls.init_event_pika_key()
         # has_change_event_list = redis.lrange(key, 0, -1) or []
@@ -387,6 +391,16 @@ class CyShowEvent(models.Model):
     @classmethod
     def pull_all_event_task(cls, log_title: str):
         cls.init_cy_show(log_title)
+
+    @classmethod
+    def pull_new_event(cls, log_title: str):
+        from caiyicloud.tasks import pull_new_event_task
+        pull_new_event_task.delay(log_title)
+        return True, None
+
+    @classmethod
+    def pull_new_event_task(cls, log_title: str):
+        cls.init_cy_show(log_title, is_new=True)
 
     @classmethod
     def notify_update_record(cls, event_id: str):

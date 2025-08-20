@@ -47,18 +47,24 @@ class CyVenueAdmin(AllOnlyViewAdmin):
 def refresh_event(modeladmin, request, queryset):
     event_ids = list(queryset.values_list('event_id', flat=True))
     CyShowEvent.sync_create_event(event_ids, '后台节目刷新')
-    messages.success(request, '执行成功')
+    messages.success(request, '执行成功,刷新中')
 
 
 refresh_event.short_description = '刷新节目所有场次'
 
 
 def pull_all_event(modeladmin, request, queryset):
-    CyShowEvent.pull_all_event('后台执行拉取')
-    messages.success(request, '执行成功')
+    CyShowEvent.pull_all_event('后台执行全部拉取')
+    messages.success(request, '执行成功,刷新中')
 
 
 pull_all_event.short_description = '拉取所有项目'
+
+def pull_new_event(modeladmin, request, queryset):
+    CyShowEvent.pull_new_event('后台执行拉新拉取')
+    messages.success(request, '执行成功,刷新中')
+
+pull_all_event.short_description = '拉取新项目'
 
 
 class CyShowEventAdmin(AllOnlyViewAdmin):
