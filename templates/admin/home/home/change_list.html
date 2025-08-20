@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据面板</title>
 {% block css %}
-<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/css/dataPanel.css' %}?_=1.0.9">
+<link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/css/dataPanel.css' %}?_=1.1.0">
 <link rel="stylesheet" type="text/css" href="{% static '/admin/simpleui-x/elementui/theme-chalk/index.css' %}?_=1.0.3">
 {% endblock %}
 </head>
@@ -22,27 +22,6 @@
                     <div>数据概览</div>
                 </div>
                 <div class="data_flex_content">
-                    <div class="data_flex">
-                        <div class="data_flex_title" style="background-color: #81B337;">
-                            <div class="title_left">
-                                <img src="{% static '/admin/simpleui-x/img/people.png' %}" alt="">
-                                <div>总用户数</div>
-                            </div>
-                            <div class="title_right" v-html="detail.user_num"></div>
-                        </div>
-                        <div class="data_flex_item">
-                            <div>
-                                <div>超级会员</div>
-                            </div>
-                            <div v-html="detail.super_card_num"></div>
-                        </div>
-                        <div class="data_flex_item">
-                            <div>
-                                <div>VIP会员</div>
-                            </div>
-                            <div v-html="detail.year_card_num"></div>
-                        </div>
-                    </div> 
                     <div class="data_flex data_flex_margin">
                         <div class="data_flex_title" style="background-color: #EF7B1C;">
                             <div class="title_left">
