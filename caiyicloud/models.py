@@ -148,17 +148,17 @@ class CaiYiCloudApp(models.Model):
                 event_id = event['event_id']
                 seat_change_vo_list = event['seat_change_vo_list']
                 is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
-            elif event_type == 'event.distribution.create':
-                # 节目分销创建通知
-                event_id = event['event_id']
-                is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
-            elif event_type == 'event.distribution.change':
-                # 节目变化
-                event_id = event['event_id']
-                event_change_type = event['event_change_type']
-                content = event['content']
-                if content:
-                    is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
+            # elif event_type == 'event.distribution.create':
+            #     # 节目分销创建通知
+            #     event_id = event['event_id']
+            #     is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
+            # elif event_type == 'event.distribution.change':
+            #     # 节目变化
+            #     event_id = event['event_id']
+            #     event_change_type = event['event_change_type']
+            #     content = event['content']
+            #     if content:
+            #         is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
         return is_success, error_msg
 
 
