@@ -404,7 +404,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             nn = 'xhs{}'.format(show.pk)
         else:
             nn = show.pk
-        filename = 'show_{}_{}_2v{}.png'.format(nn, user.id, show.version)
+        filename = 'show_{}_{}_3v{}.png'.format(nn, user.id, show.version)
         filepath = os.path.join(dir, filename)
         if not os.path.isfile(filepath):
             url = 'pages/pagesKage/showDetail/showDetail'
@@ -441,7 +441,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
                 from common.qrutils import show_share_wxa_code
                 flag = show.flag.filter(img__isnull=False).first()
                 show_share_wxa_code(buf, filepath, show, flag.img.path if flag and flag.img else None, is_img)
-                log.error(filename)
+                # log.error(filename)
             else:
                 raise CustomAPIException('获取失败')
         url = request.build_absolute_uri('/'.join([rel_url, filename]))

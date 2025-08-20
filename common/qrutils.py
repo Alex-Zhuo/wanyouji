@@ -834,7 +834,9 @@ def show_share_wxa_code(wxa_code, save_to, show, flag_path=None, is_img=False):
         raise CustomAPIException('没有封面')
     width = 375 * 2
     height = 510 * 2
-    if show.logo_mobile.height < height or show.logo_mobile.width < width:
+    h = show.logo_mobile.height % 510
+    w = show.logo_mobile.width % 375
+    if h or w:
         gimg.resize((width, height), Image.ANTIALIAS)
     else:
         gimg.thumbnail((width, height))
