@@ -66,7 +66,7 @@ def pull_new_event(modeladmin, request, queryset):
     messages.success(request, '执行成功,刷新中')
 
 
-pull_all_event.short_description = '拉取新项目'
+pull_new_event.short_description = '拉取新项目'
 
 
 class CyShowEventAdmin(AllOnlyViewAdmin):
