@@ -544,7 +544,7 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             img_name = user.share_code
         filename = 'inv_%s_%s_v7%s.png' % (img_name, sqbg.id, sqbg.ver if sqbg else 0)
-        logger.error(filename)
+        # logger.error(filename)
         filepath = os.path.join(dir, filename)
         if not os.path.isfile(filepath):
             # log.debug(request.META.get('HTTP_AUTH_ORIGIN'))
