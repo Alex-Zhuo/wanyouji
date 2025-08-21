@@ -1744,7 +1744,7 @@ class CyOrderRefund(models.Model):
 
 
 class CyEventLog(models.Model):
-    event = models.ForeignKey(CyShowEvent, verbose_name='节目', on_delete=models.PROTECT)
+    event = models.ForeignKey(CyShowEvent, verbose_name='节目', on_delete=models.CASCADE)
     title = models.CharField('描述', max_length=100)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
@@ -1758,7 +1758,7 @@ class CyEventLog(models.Model):
 
 
 class CySessionLog(models.Model):
-    session = models.ForeignKey(CySession, verbose_name='场次', on_delete=models.PROTECT)
+    session = models.ForeignKey(CySession, verbose_name='场次', on_delete=models.CASCADE)
     title = models.CharField('描述', max_length=100)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
