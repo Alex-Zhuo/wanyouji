@@ -280,7 +280,8 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # tiktok_code_display.short_description = '抖音分享二维码'
 
     def wxa_code_display(self, obj):
-        if obj and obj.is_cy_show and obj.cy_show.poster_url and (not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
+        if obj and obj.is_cy_show and obj.cy_show.poster_url and (
+                not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
                 obj.logo_mobile.path)):
             from caiyicloud.models import logo_mobile_dir
             obj.logo_mobile = save_url_img(obj.cy_show.poster_url, logo_mobile_dir)
@@ -321,7 +322,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
         with with_redis() as redis:
             if redis.setnx(key, 1):
                 redis.expire(key, 3)
-                fields = ['lat', 'lng']
+                fields = ['lat', 'lng', 'cate', 'show_type']
                 if change:
                     inst = ShowProject.objects.get(id=obj.id)
                     if obj.logo_mobile != inst.logo_mobile:
