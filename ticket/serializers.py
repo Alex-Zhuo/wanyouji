@@ -1315,7 +1315,7 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        log.debug(validated_data)
+        # log.debug(validated_data)
         request = self.context.get('request')
         id_card = validated_data.get('id_card', None)
         if not id_card:
