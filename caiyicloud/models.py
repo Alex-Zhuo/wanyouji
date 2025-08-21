@@ -307,6 +307,7 @@ class CyShowEvent(models.Model):
     )
     expire_order_minute = models.PositiveSmallIntegerField('订单支付等待时间', help_text='单位：分钟')
     snapshot = models.TextField('其他信息', null=True, blank=True, editable=False)
+    is_delete = models.BooleanField('是否删除', default=False, editable=False)
     # 时间信息
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
