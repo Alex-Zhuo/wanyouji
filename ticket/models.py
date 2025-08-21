@@ -597,7 +597,7 @@ class ShowProject(UseNoAbstract):
                                                limit_choices_to=models.Q(qualification_type=5005),
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
-    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/",
+    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/",toolbars='mini',
                            filePath=f"{FILE_FIELD_PREFIX}/show/",
                            upload_settings={"imageMaxSize": 1204000},
                            settings={}, command=None, null=True)
