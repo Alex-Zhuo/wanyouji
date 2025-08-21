@@ -374,8 +374,11 @@ class CyShowEvent(models.Model):
     def notify_create_show_task(cls, event_ids: list, log_title: str):
         # log_title = '节目创建回调'
         for event_id in event_ids:
-            cls.update_or_create_record(event_id, log_title)
-            CySession.init_cy_session(event_id, log_title)
+            try:
+                cls.update_or_create_record(event_id, log_title)
+                CySession.init_cy_session(event_id, log_title)
+            except Exception as e:
+                log.error(e)
 
     @classmethod
     def sync_create_event(cls, event_ids: list, log_title: str):
