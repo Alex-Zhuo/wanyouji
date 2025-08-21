@@ -38,6 +38,7 @@ EVENT_CATEGORIES = {
 CY_NEED_CONFIRM_DICT_KEY = get_redis_name('cy_need_confirm_key')
 CONFIRM_RETRY_TIMES = 3
 APPLY_PLATFORM = '深圳文旅体'
+logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
 
 
 def create_code_qr(code: str, filepath_name: str):
@@ -478,7 +479,6 @@ class CyShowEvent(models.Model):
         show_type = show_second_cate.show_type
         cate = show_second_cate.cate
         venue = CyVenue.init_venue(event_detail['venue_id'])
-        logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
         # 保存网络图片
         logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
@@ -515,6 +515,8 @@ class CyShowEvent(models.Model):
                 TicketPurchaseNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
         show.shows_detail_copy_to_pika()
         CyEventLog.create_record(cy_show, log_title)
+        if not os.path.isfile(logo_mobile_path):
+            logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         return cy_show
     # except Exception as e:
     #     log.error(e)
