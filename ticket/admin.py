@@ -348,8 +348,8 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         # 过滤外键的选择。
-        if obj and obj.is_cy_show and obj.cy_show.poster_url and obj.logo_mobile and not os.path.isfile(
-                obj.logo_mobile.path):
+        if obj and obj.is_cy_show and obj.cy_show.poster_url and (not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
+                obj.logo_mobile.path)):
             from caiyicloud.models import logo_mobile_dir
             obj.logo_mobile = save_url_img(obj.cy_show.poster_url, logo_mobile_dir)
             obj.save(update_fields=['logo_mobile'])
