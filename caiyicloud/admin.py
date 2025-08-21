@@ -75,6 +75,11 @@ class CyShowEventAdmin(AllOnlyViewAdmin):
     list_filter = ['state', 'show_type', 'updated_at']
     actions = [refresh_event, pull_new_event, pull_all_event]
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.filter(is_delete=False)
+        return qs
+
 
 class CyIdTypesAdmin(AllOnlyViewAdmin):
     list_display = ['code', 'name']
