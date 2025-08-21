@@ -2430,15 +2430,16 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = amount * discount
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = amount * discount
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
     @classmethod
@@ -2466,15 +2467,16 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = quantize(amount * discount, 2)
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = quantize(amount * discount, 2)
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
     def reset_stock(self, stock):
@@ -3017,15 +3019,16 @@ class SessionSeat(models.Model):
                     raise CustomAPIException('座位{}已被占用，请重新选座'.format(str(inst)))
             else:
                 raise CustomAPIException('座位选择错误，请重新选座，')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = quantize(amount * discount, 2)
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = quantize(amount * discount, 2)
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return multiply, amount, actual_amount, session_seat_list, ticket_order_discount_dict
 
 
