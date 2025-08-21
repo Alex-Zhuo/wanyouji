@@ -1304,7 +1304,7 @@ class ShowUserSerializer(PKtoNoSerializer):
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    id_card = serializers.CharField(required=False)
+    id_card = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     def validate_mobile(self, value):
         import re
