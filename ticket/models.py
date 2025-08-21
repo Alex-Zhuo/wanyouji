@@ -630,6 +630,10 @@ class ShowProject(UseNoAbstract):
         verbose_name_plural = verbose_name = '节目'
         ordering = ['-pk']
 
+    @property
+    def is_cy_show(self):
+        return hasattr(self, 'cy_show')
+
     @classmethod
     def import_record(cls, file_path):
         from django.conf import settings
@@ -901,7 +905,6 @@ class ShowProject(UseNoAbstract):
             inst.redis_show_date_copy()
 
     def get_wxa_code(self):
-        return None
         from mp.models import SystemWxMP
         from django.db.models import signals
         sy = SystemWxMP.get()

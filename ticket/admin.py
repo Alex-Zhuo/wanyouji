@@ -19,7 +19,7 @@ import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.contrib import messages
-from common.utils import get_config, s_mobile, s_name, show_content, s_id_card, get_whole_url
+from common.utils import get_config, s_mobile, s_name, show_content, s_id_card, get_whole_url, save_url_img
 from django.db.transaction import atomic
 from dj_ext.exceptions import AdminException
 import pysnooper
@@ -33,6 +33,7 @@ import random
 
 # from kuaishou_wxa.models import KsGoodsConfig, KsGoodsImage, KsOrderSettleRecord
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -347,6 +348,11 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         # 过滤外键的选择。
+        if obj and obj.is_cy_show and obj.cy_show.poster_url and obj.logo_mobile and not os.path.isfile(
+                obj.logo_mobile.path):
+            from caiyicloud.models import logo_mobile_dir
+            obj.logo_mobile = save_url_img(obj.cy_show.poster_url, logo_mobile_dir)
+            obj.save(update_fields=['logo_mobile'])
         if context['adminform'].form.fields.get('host_approval_qual'):
             context['adminform'].form.fields['host_approval_qual'].queryset = TikTokQualRecord.objects.filter(
                 qualification_type=TikTokQualRecord.Q_APPROVE, status=TikTokQualRecord.STATUS_CHECK)
