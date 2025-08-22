@@ -597,7 +597,7 @@ class ShowProject(UseNoAbstract):
                                                limit_choices_to=models.Q(qualification_type=5005),
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
-    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/",toolbars='mini',
+    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/", toolbars='mini',
                            filePath=f"{FILE_FIELD_PREFIX}/show/",
                            upload_settings={"imageMaxSize": 1204000},
                            settings={}, command=None, null=True)
@@ -689,6 +689,9 @@ class ShowProject(UseNoAbstract):
         # inst = ShowCollectRecord.objects.filter(show_id=int(show_id), user=user).first()
         # data['is_collect'] = inst.is_collect if inst else False
         now = timezone.now()
+        if data.get('content'):
+            config = get_config()
+            data['content'] = data['content'].replace('src="/media/', f'src="{config["media_url"]}')
         sale_time = datetime.strptime(data['sale_time'], '%Y-%m-%dT%H:%M:%S')
         session_end_at = datetime.strptime(data['session_end_at'], '%Y-%m-%dT%H:%M:%S') if data.get(
             'session_end_at') else None
