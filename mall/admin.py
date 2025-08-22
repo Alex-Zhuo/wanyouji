@@ -52,7 +52,7 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     autocomplete_fields = ['parent']
     search_fields = ['=mobile', '=id']
     list_filter = (UserAdminTypeFilter, 'date_joined', 'follow', HasParentFilter, 'is_active', 'is_staff')
-    actions = [set_member]
+    # actions = [set_member]
     nonsuperuser_readonly_fields = ['username', 'parent', 'new_parent_cache', 'new_parent_at_cache']
     # has_delete 用于是否有删除权限
     readonly_fields = ['new_parent_cache', 'new_parent_at_cache']
