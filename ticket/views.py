@@ -1010,7 +1010,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedAgentUser])
     def agent_order(self, request):
         status = request.GET.get('status') or None
-        qs = self.queryset.filter(agent=request.user)
+        qs = TicketOrder.objects.filter(agent=request.user)
         if status:
             qs = qs.filter(status=int(status))
         else:
