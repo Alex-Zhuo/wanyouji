@@ -3327,10 +3327,12 @@ class TicketOrder(models.Model):
             from shopping_points.models import UserCommissionChangeRecord
             qs = UserCommissionChangeRecord.objects.filter(order=self,
                                                            status=UserCommissionChangeRecord.STATUS_CAN_WITHDRAW)
+            if is_refund:
+                qs = qs.filter(source_type=UserCommissionChangeRecord.SOURCE_TYPE_REFUND)
+            else:
+                qs = qs.exclude(source_type=UserCommissionChangeRecord.SOURCE_TYPE_REFUND)
             if qs:
                 c_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
-            if is_refund:
-                c_amount = -c_amount
             SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount,
                                              c_amount=c_amount)
 
