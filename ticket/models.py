@@ -3730,6 +3730,7 @@ class TicketOrder(models.Model):
                             self.do_order()
 
     def do_order(self):
+        self.add_stl()
         if self.order_type == self.TY_MARGIN:
             if self.source_order and self.source_order.pay_type == Receipt.PAY_WeiXin_LP or \
                     self.source_order.source_type in [self.SOURCE_VIDEO, self.SOURCE_LIVE]:
