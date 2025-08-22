@@ -91,7 +91,6 @@ class TotalStatistical(models.Model):
 
     @classmethod
     def task_change_data(cls):
-        close_old_connections()
         from caches import get_pika_redis, stl_user_num, stl_session_num, stl_agent_num, stl_super_card_num, \
             stl_super_amount, stl_super_order_num, stl_super_rest_amount, stl_year_card_num, stl_dy_amount, \
             stl_wx_amount, stl_dy_live_order_num, stl_dy_video_order_num, stl_dy_order_num, stl_wx_order_num, \
