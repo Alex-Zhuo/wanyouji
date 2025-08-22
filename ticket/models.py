@@ -5223,7 +5223,7 @@ class TicketOrderRefund(models.Model):
                         account = inst.account
                         UserCommissionChangeRecord.add_record(account, -amount, source_type, desc,
                                                               status=UserCommissionChangeRecord.STATUS_CAN_WITHDRAW,
-                                                              order=order)
+                                                              order=order, refund_source_type=inst.source_type)
                 if qs:
                     # 每日代理销售记录退款扣除
                     order.change_agent_amount(is_refund=True)
