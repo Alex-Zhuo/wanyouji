@@ -281,6 +281,8 @@ class ShowPerformer(models.Model):
         while dd and i < 200:
             i += 1
             dd = redis.rpop(performer_key)
+            if not dd:
+                break
             id, num = dd.split('_')
             if total_list.get(str(id)):
                 total_list[str(id)] += int(num)

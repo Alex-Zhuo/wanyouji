@@ -269,6 +269,8 @@ class CityStatistical(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(city_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -318,6 +320,8 @@ class DayStatistical(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(day_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -367,6 +371,8 @@ class MonthSales(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(month_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -457,6 +463,8 @@ class SessionAgentDaySum(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(session_agent_sum_key)
+                if not dd:
+                    break
                 id, amount, c_amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['amount'] += Decimal(amount)
@@ -523,6 +531,8 @@ class SessionCpsDaySum(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(session_cps_sum_key)
+                if not dd:
+                    break
                 id, amount, c_amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['amount'] += Decimal(amount)
