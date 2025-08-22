@@ -667,7 +667,6 @@ class UserCommissionChangeRecord(ChangeAddAbstract):
             from statistical.models import TotalStatistical
             if refund_source_type:
                 type = refund_source_type
-                amount = -amount
             else:
                 type = source_type
             share_award_amount = 0
