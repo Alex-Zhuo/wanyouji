@@ -1082,7 +1082,7 @@ class SessionInfo(UseNoAbstract):
     desc = models.CharField('场次备注', max_length=100, null=True, blank=True)
     # 限购相关
     order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购', editable=False)
-    is_name_buy = models.BooleanField('是否一单一证', default=False, help_text='0.01购票权限用户不走一单一证流程')
+    is_name_buy = models.BooleanField('是否一单一证', default=False)
     name_buy_num = models.PositiveIntegerField('单证限购数量', default=0, help_text='用于限制一证最多购买多少张票，配合一单一证使用')
     one_id_one_ticket = models.BooleanField(default=False, verbose_name='是否一票一证购买')
     SEAT_HAS = 1

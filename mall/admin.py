@@ -51,14 +51,14 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     ordering = ['-pk']
     autocomplete_fields = ['parent']
     search_fields = ['=mobile', '=id']
-    list_filter = (UserAdminTypeFilter, 'date_joined', 'follow', HasParentFilter, 'flag', 'is_active', 'is_staff')
+    list_filter = (UserAdminTypeFilter, 'date_joined', 'follow', HasParentFilter, 'is_active', 'is_staff')
     actions = [set_member]
     nonsuperuser_readonly_fields = ['username', 'parent', 'new_parent_cache', 'new_parent_at_cache']
     # has_delete 用于是否有删除权限
     readonly_fields = ['new_parent_cache', 'new_parent_at_cache']
     list_display = (
-        'id', 'username', 'mobile', 'last_name', 'first_name', 'flag',
-        'parent', 'new_parent_cache', 'new_parent_at_cache', 'has_lock_seat', 'is_active', 'agree_member',
+        'id', 'username', 'mobile', 'last_name', 'first_name',
+        'parent', 'new_parent_cache', 'new_parent_at_cache', 'is_active', 'agree_member',
         'agree_privacy', 'agree_agent', 'date_joined', 'share_code', 'follow', 'unionid', 'lp_openid', 'openid',
         'unionid_tiktok',
         'openid_tiktok')
@@ -67,12 +67,12 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
         (None, {
             'classes': ('wide',),
             'fields': (
-                'username', 'password1', 'password2', 'mobile', 'flag', 'parent', 'parent_at', 'is_staff', 'groups'),
+                'username', 'password1', 'password2', 'mobile', 'parent', 'parent_at', 'is_staff', 'groups'),
         }),
     )
     superuser_changeform_fieldsets = (
         (None,
-         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile', 'flag')}),
+         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile')}),
         (_('Permissions'), {'fields': ('agree_member',
                                        'agree_privacy', 'agree_agent', 'is_active', 'is_staff', 'is_superuser',
                                        'groups')}),
@@ -81,19 +81,19 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     # 技术人员账号不能修改密码
     tg_changeform_fieldsets = (
         (None,
-         {'fields': ('username', 'last_name', 'first_name', 'mobile', 'flag')}),
+         {'fields': ('username', 'last_name', 'first_name', 'mobile')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
         (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
     )
 
     nonsuperuser_changeform_fieldsets = (
         (None,
-         {'fields': ('password', 'first_name', 'last_name', 'mobile', 'flag', 'parent', 'parent_at', 'new_parent_cache',
+         {'fields': ('password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
                      'new_parent_at_cache')}),
     )
 
     nonsuperuser_changable_fields = (
-        'password', 'first_name', 'last_name', 'mobile', 'flag', 'parent', 'parent_at', 'new_parent_cache',
+        'password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
         'new_parent_at_cache'
     )
     list_per_page = 100
