@@ -31,6 +31,7 @@ import pysnooper
 from caches import get_pika_redis, get_redis_name, run_with_lock
 from django.core.validators import validate_image_file_extension, FileExtensionValidator
 from restframework_ext.models import UseNoAbstract
+from django.db.models import Sum
 
 log = logging.getLogger(__name__)
 tiktok_goods_url = 'pages/pagesKage/showDetail/showDetail'
@@ -610,7 +611,7 @@ class ShowProject(UseNoAbstract):
     STATUS_OFF = 0
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
-    is_recommend = models.BooleanField('为你推荐', default=True,help_text='勾选后节目将会显示在首页底部【为你推荐】板块')
+    is_recommend = models.BooleanField('为你推荐', default=True, help_text='勾选后节目将会显示在首页底部【为你推荐】板块')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
@@ -3322,7 +3323,14 @@ class TicketOrder(models.Model):
             else:
                 s_type = self.source_type
             amount = -self.refund_amount if is_refund else self.award_amount
-            SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount)
+            c_amount = 0
+            from shopping_points.models import UserCommissionChangeRecord
+            qs = UserCommissionChangeRecord.objects.filter(order=self,
+                                                           status=UserCommissionChangeRecord.STATUS_CAN_WITHDRAW)
+            if qs:
+                c_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+            SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount,
+                                             c_amount=c_amount)
 
     def change_cps_agent_amount(self, source_type, c_amount, amount, platform):
         from statistical.models import SessionCpsDaySum
