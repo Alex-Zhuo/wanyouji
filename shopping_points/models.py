@@ -676,7 +676,7 @@ class UserCommissionChangeRecord(ChangeAddAbstract):
                 share_award_amount = amount
             elif type == cls.SOURCE_TYPE_GROUP:
                 group_award_amount = amount
-            if source_type in cls.award_source_type():
+            if type in cls.award_source_type():
                 # 增加或减少
                 total_award_amount = amount
             TotalStatistical.change_award_stl(share_award_amount=share_award_amount,
