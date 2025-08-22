@@ -912,6 +912,8 @@ class CySession(models.Model):
             session = SessionInfo.objects.create(**session_data)
             cls_data['c_session'] = session
             cy_session = cls.objects.create(**cls_data)
+            from statistical.models import TotalStatistical
+            TotalStatistical.add_session_num()
         else:
             cy_session = cy_session_qs.first()
             session = cy_session.c_session
