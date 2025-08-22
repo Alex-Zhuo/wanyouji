@@ -59,18 +59,18 @@ def export_cps_record(queryset):
 
 class TotalStatistical(models.Model):
     user_num = models.IntegerField('总用户数', default=0)
-    super_card_num = models.IntegerField('超级会员数', default=0)
-    super_amount = models.DecimalField('超级会员卡总收款', max_digits=13, decimal_places=2, default=0)
-    super_order_num = models.IntegerField('超级会员卡订单数', default=0)
-    super_rest_amount = models.DecimalField('超级会员卡余额', max_digits=13, decimal_places=2, default=0)
-    year_card_num = models.IntegerField('VIP会员数', default=0)
+    super_card_num = models.IntegerField('超级会员数', default=0, editable=False)
+    super_amount = models.DecimalField('超级会员卡总收款', max_digits=13, decimal_places=2, default=0, editable=False)
+    super_order_num = models.IntegerField('超级会员卡订单数', default=0, editable=False)
+    super_rest_amount = models.DecimalField('超级会员卡余额', max_digits=13, decimal_places=2, default=0, editable=False)
+    year_card_num = models.IntegerField('VIP会员数', default=0, editable=False)
     session_num = models.IntegerField('总场次数', default=0)
-    dy_amount = models.DecimalField('抖音总票房', max_digits=13, decimal_places=2, default=0)
+    dy_amount = models.DecimalField('抖音总票房', max_digits=13, decimal_places=2, default=0, editable=False)
     wx_amount = models.DecimalField('微信总票房', max_digits=13, decimal_places=2, default=0)
-    dy_live_order_num = models.IntegerField('抖音直播间订单数', default=0, help_text='下单渠道数量')
-    dy_video_order_num = models.IntegerField('抖音短视频订单数', default=0, help_text='下单渠道数量')
-    dy_order_num = models.IntegerField('抖音小程序订单数', default=0, help_text='下单渠道数量')
-    wx_order_num = models.IntegerField('微信小程序订单数', default=0, help_text='下单渠道数量')
+    dy_live_order_num = models.IntegerField('抖音直播间订单数', default=0, help_text='下单渠道数量', editable=False)
+    dy_video_order_num = models.IntegerField('抖音短视频订单数', default=0, help_text='下单渠道数量', editable=False)
+    dy_order_num = models.IntegerField('抖音小程序订单数', default=0, help_text='下单渠道数量', editable=False)
+    wx_order_num = models.IntegerField('微信小程序订单数', default=0, help_text='下单渠道数量', editable=False)
     refund_num = models.IntegerField('退款订单总数', default=0)
     refund_amount = models.DecimalField('退款总额', max_digits=13, decimal_places=2, default=0)
     agent_num = models.IntegerField('代理人数', default=0)
@@ -91,7 +91,6 @@ class TotalStatistical(models.Model):
 
     @classmethod
     def task_change_data(cls):
-        close_old_connections()
         from caches import get_pika_redis, stl_user_num, stl_session_num, stl_agent_num, stl_super_card_num, \
             stl_super_amount, stl_super_order_num, stl_super_rest_amount, stl_year_card_num, stl_dy_amount, \
             stl_wx_amount, stl_dy_live_order_num, stl_dy_video_order_num, stl_dy_order_num, stl_wx_order_num, \
@@ -270,6 +269,8 @@ class CityStatistical(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(city_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -319,6 +320,8 @@ class DayStatistical(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(day_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -368,6 +371,8 @@ class MonthSales(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(month_order_sum)
+                if not dd:
+                    break
                 id, num, amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['order_num'] += int(num)
@@ -458,6 +463,8 @@ class SessionAgentDaySum(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(session_agent_sum_key)
+                if not dd:
+                    break
                 id, amount, c_amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['amount'] += Decimal(amount)
@@ -524,6 +531,8 @@ class SessionCpsDaySum(models.Model):
             while dd and i < 200:
                 i += 1
                 dd = redis.rpop(session_cps_sum_key)
+                if not dd:
+                    break
                 id, amount, c_amount = dd.split('_')
                 if total_list.get(str(id)):
                     total_list[str(id)]['amount'] += Decimal(amount)

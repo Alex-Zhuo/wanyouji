@@ -19,7 +19,7 @@ import xlwt
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.contrib import messages
-from common.utils import get_config, s_mobile, s_name, show_content, s_id_card, get_whole_url
+from common.utils import get_config, s_mobile, s_name, show_content, s_id_card, get_whole_url, save_url_img
 from django.db.transaction import atomic
 from dj_ext.exceptions import AdminException
 import pysnooper
@@ -33,6 +33,7 @@ import random
 
 # from kuaishou_wxa.models import KsGoodsConfig, KsGoodsImage, KsOrderSettleRecord
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +265,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     autocomplete_fields = ['cate_second', 'venues', 'flag']
     # autocomplete_fields = ['show_type', 'venues', 'performer', 'flag'] + ['host_approval_qual', 'ticket_agent_qual']
     actions = [set_on, set_off]
-    inlines = [TicketPurchaseNoticeInline, TicketWatchingNoticeInline, ShowsDetailImageInline]
+    inlines = [TicketPurchaseNoticeInline, TicketWatchingNoticeInline]
     readonly_fields = ['cate', 'show_type', 'session_end_at', 'lng', 'lat', 'wxa_code', 'no']
     list_per_page = 50
     list_editable = ['display_order']
@@ -279,6 +280,12 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # tiktok_code_display.short_description = '抖音分享二维码'
 
     def wxa_code_display(self, obj):
+        if obj and obj.is_cy_show and obj.cy_show.poster_url and (
+                not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
+                obj.logo_mobile.path)):
+            from caiyicloud.models import logo_mobile_dir
+            obj.logo_mobile = save_url_img(obj.cy_show.poster_url, logo_mobile_dir)
+            obj.save(update_fields=['logo_mobile'])
         request = get_request()
         code = obj.get_wxa_code()
         return mark_safe(
@@ -315,7 +322,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
         with with_redis() as redis:
             if redis.setnx(key, 1):
                 redis.expire(key, 3)
-                fields = ['lat', 'lng']
+                fields = ['lat', 'lng', 'cate', 'show_type']
                 if change:
                     inst = ShowProject.objects.get(id=obj.id)
                     if obj.logo_mobile != inst.logo_mobile:

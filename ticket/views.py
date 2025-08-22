@@ -404,9 +404,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             nn = 'xhs{}'.format(show.pk)
         else:
             nn = show.pk
-        filename = 'show_{}_{}_13v{}.png'.format(nn, user.id, show.version)
+        filename = 'show_{}_{}_4v{}.png'.format(nn, user.id, show.version)
         filepath = os.path.join(dir, filename)
-        # log.error(filename)
         if not os.path.isfile(filepath):
             url = 'pages/pagesKage/showDetail/showDetail'
             is_img = False
@@ -442,6 +441,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
                 from common.qrutils import show_share_wxa_code
                 flag = show.flag.filter(img__isnull=False).first()
                 show_share_wxa_code(buf, filepath, show, flag.img.path if flag and flag.img else None, is_img)
+                # log.error(filename)
             else:
                 raise CustomAPIException('获取失败')
         url = request.build_absolute_uri('/'.join([rel_url, filename]))
@@ -852,7 +852,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedManagerUser])
     def search_order(self, request):
         kw = request.GET.get('kw')
-        qs = self.queryset.filter(status=TicketOrder.STATUS_UNPAID)
+        qs = TicketOrder.objects.filter(status=TicketOrder.STATUS_UNPAID)
         if kw:
             qs = qs.filter(Q(order_no=kw) | Q(mobile=kw))
             data = self.serializer_class(qs, many=True, context={'request': request}).data
@@ -1010,7 +1010,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedAgentUser])
     def agent_order(self, request):
         status = request.GET.get('status') or None
-        qs = self.queryset.filter(agent=request.user)
+        qs = TicketOrder.objects.filter(agent=request.user)
         if status:
             qs = qs.filter(status=int(status))
         else:

@@ -773,13 +773,13 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         amounts_data['actual_total_amount'] = cy_actual_amount
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
         # 优惠卷和会员卡互斥
-        if can_member_card:
-            account = user.account
-            discount = account.get_discount()
-            if discount < 1:
-                cy_actual_amount = cy_actual_amount * discount
-                ticket_order_discount_list.append(dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                       amount=cy_actual_amount - cy_actual_amount))
+        # if can_member_card:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     if discount < 1:
+        #         cy_actual_amount = cy_actual_amount * discount
+        #         ticket_order_discount_list.append(dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                                amount=cy_actual_amount - cy_actual_amount))
 
         amount = cy_amount + express_fee
         actual_amount = cy_actual_amount + express_fee

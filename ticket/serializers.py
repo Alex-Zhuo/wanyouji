@@ -1147,8 +1147,12 @@ class TicketOrderDetailSerializer(TicketOrderSerializer):
         data = dict(content=None, notice=None)
         if obj.session and obj.session.show:
             show = obj.session.show
-            data['content'] = show.content
-            data['notice'] = show.notice
+            data['content'] = None
+            from caches import get_pika_redis, redis_shows_copy_key
+            redis = get_pika_redis()
+            data = redis.hget(redis_shows_copy_key, str(show.id))
+            data = json.loads(data)
+            data['notice'] = data.get('watching_notice')
         return data
 
     def get_code_list(self, obj):
@@ -1304,7 +1308,7 @@ class ShowUserSerializer(PKtoNoSerializer):
 
 class ShowUserCreateSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    id_card = serializers.CharField(required=True)
+    id_card = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     def validate_mobile(self, value):
         import re
@@ -1315,9 +1319,13 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        # log.debug(validated_data)
         request = self.context.get('request')
         id_card = validated_data.get('id_card', None)
-        if id_card:
+        if not id_card:
+            raise CustomAPIException('请输入身份证号')
+        pk = validated_data.get('id')
+        if id_card and not pk:
             # 是否已经验证过了，验证过的不需要再验证
             has_auth = ShowUser.objects.filter(id_card=id_card, name=validated_data['name']).first()
             if not has_auth:
@@ -1325,8 +1333,8 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
                 if not auth_st:
                     raise CustomAPIException('姓名与身份证不匹配或有误，请核对后重试！')
         try:
-            if validated_data.get('id'):
-                inst = ShowUser.objects.filter(no=validated_data['id']).first()
+            if pk:
+                inst = ShowUser.objects.filter(no=pk).first()
                 inst.name = validated_data['name']
                 inst.mobile = validated_data['mobile']
                 inst.save(update_fields=['name', 'mobile'])

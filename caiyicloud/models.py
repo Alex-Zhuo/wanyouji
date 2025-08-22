@@ -38,6 +38,7 @@ EVENT_CATEGORIES = {
 CY_NEED_CONFIRM_DICT_KEY = get_redis_name('cy_need_confirm_key')
 CONFIRM_RETRY_TIMES = 3
 APPLY_PLATFORM = '深圳文旅体'
+logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
 
 
 def create_code_qr(code: str, filepath_name: str):
@@ -148,17 +149,17 @@ class CaiYiCloudApp(models.Model):
                 event_id = event['event_id']
                 seat_change_vo_list = event['seat_change_vo_list']
                 is_success, error_msg = CySession.sync_stock_save_to_pika(event_id, seat_change_vo_list)
-            elif event_type == 'event.distribution.create':
-                # 节目分销创建通知
-                event_id = event['event_id']
-                is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
-            elif event_type == 'event.distribution.change':
-                # 节目变化
-                event_id = event['event_id']
-                event_change_type = event['event_change_type']
-                content = event['content']
-                if content:
-                    is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
+            # elif event_type == 'event.distribution.create':
+            #     # 节目分销创建通知
+            #     event_id = event['event_id']
+            #     is_success, error_msg = CyShowEvent.sync_create_event([event_id], '节目创建回调')
+            # elif event_type == 'event.distribution.change':
+            #     # 节目变化
+            #     event_id = event['event_id']
+            #     event_change_type = event['event_change_type']
+            #     content = event['content']
+            #     if content:
+            #         is_success, error_msg = CyShowEvent.sync_change(event_id, event_change_type, content)
         return is_success, error_msg
 
 
@@ -307,6 +308,7 @@ class CyShowEvent(models.Model):
     )
     expire_order_minute = models.PositiveSmallIntegerField('订单支付等待时间', help_text='单位：分钟')
     snapshot = models.TextField('其他信息', null=True, blank=True, editable=False)
+    is_delete = models.BooleanField('是否删除', default=False, editable=False)
     # 时间信息
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -334,7 +336,7 @@ class CyShowEvent(models.Model):
         return get_redis_name('cyiniteventkey')
 
     @classmethod
-    def init_cy_show(cls, log_title=None):
+    def init_cy_show(cls, log_title=None, is_new=False):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
@@ -352,8 +354,12 @@ class CyShowEvent(models.Model):
         if not log_title:
             log_title = '初始化拉取'
         for event in event_list:
-            cls.update_or_create_record(event['id'], log_title)
-            CySession.init_cy_session(event['id'], log_title)
+            has_event = False
+            if is_new:
+                has_event = cls.objects.filter(event_id=event['id']).exists()
+            if not has_event:
+                cls.update_or_create_record(event['id'], log_title)
+                CySession.init_cy_session(event['id'], log_title)
         # redis = get_pika_redis()
         # key = cls.init_event_pika_key()
         # has_change_event_list = redis.lrange(key, 0, -1) or []
@@ -369,8 +375,11 @@ class CyShowEvent(models.Model):
     def notify_create_show_task(cls, event_ids: list, log_title: str):
         # log_title = '节目创建回调'
         for event_id in event_ids:
-            cls.update_or_create_record(event_id, log_title)
-            CySession.init_cy_session(event_id, log_title)
+            try:
+                cls.update_or_create_record(event_id, log_title)
+                CySession.init_cy_session(event_id, log_title)
+            except Exception as e:
+                log.error(e)
 
     @classmethod
     def sync_create_event(cls, event_ids: list, log_title: str):
@@ -387,6 +396,16 @@ class CyShowEvent(models.Model):
     @classmethod
     def pull_all_event_task(cls, log_title: str):
         cls.init_cy_show(log_title)
+
+    @classmethod
+    def pull_new_event(cls, log_title: str):
+        from caiyicloud.tasks import pull_new_event_task
+        pull_new_event_task.delay(log_title)
+        return True, None
+
+    @classmethod
+    def pull_new_event_task(cls, log_title: str):
+        cls.init_cy_show(log_title, is_new=True)
 
     @classmethod
     def notify_update_record(cls, event_id: str):
@@ -460,7 +479,6 @@ class CyShowEvent(models.Model):
         show_type = show_second_cate.show_type
         cate = show_second_cate.cate
         venue = CyVenue.init_venue(event_detail['venue_id'])
-        logo_mobile_dir = f'{IMAGE_FIELD_PREFIX}/ticket/shows'
         # 保存网络图片
         logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
@@ -497,6 +515,8 @@ class CyShowEvent(models.Model):
                 TicketPurchaseNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
         show.shows_detail_copy_to_pika()
         CyEventLog.create_record(cy_show, log_title)
+        if not os.path.isfile(logo_mobile_path):
+            logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         return cy_show
     # except Exception as e:
     #     log.error(e)
@@ -892,6 +912,8 @@ class CySession(models.Model):
             session = SessionInfo.objects.create(**session_data)
             cls_data['c_session'] = session
             cy_session = cls.objects.create(**cls_data)
+            from statistical.models import TotalStatistical
+            TotalStatistical.add_session_num()
         else:
             cy_session = cy_session_qs.first()
             session = cy_session.c_session
@@ -1730,7 +1752,7 @@ class CyOrderRefund(models.Model):
 
 
 class CyEventLog(models.Model):
-    event = models.ForeignKey(CyShowEvent, verbose_name='节目', on_delete=models.PROTECT)
+    event = models.ForeignKey(CyShowEvent, verbose_name='节目', on_delete=models.CASCADE)
     title = models.CharField('描述', max_length=100)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
@@ -1744,7 +1766,7 @@ class CyEventLog(models.Model):
 
 
 class CySessionLog(models.Model):
-    session = models.ForeignKey(CySession, verbose_name='场次', on_delete=models.PROTECT)
+    session = models.ForeignKey(CySession, verbose_name='场次', on_delete=models.CASCADE)
     title = models.CharField('描述', max_length=100)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 

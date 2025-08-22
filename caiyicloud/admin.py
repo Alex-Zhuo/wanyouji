@@ -47,25 +47,38 @@ class CyVenueAdmin(AllOnlyViewAdmin):
 def refresh_event(modeladmin, request, queryset):
     event_ids = list(queryset.values_list('event_id', flat=True))
     CyShowEvent.sync_create_event(event_ids, '后台节目刷新')
-    messages.success(request, '执行成功')
+    messages.success(request, '执行成功,刷新中')
 
 
 refresh_event.short_description = '刷新节目所有场次'
 
 
 def pull_all_event(modeladmin, request, queryset):
-    CyShowEvent.pull_all_event('后台执行拉取')
-    messages.success(request, '执行成功')
+    CyShowEvent.pull_all_event('后台执行全部拉取')
+    messages.success(request, '执行成功,刷新中')
 
 
 pull_all_event.short_description = '拉取所有项目'
+
+
+def pull_new_event(modeladmin, request, queryset):
+    CyShowEvent.pull_new_event('后台执行拉新拉取')
+    messages.success(request, '执行成功,刷新中')
+
+
+pull_new_event.short_description = '拉取新项目'
 
 
 class CyShowEventAdmin(AllOnlyViewAdmin):
     list_display = ['event_id', 'show', 'category', 'show_type', 'seat_type', 'ticket_mode', 'state',
                     'expire_order_minute', 'updated_at']
     list_filter = ['state', 'show_type', 'updated_at']
-    actions = [refresh_event, pull_all_event]
+    actions = [refresh_event, pull_new_event, pull_all_event]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.filter(is_delete=False)
+        return qs
 
 
 class CyIdTypesAdmin(AllOnlyViewAdmin):

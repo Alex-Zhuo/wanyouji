@@ -61,7 +61,7 @@ router.register(r'mpclient', MpClientView, basename='mpclient')
 # router.register(r'xiaohs', XhsWxaViewSet, basename='xhs')
 router.register(r'cy', CaiYiViewSet, basename='caiyi')
 urlpatterns = [
-    # url(r'^ueditor/', include('DjangoUeditor.urls')),
+    url(r'^ueditor/', include('DjangoUeditor.urls')),
     url(r'^{}/'.format(BASE_CONF['admin_url_site_name']), admin.site.urls),
     url(r'^{}/'.format(BASE_CONF['admin_url_site_name_tg']), technology_admin.urls),
     url(r'^api/wmp/', include(MPRouter.urls)),

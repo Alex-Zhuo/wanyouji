@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.utils import timezone
-
+from DjangoUeditor.models import UEditorField
 from common.config import FILE_FIELD_PREFIX, IMAGE_FIELD_PREFIX
 from express.models import Division
 from mall.models import User, validate_positive_int_gen, Receipt, TheaterCardUserRecord, TheaterCardTicketLevel, \
@@ -31,6 +31,7 @@ import pysnooper
 from caches import get_pika_redis, get_redis_name, run_with_lock
 from django.core.validators import validate_image_file_extension, FileExtensionValidator
 from restframework_ext.models import UseNoAbstract
+from django.db.models import Sum
 
 log = logging.getLogger(__name__)
 tiktok_goods_url = 'pages/pagesKage/showDetail/showDetail'
@@ -281,6 +282,8 @@ class ShowPerformer(models.Model):
         while dd and i < 200:
             i += 1
             dd = redis.rpop(performer_key)
+            if not dd:
+                break
             id, num = dd.split('_')
             if total_list.get(str(id)):
                 total_list[str(id)] += int(num)
@@ -325,7 +328,7 @@ class ShowType(models.Model):
     cy_cate = models.OneToOneField('caiyicloud.CyCategory', verbose_name='彩艺云类目', related_name='cy_cate', null=True,
                                    blank=True, on_delete=models.SET_NULL, help_text='彩艺云用才选')
     is_use = models.BooleanField('是否启用', default=True)
-    slug = models.CharField('标识', null=True, blank=True, max_length=15,unique=True)
+    slug = models.CharField('标识', null=True, blank=True, max_length=15, unique=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目分类'
@@ -597,14 +600,18 @@ class ShowProject(UseNoAbstract):
                                                limit_choices_to=models.Q(qualification_type=5005),
                                                help_text='票务代理,要传“演出主办方授权书” 5005', blank=True, related_name='+',
                                                editable=False)
-    content = models.TextField('节目介绍', null=True)
+    content = UEditorField(u'节目介绍', width=755, height=300, imagePath=f"{IMAGE_FIELD_PREFIX}/show/", toolbars='mini',
+                           filePath=f"{FILE_FIELD_PREFIX}/show/",
+                           upload_settings={"imageMaxSize": 1204000},
+                           settings={}, command=None, null=True)
+    # content = models.TextField('演出介绍', null=True)
     notice = models.TextField('购票须知', null=True, editable=False)
     other_notice = models.TextField('其他说明信息', help_text='抖音商品使用', null=True, blank=True, editable=False)
     STATUS_ON = 1
     STATUS_OFF = 0
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
-    is_recommend = models.BooleanField('是否近期节目', default=True)
+    is_recommend = models.BooleanField('为你推荐', default=True, help_text='勾选后节目将会显示在首页底部【为你推荐】板块')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
@@ -625,6 +632,10 @@ class ShowProject(UseNoAbstract):
     class Meta:
         verbose_name_plural = verbose_name = '节目'
         ordering = ['-pk']
+
+    @property
+    def is_cy_show(self):
+        return hasattr(self, 'cy_show')
 
     @classmethod
     def import_record(cls, file_path):
@@ -681,6 +692,9 @@ class ShowProject(UseNoAbstract):
         # inst = ShowCollectRecord.objects.filter(show_id=int(show_id), user=user).first()
         # data['is_collect'] = inst.is_collect if inst else False
         now = timezone.now()
+        if data.get('content'):
+            config = get_config()
+            data['content'] = data['content'].replace('src="/media/', f'src="{config["media_url"]}')
         sale_time = datetime.strptime(data['sale_time'], '%Y-%m-%dT%H:%M:%S')
         session_end_at = datetime.strptime(data['session_end_at'], '%Y-%m-%dT%H:%M:%S') if data.get(
             'session_end_at') else None
@@ -897,7 +911,6 @@ class ShowProject(UseNoAbstract):
             inst.redis_show_date_copy()
 
     def get_wxa_code(self):
-        return None
         from mp.models import SystemWxMP
         from django.db.models import signals
         sy = SystemWxMP.get()
@@ -1072,7 +1085,7 @@ class SessionInfo(UseNoAbstract):
     desc = models.CharField('场次备注', max_length=100, null=True, blank=True)
     # 限购相关
     order_limit_num = models.IntegerField('每个订单限购数量', default=0, help_text='购票限制,0表示不限购', editable=False)
-    is_name_buy = models.BooleanField('是否一单一证', default=False, help_text='0.01购票权限用户不走一单一证流程')
+    is_name_buy = models.BooleanField('是否一单一证', default=False)
     name_buy_num = models.PositiveIntegerField('单证限购数量', default=0, help_text='用于限制一证最多购买多少张票，配合一单一证使用')
     one_id_one_ticket = models.BooleanField(default=False, verbose_name='是否一票一证购买')
     SEAT_HAS = 1
@@ -1092,7 +1105,7 @@ class SessionInfo(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     is_delete = models.BooleanField('是否作废', default=False)
-    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False)
+    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False, editable=False)
     is_sale_off = models.BooleanField('标记售罄', default=False)
     is_paper = models.BooleanField('是否纸质票', default=False, help_text='勾选的场次对应的订单需要邮寄纸质票给客户')
     express_template = models.ForeignKey('express.Template', verbose_name='邮费模板', null=True, blank=True,
@@ -2423,15 +2436,16 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = amount * discount
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = amount * discount
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
     @classmethod
@@ -2459,15 +2473,16 @@ class TicketFile(models.Model):
                 level_list.append(dict(level=inst, multiply=multiply))
             else:
                 raise CustomAPIException('下单失败，请重新选择')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = quantize(amount * discount, 2)
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = quantize(amount * discount, 2)
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return total_multiply, amount, actual_amount, level_list, ticket_order_discount_dict
 
     def reset_stock(self, stock):
@@ -3010,15 +3025,16 @@ class SessionSeat(models.Model):
                     raise CustomAPIException('座位{}已被占用，请重新选座'.format(str(inst)))
             else:
                 raise CustomAPIException('座位选择错误，请重新选座，')
-        if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
-            account = user.account
-            discount = account.get_discount()
-            actual_amount = quantize(amount * discount, 2)
-            if discount < 1:
-                ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
-                                                  amount=amount - actual_amount)
-        else:
-            actual_amount = quantize(actual_amount, 2)
+        # if can_member_card and pay_type == Receipt.PAY_WeiXin_LP:
+        #     account = user.account
+        #     discount = account.get_discount()
+        #     actual_amount = quantize(amount * discount, 2)
+        #     if discount < 1:
+        #         ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_YEAR, title='年度会员卡优惠',
+        #                                           amount=amount - actual_amount)
+        # else:
+        #     actual_amount = quantize(actual_amount, 2)
+        actual_amount = quantize(actual_amount, 2)
         return multiply, amount, actual_amount, session_seat_list, ticket_order_discount_dict
 
 
@@ -3307,7 +3323,18 @@ class TicketOrder(models.Model):
             else:
                 s_type = self.source_type
             amount = -self.refund_amount if is_refund else self.award_amount
-            SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount)
+            c_amount = 0
+            from shopping_points.models import UserCommissionChangeRecord
+            qs = UserCommissionChangeRecord.objects.filter(order=self,
+                                                           status=UserCommissionChangeRecord.STATUS_CAN_WITHDRAW)
+            if is_refund:
+                qs = qs.filter(source_type=UserCommissionChangeRecord.SOURCE_TYPE_REFUND)
+            else:
+                qs = qs.exclude(source_type=UserCommissionChangeRecord.SOURCE_TYPE_REFUND)
+            if qs:
+                c_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+            SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount,
+                                             c_amount=c_amount)
 
     def change_cps_agent_amount(self, source_type, c_amount, amount, platform):
         from statistical.models import SessionCpsDaySum
@@ -3717,6 +3744,7 @@ class TicketOrder(models.Model):
                             self.do_order()
 
     def do_order(self):
+        self.add_stl()
         if self.order_type == self.TY_MARGIN:
             if self.source_order and self.source_order.pay_type == Receipt.PAY_WeiXin_LP or \
                     self.source_order.source_type in [self.SOURCE_VIDEO, self.SOURCE_LIVE]:
