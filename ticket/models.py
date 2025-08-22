@@ -3329,6 +3329,8 @@ class TicketOrder(models.Model):
                                                            status=UserCommissionChangeRecord.STATUS_CAN_WITHDRAW)
             if qs:
                 c_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+            if is_refund:
+                c_amount = -c_amount
             SessionAgentDaySum.change_record(self.session, self.agent, self.pay_at, s_type, amount=amount,
                                              c_amount=c_amount)
 
