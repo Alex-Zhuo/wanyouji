@@ -852,7 +852,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedManagerUser])
     def search_order(self, request):
         kw = request.GET.get('kw')
-        qs = self.queryset.filter(status=TicketOrder.STATUS_UNPAID)
+        qs = TicketOrder.objects.filter(status=TicketOrder.STATUS_UNPAID)
         if kw:
             qs = qs.filter(Q(order_no=kw) | Q(mobile=kw))
             data = self.serializer_class(qs, many=True, context={'request': request}).data
