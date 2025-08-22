@@ -366,6 +366,7 @@ class UserAccount(models.Model):
 
 class ChangeAddAbstract(DateDetailAbstract):
     account = models.ForeignKey(UserAccount, verbose_name='用户账户', null=True, on_delete=models.SET_NULL)
+    mobile = models.CharField('手机号', max_length=20, null=True, blank=True)
     amount = models.DecimalField('金额', default=0, max_digits=15, decimal_places=2)
     desc = models.CharField('描述', max_length=200, null=True, blank=True)
     extra_info = models.CharField('额外信息', max_length=200, null=True, blank=True, editable=False)
