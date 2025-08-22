@@ -608,7 +608,7 @@ class ShowProject(UseNoAbstract):
     STATUS_OFF = 0
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
-    is_recommend = models.BooleanField('是否近期节目', default=True)
+    is_recommend = models.BooleanField('为你推荐', default=True,help_text='勾选后节目将会显示在首页底部【为你推荐】板块')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
@@ -1102,7 +1102,7 @@ class SessionInfo(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     is_delete = models.BooleanField('是否作废', default=False)
-    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False)
+    is_theater_discount = models.BooleanField('是否参与剧场会员卡优惠', default=False, editable=False)
     is_sale_off = models.BooleanField('标记售罄', default=False)
     is_paper = models.BooleanField('是否纸质票', default=False, help_text='勾选的场次对应的订单需要邮寄纸质票给客户')
     express_template = models.ForeignKey('express.Template', verbose_name='邮费模板', null=True, blank=True,

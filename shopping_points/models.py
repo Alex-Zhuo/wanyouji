@@ -37,7 +37,7 @@ class UserAccountLevel(models.Model):
     slug = models.CharField('识别标识', max_length=10, null=True, help_text='识别序号(请勿修改)')
     share_ratio = models.DecimalField('分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     team_ratio = models.DecimalField('团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
+    card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',editable=False)
     theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',editable=False)
 
     class Meta:
