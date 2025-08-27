@@ -58,7 +58,7 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     readonly_fields = ['new_parent_cache', 'new_parent_at_cache']
     list_display = (
         'id', 'username', 'mobile', 'last_name', 'first_name',
-        'parent', 'new_parent_cache', 'new_parent_at_cache', 'is_active', 'agree_member',
+        'parent', 'new_parent_cache', 'new_parent_at_cache', 'is_active','flag', 'agree_member',
         'agree_privacy', 'agree_agent', 'date_joined', 'share_code', 'follow', 'unionid', 'lp_openid', 'openid',
         'unionid_tiktok',
         'openid_tiktok')
@@ -72,7 +72,7 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     )
     superuser_changeform_fieldsets = (
         (None,
-         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile')}),
+         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile','flag')}),
         (_('Permissions'), {'fields': ('agree_member',
                                        'agree_privacy', 'agree_agent', 'is_active', 'is_staff', 'is_superuser',
                                        'groups')}),
@@ -81,7 +81,7 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     # 技术人员账号不能修改密码
     tg_changeform_fieldsets = (
         (None,
-         {'fields': ('username', 'last_name', 'first_name', 'mobile')}),
+         {'fields': ('username', 'last_name', 'first_name', 'mobile', 'flag')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
         (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
     )
