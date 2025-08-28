@@ -247,8 +247,8 @@ class UserCouponImport(models.Model):
                 UserCouponCacheRecord.objects.bulk_update(update_list, ['num'])
         except Exception as e:
             log.error(e)
-            self.fail_msg = str(e)
-        self.status = self.ST_FINISH if fail_num == 0 else self.ST_FAIL
+            fail_msg = str(e)
+        self.status = self.ST_FINISH if fail_num == 0 and not fail_msg else self.ST_FAIL
         self.fail_num = fail_num
         self.success_num = success_num
         self.fail_msg = fail_msg
