@@ -196,8 +196,8 @@ class UserCouponImport(models.Model):
         fail_msg = ''
         try:
             from openpyxl import load_workbook
-            # wb = load_workbook(self.file.path)
-            wb = load_workbook('d:/11.xlsx')
+            wb = load_workbook(self.file.path)
+            # wb = load_workbook('d:/11.xlsx')
             ws = wb.active
             update_list = []
             coupon_dict = dict()
