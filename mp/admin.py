@@ -5,6 +5,11 @@ from dj import technology_admin
 from dj_ext.permissions import RemoveDeleteModelAdmin, TechnologyModelAdmin
 from mp.models import SystemMP, WeiXinPayConfig, ShareQrcodeBackground, BasicConfig, ReturnAddress, WxMenu, SystemWxMP, \
     SystemDouYinMP, SystemDouYin, DouYinPayConfig, DouYinImages, MaiZuoAccount
+from django_q.models import Schedule, Success, Failure
+
+admin.site.unregister(Failure)
+admin.site.unregister(Success)
+admin.site.unregister(Schedule)
 
 
 class SystemWxMPAdmin(TechnologyModelAdmin):
@@ -55,6 +60,7 @@ class DouYinImagesInline(admin.StackedInline):
 
 class BasicConfigAdmin(RemoveDeleteModelAdmin):
     readonly_fields = ['sms_url']
+
     # cinlines = [DouYinImagesInline]
 
     def changelist_view(self, request, extra_context=None):
