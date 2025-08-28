@@ -103,6 +103,11 @@ class ChangeAndViewAdmin(RemoveDeleteModelAdmin):
         return request.user and request.user.is_active and request.user.is_staff and self.admin_site == technology_admin
 
 
+class AddAndViewAdmin(RemoveDeleteModelAdmin):
+    def has_change_permission(self, request, obj=None):
+        return request.user and request.user.is_active and request.user.is_staff and self.admin_site == technology_admin
+
+
 class OnlyViewAdmin(ChangeAndViewAdmin):
     def has_change_permission(self, request, obj=None):
         return request.user and request.user.is_active and request.user.is_staff and self.admin_site == technology_admin

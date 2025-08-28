@@ -601,3 +601,12 @@ def qrcode_dir_cy(filepath_name: str):
 def get_whole_url(url: str):
     config = get_config()
     return '{}{}'.format(config['template_url'], url)
+
+
+def validate_mobile(value):
+    import re
+    REG_MOBILE = r'^\d{11}$'
+    R_MOBILE = re.compile(REG_MOBILE)
+    if not R_MOBILE.match(value):
+        return False
+    return True

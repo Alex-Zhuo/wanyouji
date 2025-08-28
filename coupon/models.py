@@ -1,12 +1,19 @@
 # coding=utf-8
 from __future__ import unicode_literals
+
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+
+from common.config import FILE_FIELD_PREFIX
 from restframework_ext.models import UseNoAbstract
 from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond
 from caches import get_pika_redis, get_redis_name
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Coupon(UseNoAbstract):
@@ -65,7 +72,7 @@ class UserCouponRecord(UseNoAbstract):
     snapshot = models.TextField('优惠券快照', null=True, blank=True, help_text='领取时保存的快照', editable=False)
 
     class Meta:
-        verbose_name_plural = verbose_name = '用户优惠券记录'
+        verbose_name_plural = verbose_name = '用户消费券记录'
 
     def __str__(self):
         return '{}:{}'.format(self.user, self.coupon)
@@ -144,3 +151,132 @@ class UserCouponRecord(UseNoAbstract):
         self.status = self.STATUS_DEFAULT if self.expire_time < timezone.now() else self.STATUS_EXPIRE
         self.used_time = None
         self.save(update_fields=['used_time', 'order', 'status'])
+
+
+class UserCouponImport(models.Model):
+    file = models.FileField(u'文件', upload_to=f'{FILE_FIELD_PREFIX}/coupon',
+                            validators=[FileExtensionValidator(allowed_extensions=['xlsx'])], help_text='只支持xlsx')
+    remark = models.CharField('备注说明', max_length=100, null=True, blank=True)
+    ST_NEED = 1
+    ST_DOING = 2
+    ST_FINISH = 3
+    ST_FAIL = 4
+    status = models.PositiveIntegerField('状态', default=1,
+                                         choices=[(ST_NEED, '未执行'), (ST_DOING, '执行中'), (ST_FINISH, '已完成'),
+                                                  (ST_FAIL, '异常')])
+    create_at = models.DateTimeField(u'创建时间', auto_now_add=True)
+    exec_at = models.DateTimeField(u'执行发放时间', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作人员', on_delete=models.CASCADE)
+    total_num = models.IntegerField('总行数', default=0)
+    success_num = models.IntegerField('成功行数', default=0)
+    fail_num = models.IntegerField('失败行数', default=0)
+    fail_msg = models.TextField('失败行信息', null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = u'批量发放记录'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return self.file.name
+
+    @classmethod
+    def do_coupon_import_task(cls, pk):
+        inst = cls.objects.get(pk=pk)
+        inst.do_import()
+
+    def do_import(self):
+        def format_str(content: str):
+            return content.replace('_x000D_', ' ')
+
+        self.exec_at = timezone.now()
+        self.status = self.ST_DOING
+        self.save(update_fields=['status', 'exec_at'])
+        fail_num = 0
+        success_num = 0
+        fail_msg = ''
+        try:
+            from openpyxl import load_workbook
+            # wb = load_workbook(self.file.path)
+            wb = load_workbook('d:/11.xlsx')
+            ws = wb.active
+            update_list = []
+            coupon_dict = dict()
+            user_dict = dict()
+            for line, row in enumerate(ws.rows, 1):
+                if line == 1:
+                    title_list = [t.value for t in row]
+                    mobile_index = title_list.index('手机号')
+                    coupon_index = title_list.index('消费券编号')
+                    num_index = title_list.index('发放数量')
+                    continue
+                try:
+                    dd = list(map(lambda cell: cell.value, row))
+                    mobile = format_str(str(dd[mobile_index]))
+                    from common.utils import validate_mobile
+                    vm = validate_mobile(mobile)
+                    if not vm:
+                        raise ValueError('手机号格式错误')
+                    if not user_dict.get(mobile):
+                        from mall.models import User
+                        user = User.objects.filter(mobile=mobile).first()
+                        user_dict[mobile] = user
+                    else:
+                        user = user_dict[mobile]
+                    coupon_no = format_str(str(dd[coupon_index]))
+                    num = int(dd[num_index])
+                    if not coupon_dict.get(coupon_no):
+                        coupon = Coupon.objects.get(no=coupon_no)
+                        coupon_dict[coupon_no] = coupon
+                    else:
+                        coupon = coupon_dict[coupon_no]
+                    if not user:
+                        obj = UserCouponCacheRecord.get_obj(self.id, mobile, coupon.id)
+                        obj.num = num
+                        update_list.append(obj)
+                    else:
+                        for i in list(range(0, num)):
+                            inst = UserCouponRecord.objects.create(user=user, coupon=coupon,
+                                                                   expire_time=coupon.expire_time)
+                            inst.save_common()
+                    success_num += 1
+                except Exception as e:
+                    fail_num += 1
+                    fail_msg = fail_msg + '{}行,'.format(line)
+                    print(e)
+            if update_list:
+                UserCouponCacheRecord.objects.bulk_update(update_list, ['num'])
+        except Exception as e:
+            log.error(e)
+            self.fail_msg = str(e)
+        self.status = self.ST_FINISH if fail_num == 0 else self.ST_FAIL
+        self.fail_num = fail_num
+        self.success_num = success_num
+        self.fail_msg = fail_msg
+        self.save(update_fields=['status', 'fail_num', 'success_num', 'fail_msg'])
+
+
+class UserCouponCacheRecord(models.Model):
+    record = models.ForeignKey(UserCouponImport, verbose_name='批量发放记录', on_delete=models.SET_NULL, null=True)
+    mobile = models.CharField('手机号', max_length=20, db_index=True)
+    coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.CASCADE)
+    num = models.PositiveSmallIntegerField('发放数量', default=0)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '未领取记录'
+        ordering = ['-pk']
+
+    @classmethod
+    def get_obj(cls, record_id: int, mobile: str, coupon_id: int):
+        obj, _ = cls.objects.get_or_create(record_id=record_id, mobile=mobile, coupon_id=coupon_id)
+        return obj
+
+    @classmethod
+    def do_bind_user_task(cls, mobile: str, user_id: int):
+        qs = cls.objects.filter(mobile=mobile)
+        for obj in qs:
+            coupon = obj.coupon
+            for i in list(range(0, obj.num)):
+                inst = UserCouponRecord.objects.create(user_id=user_id, coupon=coupon,
+                                                       expire_time=coupon.expire_time)
+                inst.save_common()
+        qs.delete()

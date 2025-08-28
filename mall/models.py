@@ -478,6 +478,8 @@ class User(AbstractUser):
             pass
         if fields:
             user = self.do_combine_user(mobile, fields, request, first_name)
+        from coupon.tasks import coupon_bind_user_task
+        coupon_bind_user_task.delay(mobile, user.id)
         return user
 
     def do_combine_user(self, mobile, fields: list, request, first_name=None):
