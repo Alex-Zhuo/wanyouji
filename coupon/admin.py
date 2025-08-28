@@ -43,8 +43,8 @@ def do_performance_import(modeladmin, request, queryset):
     if not qs:
         raise AdminException('未执行的记录才能执行')
     for inst in qs:
-        from coupon.tasks import coupon_import_task
-        coupon_import_task.delay(inst.id)
+        from coupon.q_tasks import coupon_import_task
+        coupon_import_task.delay(pk=inst.id)
     messages.success(request, '操作成功,正在执行')
 
 

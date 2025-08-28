@@ -22,10 +22,10 @@ def auto_init_mai_zuo():
     MaiZuoTask.pull_record()
 
 
-@shared_task
-def down_load_task():
-    from ticket.models import DownLoadTask
-    DownLoadTask.do_task()
+# @shared_task
+# def down_load_task():
+#     from ticket.models import DownLoadTask
+#     DownLoadTask.do_task()
 
 
 @shared_task

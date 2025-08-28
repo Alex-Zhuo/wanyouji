@@ -4317,7 +4317,7 @@ class TicketOrder(models.Model):
                 seat_desc_t, level_desc_t = tu.get_export_data()
                 seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
                 level_desc = level_desc + level_desc_t if level_desc else level_desc_t
-            data = [str(record.user), record.name, record.mobile, record.show_express_address,
+            data = [str(record.user), record.mobile, record.show_express_address,
                     str(record.agent) if record.agent else None,
                     record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
                     record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply,

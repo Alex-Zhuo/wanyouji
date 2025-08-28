@@ -12,12 +12,6 @@ def coupon_expire_task():
 
 
 @shared_task
-def coupon_import_task(pk: int):
-    # 导入任务
-    UserCouponImport.do_coupon_import_task(pk)
-
-
-@shared_task
 def coupon_bind_user_task(mobile: str, user_id: int):
-    # 导入任务
+    # 绑定消费券
     UserCouponCacheRecord.do_bind_user_task(mobile, user_id)

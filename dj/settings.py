@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'import_export',
     'nested_admin',
+    'django_q',
     'rest_framework',
     'DjangoUeditor',
     'qcloud',
@@ -320,6 +321,9 @@ LOGGING = {
         },
     }
 }
+if get_config().get('Q_CLUSTER'):
+    Q_CLUSTER = get_config().get('Q_CLUSTER')
+
 TIME_INPUT_FORMATS = ['%H:%M:%S']
 from mall.mall_conf import admin_url_site_name
 
@@ -376,10 +380,10 @@ CELERY_BEAT_SCHEDULE = {
     # },
 
     # 其他任务
-    'down_load_task': {
-        'task': 'ticket.tasks.down_load_task',
-        'schedule': timedelta(seconds=181),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    },
+    # 'down_load_task': {
+    #     'task': 'ticket.tasks.down_load_task',
+    #     'schedule': timedelta(seconds=181),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
     'add_session_actual_amount': {
         'task': 'ticket.tasks.add_session_actual_amount',
         'schedule': timedelta(seconds=153),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
