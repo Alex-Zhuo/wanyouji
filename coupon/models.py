@@ -13,6 +13,7 @@ from caches import get_pika_redis, get_redis_name
 import json
 import logging
 from django.db import close_old_connections
+
 log = logging.getLogger(__name__)
 
 
@@ -184,6 +185,7 @@ class UserCouponImport(models.Model):
         close_old_connections()
         inst = cls.objects.get(pk=pk)
         inst.do_import()
+        log.info(f'批量发放记录导入完成,{pk}')
 
     def do_import(self):
         def format_str(content: str):
