@@ -12,7 +12,7 @@ from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategor
 from caches import get_pika_redis, get_redis_name
 import json
 import logging
-
+from django.db import close_old_connections
 log = logging.getLogger(__name__)
 
 
@@ -181,6 +181,7 @@ class UserCouponImport(models.Model):
 
     @classmethod
     def do_coupon_import_task(cls, pk):
+        close_old_connections()
         inst = cls.objects.get(pk=pk)
         inst.do_import()
 

@@ -1316,6 +1316,8 @@ def export_ticket_order(modeladmin, request, queryset):
             key = inst.pika_down_key()
             ids = json.dumps(list(queryset.values_list('id', flat=True)))
             redis.set(key, ids)
+            from ticket.q_tasks import down_load_task
+            down_load_task()
         else:
             raise AdminException('请1分钟后再操作')
 
