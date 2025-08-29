@@ -436,7 +436,7 @@ class User(AbstractUser):
         """
         if not (share_code or parent):
             raise CustomAPIException('参数错误:010')
-        # log.warning(share_code)
+        log.warning(share_code)
         if share_code:
             from mall.user_cache import share_code_to_user
             # 3个月没有重新登陆的用户则不绑定
@@ -444,6 +444,7 @@ class User(AbstractUser):
         else:
             parent = parent
         if parent:
+            log.warning(parent.id)
             # 每次都更新 新上级，用于订单绑定 代理或者验票员
             # self.set_new_parent(parent)
             if self.id != parent.id:
