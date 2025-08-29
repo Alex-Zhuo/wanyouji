@@ -163,7 +163,7 @@ async def noseat_order(req: FastAPIRequest):
         order, payno, prepare_order, pay_end_at, ks_order_info, xhs_order_info = s.create(data)
         data = dict(receipt_id=payno, prepare_order=prepare_order, pay_end_at=pay_end_at,
                     order_id=order.order_no, ks_order_info=ks_order_info, xhs_order_info=xhs_order_info)
-        log.warning(f"got the queue and exec over")
+        # log.warning(f"got the queue and exec over")
         return data
 
     try:
