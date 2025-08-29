@@ -106,7 +106,7 @@ async def new_info(req: FastAPIRequest):
     if not user:
         return ORJSONResponse(status_code=403, content=dict(msg='请重新登录'))
     share_code = req.query_params.get('share_code')
-    log.error(share_code)
+    log.error(req.query_params)
     if share_code:
         try:
             user.bind_parent(share_code)
