@@ -511,6 +511,21 @@ class CaiYiCloud(CaiYiCloudAbstract):
         self.parse_resp(ret)
         return ret['data']
 
+    def promotion_detail(self,promotion_id:str):
+        """
+        https://platform.caiyicloud.com/doc/v1/distribution/promotions/promotions_info
+        该接口用于查询商户营销活动详细信息
+        """
+        headers = self.headers()
+        sign_params = self.common_sign_params(headers)
+        data = dict(promotion_id=promotion_id)
+        sign_params.update(data)
+        headers['sign'] = self.get_sign(sign_params)
+        params = dict(supplier_id=self.supplier_id)
+        ret = self._get(f'api/marketing/v1/promotions/{promotion_id}', params=params, headers=headers)
+        self.parse_resp(ret)
+        return ret['data']
+
 
 _caiyicloud = None
 
