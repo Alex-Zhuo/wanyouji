@@ -99,7 +99,7 @@ def pika_redis():
 
 @app.get("/tapi/szpw/new_info/")
 async def new_info(req: FastAPIRequest):
-    log.error(req.query_params)
+    # log.error(req.query_params)
     config = get_config()
     token = req.headers.get('actoken') or req.query_params.get('token')
     from mall.user_cache import token_to_cache_user
