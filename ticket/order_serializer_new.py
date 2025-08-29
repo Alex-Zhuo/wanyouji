@@ -3,24 +3,23 @@
 from rest_framework import serializers
 from django.db.transaction import atomic
 from restframework_ext.exceptions import CustomAPIException
-from ticket.models import SessionInfo, TicketFile, SessionSeat, TicketOrder, ShowType, ShowUser, TicketOrderDiscount
+from ticket.models import SessionInfo, TicketFile, TicketOrder, ShowType, ShowUser, TicketOrderDiscount
 import logging
 from decimal import Decimal
-from ticket.serializers import get_origin
 from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, TheaterCard, TheaterCardChangeRecord, \
     UserAddress
-from datetime import datetime
 from django.utils import timezone
-import json
-from caches import redis_ticket_level_cache, get_pika_redis
+from caches import get_pika_redis
 from django.core.cache import cache
-from caches import cache_order_seat_key
+from caches import cache_order_seat_key, cache_order_session_key, cache_order_show_key,redis_venues_copy_key
+import orjson
+from common.config import get_config
 
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
 
 
-class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
+class TicketOrderCreateNoCommonSerializer(serializers.ModelSerializer):
     receipt = serializers.ReadOnlyField(source='receipt_id')
     pay_type = serializers.ChoiceField(required=True, label='支付方式', choices=Receipt.PAY_CHOICES)
     multiply = serializers.IntegerField(required=True)
@@ -33,14 +32,6 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
     coupon_no = serializers.CharField(required=False)
     channel_type = serializers.IntegerField(required=True)
 
-    def validate_mobile(self, value):
-        import re
-        REG_MOBILE = r'^\d{11}$'
-        R_MOBILE = re.compile(REG_MOBILE)
-        if not R_MOBILE.match(value):
-            raise CustomAPIException('手机号格式不对')
-        return value
-
     def handle_coupon(self, show, coupon_no: str, actual_amount):
         coupon_record = None
         ticket_order_discount_dict = None
@@ -51,7 +42,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             except UserCouponRecord.DoesNotExist:
                 raise CustomAPIException(detail=u'优惠券信息有误')
             try:
-                snapshot = json.loads(coupon_record.snapshot)
+                snapshot = orjson.loads(coupon_record.snapshot)
                 coupon = coupon_record.coupon
                 if actual_amount < coupon_record.require_amount:
                     raise CustomAPIException(detail=u'未达到优惠券使用条件')
@@ -74,54 +65,14 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                                               amount=coupon_amount)
         return actual_amount, coupon_record, ticket_order_discount_dict
 
-    def validate_express_address_id(self, value):
-        if value:
-            try:
-                return UserAddress.objects.get(pk=value)
-            except UserAddress.DoesNotExist:
-                raise CustomAPIException('收获地址不存在')
-
-    def validate_show_user_ids(self, value):
-        if value:
-            request = self.context.get('request')
-            user = request.user
-            qs = ShowUser.objects.filter(user=user, no__in=value)
-            if not qs:
-                raise CustomAPIException('请选择正确的实名常用观演人')
-            return qs
-
-    def validate_session_id(self, value):
-        try:
-            request = self.context.get('request')
-            if not request.user.mobile:
-                raise CustomAPIException('请先绑定手机')
-            is_tiktok = True if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok' else False
-            from django.core.cache import cache
-            from caches import cache_order_session_key
-            key = cache_order_session_key.format(value)
-            inst = cache.get(key)
-            if not inst:
-                inst = SessionInfo.objects.get(no=value)
-                cache.set(key, inst, 120)
-            # else:
-            #     log.warning('session_order_cache')
-            if not inst.show.can_buy:
-                raise CustomAPIException('演出已停止购买')
-            if not inst.can_buy:
-                raise CustomAPIException('该场次已停止购买')
-            if is_tiktok and not inst.dy_can_buy():
-                raise CustomAPIException('该场次已停止购买')
-            return inst
-        except SessionInfo.DoesNotExist:
-            raise CustomAPIException('场次找不到')
-
-    def before_create(self, session, is_ks, validated_data, is_xhs=False):
+    def before_create(self, session, is_ks, validated_data, is_xhs=False, is_test=False):
         user = validated_data['user']
-        from caches import run_with_lock
-        user_key = 'user_key_{}'.format(user.id)
-        with run_with_lock(user_key, 5) as got:
-            if not got:
-                raise CustomAPIException('请勿重复下单')
+        if not is_test:
+            from caches import run_with_lock
+            user_key = 'user_key_{}'.format(user.id)
+            with run_with_lock(user_key, 5) as got:
+                if not got:
+                    raise CustomAPIException('请勿重复下单')
         q_session = None
         if is_ks:
             if not session.is_ks_session:
@@ -170,22 +121,22 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         :param validated_data:
         :return:
         """
-        user = self.context.get('request').user
+        user = validated_data['user']
         pay_type = validated_data['pay_type']
         amount = validated_data['actual_amount']
-        wx_pay_config = validated_data.get('wx_pay_config')
-        dy_pay_config = validated_data.get('dy_pay_config')
-        if validated_data.get('card_jc_amount'):
-            amount = amount - validated_data.get('card_jc_amount')
-            if amount > 0:
-                # 会员卡实付剩余的，用微信支付
-                pay_type = Receipt.PAY_WeiXin_LP
-            else:
-                wx_pay_config = None
-                dy_pay_config = None
+        wx_pay_config_id = validated_data.get('wx_pay_config_id')
+        dy_pay_config_id = validated_data.get('dy_pay_config_id')
+        # if validated_data.get('card_jc_amount'):
+        #     amount = amount - validated_data.get('card_jc_amount')
+        #     if amount > 0:
+        #         # 会员卡实付剩余的，用微信支付
+        #         pay_type = Receipt.PAY_WeiXin_LP
+        #     else:
+        #         wx_pay_config_id = None
+        #         dy_pay_config_id = None
         return Receipt.objects.create(amount=amount, user=user, pay_type=pay_type,
-                                      biz=Receipt.BIZ_TICKET, wx_pay_config=wx_pay_config,
-                                      dy_pay_config=dy_pay_config)
+                                      biz=Receipt.BIZ_TICKET, wx_pay_config_id=wx_pay_config_id,
+                                      dy_pay_config_id=dy_pay_config_id)
 
     def validate_amounts(self, amount, actual_amount, validated_data):
         if Decimal(amount) != Decimal(validated_data['amount']) or Decimal(float(
@@ -271,9 +222,10 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                 TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, order.multiply, is_get=False)
         # order.change_scroll_list()
 
-    def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
+    def set_validated_data(self, show, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
                            pack_multiply=0):
         # pack_multiply 计算了套票的数量，用于实名验证数量和控制下单数量
+        session = validated_data['session']
         if pack_multiply == 0:
             pack_multiply = real_multiply
         from common.utils import s_id_card
@@ -316,22 +268,24 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         #         validated_data['u_agent_id'] = user.parent.id
 
         validated_data['u_user_id'] = user.id
-        validated_data['title'] = session.show.title
-        validated_data['venue'] = session.show.venues
+        validated_data['title'] = show.title
+        validated_data['venue'] = show.venues_id
         validated_data['start_at'] = session.start_at
         validated_data['end_at'] = session.end_at
         if validated_data['pay_type'] == Receipt.PAY_TikTok_LP:
-            from mp.models import DouYinPayConfig
-            validated_data['dy_pay_config'] = session.show.dy_pay_config or DouYinPayConfig.get_default()
+            validated_data['dy_pay_config_id'] = show.dy_pay_config_id
         elif validated_data['pay_type'] in [Receipt.PAY_WeiXin_LP, Receipt.PAY_CARD_JC]:
-            from mp.models import WeiXinPayConfig
-            validated_data['wx_pay_config'] = session.show.wx_pay_config or WeiXinPayConfig.get_default()
+            if not show.wx_pay_config_id:
+                from mp.models import WeiXinPayConfig
+                validated_data['wx_pay_config_id'] = WeiXinPayConfig.get_default().id
+            else:
+                validated_data['wx_pay_config_id'] = show.wx_pay_config_id
         if user.flag == user.FLAG_BUY:
             validated_data['is_low_buy'] = True
-        if user_tc_card and user_tc_card.amount > 0:
-            validated_data['card_jc_amount'] = user_tc_card.amount if user_tc_card.amount < validated_data[
-                'actual_amount'] else validated_data['actual_amount']
-            user_buy_inst.change_num(real_multiply)
+        # if user_tc_card and user_tc_card.amount > 0:
+        #     validated_data['card_jc_amount'] = user_tc_card.amount if user_tc_card.amount < validated_data[
+        #         'actual_amount'] else validated_data['actual_amount']
+        #     user_buy_inst.change_num(real_multiply)
         # 是否纸质
         if session.is_paper:
             validated_data['is_paper'] = True
@@ -359,23 +313,77 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         read_only_fields = ['receipt']
 
 
-class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
+class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
+    def check_mobile(self, value):
+        import re
+        REG_MOBILE = r'^\d{11}$'
+        R_MOBILE = re.compile(REG_MOBILE)
+        if not R_MOBILE.match(value):
+            raise CustomAPIException('手机号格式不对')
+        return value
+
+    def get_express_address(self, value):
+        if value:
+            try:
+                return UserAddress.objects.get(pk=value)
+            except UserAddress.DoesNotExist:
+                raise CustomAPIException('收获地址不存在')
+
+    def get_show_user(self, value, user):
+        if value:
+            qs = ShowUser.objects.filter(user=user, no__in=value)
+            if not qs:
+                raise CustomAPIException('请选择正确的实名常用观演人')
+            return qs
+
+    def get_session(self, value, user):
+        try:
+            if not user.mobile:
+                raise CustomAPIException('请先绑定手机')
+            # is_tiktok = True if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok' else False
+            key = cache_order_session_key.format(value)
+            inst = cache.get(key)
+            if not inst:
+                inst = SessionInfo.objects.get(no=value)
+                cache.set(key, inst, 60)
+            if not inst.can_buy:
+                raise CustomAPIException('该场次已停止购买')
+            # if is_tiktok and not inst.dy_can_buy():
+            #     raise CustomAPIException('该场次已停止购买')
+            return inst
+        except SessionInfo.DoesNotExist:
+            raise CustomAPIException('场次找不到')
+
+    def get_show(self, session):
+        show_key = cache_order_show_key.format(session.show_id)
+        show = cache.get(show_key)
+        if not show:
+            show = session.show
+            cache.set(show_key, show, 60)
+        if not show.can_buy:
+            raise CustomAPIException('演出已停止购买')
+        return show
+
     @atomic
     def create(self, validated_data):
         # ticket_list [dict(level_id=1,multiply=2)]
-        request = self.context.get('request')
+        # request = self.context.get('request')
+        user = validated_data['user']
+        self.check_mobile(validated_data['mobile'])
+        validated_data['express_address_id'] = self.get_express_address(validated_data.get('express_address_id'))
+        validated_data['show_user_ids'] = self.get_show_user(validated_data.get('show_user_ids'), user)
         ticket_order_discount_list = []
         is_tiktok = is_ks = is_xhs = False
-        validated_data['user'] = user = request.user
-        validated_data['session'] = session = validated_data.pop('session_id')
+        validated_data['session'] = session = self.get_session(validated_data.pop('session_id'), user)
+        show = self.get_show(session)
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data)
         # 这里验证了邮费
-        self.before_create(session, is_ks, validated_data, is_xhs=is_xhs)
+        self.before_create(session, is_ks, validated_data, is_xhs=is_xhs, is_test=validated_data.get('is_test', False))
         if session.has_seat == SessionInfo.SEAT_HAS:
             raise CustomAPIException('下单错误，必须选择座位')
         pay_type = validated_data['pay_type']
-        if pay_type == Receipt.PAY_CARD_JC and not session.is_theater_discount:
-            raise CustomAPIException('该场次不支持剧场会员卡支付')
+        # if pay_type == Receipt.PAY_CARD_JC and not session.is_theater_discount:
+        #     raise CustomAPIException('该场次不支持剧场会员卡支付')
         ticket_list = validated_data.pop('ticket_list', None)
         if not ticket_list:
             raise CustomAPIException('下单错误，请重新选择下单')
@@ -396,7 +404,7 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                 raise CustomAPIException('下单错误，票档没找到')
         if multiply != validated_data['multiply']:
             raise CustomAPIException('购票数量错误，请重新选择')
-        show_type = session.show.show_type
+        show_type = show.show_type
         user_tc_card = None
         user_buy_inst = None
         # if not is_coupon:
@@ -417,21 +425,17 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                                                express_fee)
         coupon_record = None
         if is_coupon:
-            actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=session.show,
+            actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=show,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
                                                                                                  actual_amount=actual_amount)
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)
-        validated_data = self.set_validated_data(session, user, real_multiply, validated_data, user_tc_card,
-                                                 user_buy_inst)
+        validated_data = self.set_validated_data(show, user, real_multiply, validated_data)
         validated_data['receipt'] = self.create_receipt(validated_data)
         validated_data['order_type'] = TicketOrder.TY_NO_SEAT
         show_users = validated_data.pop('show_user_ids', None)
-        inst = TicketOrder.objects.create(**validated_data)
-        if coupon_record:
-            coupon_record.set_use(inst)
         dd = []
         seat_dict = dict()
         for ll in level_list:
@@ -441,8 +445,19 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
                 seat_dict[str(level.id)] += ll['multiply']
             else:
                 seat_dict[str(level.id)] = ll['multiply']
-        inst.snapshot = inst.get_snapshot(dd)
-        inst.save(update_fields=['snapshot'])
+        pika = get_pika_redis()
+        venue_data = pika.hget(redis_venues_copy_key, str(show.venues_id))
+        if not venue_data:
+            venue_name = show.venues.name
+        else:
+            venue_data = orjson.loads(venue_data)
+            venue_name = venue_data['name']
+        logo = show.logo_mobile.url
+        snapshot = TicketOrder.get_snapshot_new(dd, session, show, venue_name, logo)
+        validated_data['snapshot'] = orjson.dumps(snapshot)
+        inst = TicketOrder.objects.create(**validated_data)
+        if coupon_record:
+            coupon_record.set_use(inst)
         prepare_order = None
         ks_order_info = None
         xhs_order_info = None
@@ -463,8 +478,6 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             raise CustomAPIException(e)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
-    class Meta(TicketOrderCreateCommonSerializer.Meta):
+    class Meta(TicketOrderCreateNoCommonSerializer.Meta):
         model = TicketOrder
-        fields = TicketOrderCreateCommonSerializer.Meta.fields
-
-
+        fields = TicketOrderCreateNoCommonSerializer.Meta.fields

@@ -3805,6 +3805,20 @@ class TicketOrder(models.Model):
                     end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))
         return json.dumps(data)
 
+    @classmethod
+    def get_snapshot_new(cls, dd, session, show, venue_name,logo):
+        """
+        商品快照
+        :return:
+        """
+        config = get_config()
+        data = dict(show_name=show.title, show_id=show.id, venue_name=venue_name, price_list=dd,
+                    logo=logo,
+                    start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
+                    has_seat=session.has_seat,
+                    end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))
+        return data
+
     def cancel(self):
         """
         取消订单

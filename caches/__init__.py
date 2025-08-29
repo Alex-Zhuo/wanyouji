@@ -150,6 +150,7 @@ save_model_key = get_redis_name('save_m_{}')
 show_project_change_key = get_redis_name('showp_c_{}')
 show_collect_copy_key = get_redis_name('show_collect_copy_key')
 cache_order_session_key = get_redis_name('cache_order_session_{}')
+cache_order_show_key = get_redis_name('cache_order_show_{}')
 cache_order_seat_key = get_redis_name('cache_order_seat_{}_{}')
 matrix_seat_data_key = get_redis_name('matrix_seat_data_key_{}')
 
