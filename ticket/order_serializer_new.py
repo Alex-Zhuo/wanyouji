@@ -269,7 +269,7 @@ class TicketOrderCreateNoCommonSerializer(serializers.ModelSerializer):
 
         validated_data['u_user_id'] = user.id
         validated_data['title'] = show.title
-        validated_data['venue'] = show.venues_id
+        validated_data['venue_id'] = show.venues_id
         validated_data['start_at'] = session.start_at
         validated_data['end_at'] = session.end_at
         if validated_data['pay_type'] == Receipt.PAY_TikTok_LP:
@@ -328,6 +328,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
                 return UserAddress.objects.get(pk=value)
             except UserAddress.DoesNotExist:
                 raise CustomAPIException('收获地址不存在')
+        return None
 
     def get_show_user(self, value, user):
         if value:
@@ -335,6 +336,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
             if not qs:
                 raise CustomAPIException('请选择正确的实名常用观演人')
             return qs
+        return None
 
     def get_session(self, value, user):
         try:
@@ -370,8 +372,10 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
         # request = self.context.get('request')
         user = validated_data['user']
         self.check_mobile(validated_data['mobile'])
-        validated_data['express_address_id'] = self.get_express_address(validated_data.get('express_address_id'))
-        validated_data['show_user_ids'] = self.get_show_user(validated_data.get('show_user_ids'), user)
+        if validated_data.get('express_address_id'):
+            validated_data['express_address_id'] = self.get_express_address(validated_data.get('express_address_id'))
+        if validated_data.get('show_user_ids'):
+            validated_data['show_user_ids'] = self.get_show_user(validated_data.get('show_user_ids'), user)
         ticket_order_discount_list = []
         is_tiktok = is_ks = is_xhs = False
         validated_data['session'] = session = self.get_session(validated_data.pop('session_id'), user)
