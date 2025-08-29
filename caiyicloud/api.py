@@ -521,8 +521,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         data = dict(promotion_id=promotion_id)
         sign_params.update(data)
         headers['sign'] = self.get_sign(sign_params)
-        params = dict(supplier_id=self.supplier_id, promotion_id=promotion_id)
-        ret = self._get('api/marketing/v1/promotions/', params=params, headers=headers)
+        params = dict(supplier_id=self.supplier_id)
+        ret = self._get(f'api/marketing/v1/promotions/{promotion_id}', params=params, headers=headers)
         self.parse_resp(ret)
         return ret['data']
 
