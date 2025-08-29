@@ -1777,3 +1777,76 @@ class CySessionLog(models.Model):
     @classmethod
     def create_record(cls, session, title):
         cls.objects.create(session=session, title=title)
+
+
+class PromoteActivity(models.Model):
+    # 营销活动策略类型选项
+    CATEGORY_CHOICES = (
+        (1, '满减满折'),
+    )
+    # 营销活动类型选项
+    TYPE_CHOICES = (
+        (1, '满额立减'),
+        (2, '每满立减'),
+        (3, '满件打折'),
+        (4, '满额打折'),
+        (5, '每满件立减'),
+        (6, '满件立减'),
+    )
+    # 是否启用选项
+    ENABLED_CHOICES = (
+        (1, '启用'),
+        (0, '未启用'),
+    )
+    act_id = models.CharField(max_length=24, db_index=True, verbose_name="活动ID")
+    name = models.CharField(max_length=100, verbose_name="活动名称")
+    category = models.PositiveSmallIntegerField(choices=CATEGORY_CHOICES, verbose_name="营销活动策略")
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES, verbose_name="营销活动类型")
+    enabled = models.PositiveSmallIntegerField(choices=ENABLED_CHOICES, verbose_name="是否启用")
+    start_time = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
+    end_time = models.DateTimeField(null=True, blank=True, verbose_name="结束时间")
+    display_name = models.BooleanField(default=False, verbose_name="是否显示名称")
+    cross_product = models.BooleanField(default=False, verbose_name="允许跨项目/场次")
+    description = models.TextField(null=True, blank=True, verbose_name="活动描述")
+    rule = models.TextField(null=True, blank=True, verbose_name="活动规则")
+
+    class Meta:
+        verbose_name = "营销活动"
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class PromoteRule(models.Model):
+    activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='rules')
+    num = models.PositiveIntegerField(null=True, blank=True, verbose_name="满足件数")
+    amount = models.DecimalField(null=True, blank=True, verbose_name="满足金额", max_digits=10, decimal_places=2, default=0)
+    discount_value = models.DecimalField(null=True, blank=True, verbose_name="打折金额/费率", max_digits=10, decimal_places=2,
+                                         default=0, help_text='打折金额/费率，金额时，单位分；费率时，打九折为10')
+
+    class Meta:
+        verbose_name = "活动规则"
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return str(self.id)
+
+
+class PromoteProduct(models.Model):
+    activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='products')
+    event = models.ForeignKey(CyShowEvent, verbose_name="节目", on_delete=models.CASCADE)
+    session = models.ForeignKey(CySession, verbose_name="场次", null=True, blank=True, on_delete=models.CASCADE)
+    ticket_type = models.ForeignKey(CyTicketType, verbose_name="票档", null=True, blank=True, on_delete=models.CASCADE)
+    must_session = models.BooleanField('是否必须', default=False)
+    SCOPE_EVENT = 1
+    SCOPE_TICKET = 2
+    SCOPE_CHOICES = ((SCOPE_EVENT, '节目'), (SCOPE_TICKET, '场次/票价'))
+    scope_type = models.PositiveSmallIntegerField('适用方式', choices=SCOPE_CHOICES, default=SCOPE_EVENT)
+
+    class Meta:
+        verbose_name = "活动应用范围"
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return str(self.id)
