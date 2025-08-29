@@ -3799,21 +3799,21 @@ class TicketOrder(models.Model):
         from common.utils import get_config
         config = get_config()
         data = dict(show_name=self.title, show_id=session.show.id, venue_name=session.show.venues.name, price_list=dd,
-                    logo='{}{}'.format(config['template_url'], session.show.logo_mobile.url),
+                    logo=session.show.logo_mobile.url,
                     start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
                     has_seat=session.has_seat,
                     end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))
         return json.dumps(data)
 
     @classmethod
-    def get_snapshot_new(cls, dd, session, show, venue_name,logo):
+    def get_snapshot_new(cls, dd, session, show, venue_name):
         """
         商品快照
         :return:
         """
         config = get_config()
         data = dict(show_name=show.title, show_id=show.id, venue_name=venue_name, price_list=dd,
-                    logo=logo,
+                    logo=show.logo_mobile.url,
                     start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
                     has_seat=session.has_seat,
                     end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))

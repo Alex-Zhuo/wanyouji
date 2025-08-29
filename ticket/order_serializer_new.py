@@ -202,16 +202,16 @@ class TicketOrderCreateNoCommonSerializer(serializers.ModelSerializer):
                 ticket_order_discount['order'] = order
                 ticket_order_discount_model_list.append(TicketOrderDiscount(**ticket_order_discount))
             TicketOrderDiscount.objects.bulk_create(ticket_order_discount_model_list)
-        if order.pay_type == Receipt.PAY_CARD_JC and show_type == ShowType.dkxj():
-            if order.card_jc_amount > 0:
-                try:
-                    TheaterCardChangeRecord.add_record(user=order.user,
-                                                       source_type=TheaterCardChangeRecord.SOURCE_TYPE_CONSUME,
-                                                       amount=-order.card_jc_amount, ticket_order=order)
-                except Exception as e:
-                    raise CustomAPIException('剧场会员卡扣除失败，请稍后再试')
-            if order.card_jc_amount == order.actual_amount:
-                order.receipt.set_paid()
+        # if order.pay_type == Receipt.PAY_CARD_JC and show_type == ShowType.dkxj():
+        #     if order.card_jc_amount > 0:
+        #         try:
+        #             TheaterCardChangeRecord.add_record(user=order.user,
+        #                                                source_type=TheaterCardChangeRecord.SOURCE_TYPE_CONSUME,
+        #                                                amount=-order.card_jc_amount, ticket_order=order)
+        #         except Exception as e:
+        #             raise CustomAPIException('剧场会员卡扣除失败，请稍后再试')
+        #     if order.card_jc_amount == order.actual_amount:
+        #         order.receipt.set_paid()
         if show_users:
             session = order.session
             if session.one_id_one_ticket:
@@ -404,7 +404,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
                 raise CustomAPIException('下单错误，票档没找到')
         if multiply != validated_data['multiply']:
             raise CustomAPIException('购票数量错误，请重新选择')
-        show_type = show.show_type
+        show_type = None
         user_tc_card = None
         user_buy_inst = None
         # if not is_coupon:
@@ -452,8 +452,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
         else:
             venue_data = orjson.loads(venue_data)
             venue_name = venue_data['name']
-        logo = show.logo_mobile.url
-        snapshot = TicketOrder.get_snapshot_new(dd, session, show, venue_name, logo)
+        snapshot = TicketOrder.get_snapshot_new(dd, session, show, venue_name)
         validated_data['snapshot'] = orjson.dumps(snapshot)
         inst = TicketOrder.objects.create(**validated_data)
         if coupon_record:
