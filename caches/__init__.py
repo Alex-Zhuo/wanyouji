@@ -16,13 +16,24 @@ def get_redis_name(name):
     prefix = get_prefix()
     return prefix + '_' + name
 
+
 def redis_client():
     redis_conf = get_config().get('redis')
     return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', 0),
                        decode_responses=True)
 
 
+def pika_client():
+    config = get_config()
+    pika = config.get('pika')
+    host = pika.get('host')
+    port = pika.get('port')
+    db = pika.get('db')
+    return StrictRedis(host=host, port=port, db=db, decode_responses=True)
+
+
 _redis = redis_client()
+_pika = pika_client()
 sms_url = get_redis_name('sms_url')
 session_info_recent_qs = get_redis_name('session_info_recent_qs')
 session_info_recommend_qs = get_redis_name('session_info_recommend_qs')
@@ -204,13 +215,7 @@ def subscribe(channel, func):
 
 
 def get_pika_redis():
-    from common.config import get_config
-    config = get_config()
-    pika = config.get('pika')
-    host = pika.get('host')
-    port = pika.get('port')
-    db = pika.get('db')
-    return StrictRedis(host=host, port=port, db=db, decode_responses=True)
+    return _pika
 
 
 def check_lock_time_out(lock_key, time_out=5):
