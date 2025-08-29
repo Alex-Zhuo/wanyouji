@@ -382,7 +382,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
         show = self.get_show(session)
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data)
         # 这里验证了邮费
-        self.before_create(session, is_ks, validated_data, is_xhs=is_xhs, is_test=validated_data.get('is_test', False))
+        self.before_create(session, is_ks, validated_data, is_xhs=is_xhs, is_test=validated_data.pop('is_test', False))
         if session.has_seat == SessionInfo.SEAT_HAS:
             raise CustomAPIException('下单错误，必须选择座位')
         pay_type = validated_data['pay_type']
