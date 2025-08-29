@@ -1025,6 +1025,16 @@ class User(AbstractUser):
         from mall.user_cache import login_refresh_cache
         login_refresh_cache(token, self)
 
+    def cache_info_token(self, token):
+        key = get_redis_name('token_info_{}'.format(token))
+        from mall.user_cache import TOKEN_EXPIRE_HOURS
+        expire_in = TOKEN_EXPIRE_HOURS * 3600 - 10
+        from mall.serializers import UserInfoCacheSerializer
+        data = UserInfoCacheSerializer(self).data
+        with get_pika_redis() as pika:
+            pika.set(key, json.dumps(data))
+            pika.expire(key, expire_in)
+
     def upgrade_member_level(self, incr=1):
         assert incr >= 1
         self.member_level += incr

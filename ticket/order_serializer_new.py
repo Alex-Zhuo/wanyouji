@@ -11,7 +11,7 @@ from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, Thea
 from django.utils import timezone
 from caches import get_pika_redis
 from django.core.cache import cache
-from caches import cache_order_seat_key, cache_order_session_key, cache_order_show_key,redis_venues_copy_key
+from caches import cache_order_seat_key, cache_order_session_key, cache_order_show_key, redis_venues_copy_key
 import orjson
 from common.config import get_config
 
@@ -32,13 +32,13 @@ class TicketOrderCreateNoCommonSerializer(serializers.ModelSerializer):
     coupon_no = serializers.CharField(required=False)
     channel_type = serializers.IntegerField(required=True)
 
-    def handle_coupon(self, show, coupon_no: str, actual_amount):
+    def handle_coupon(self, show, user, coupon_no: str, actual_amount):
         coupon_record = None
         ticket_order_discount_dict = None
         if coupon_no:
             from coupon.models import UserCouponRecord, Coupon
             try:
-                coupon_record = UserCouponRecord.objects.get(no=coupon_no, user=self.context.get('request').user)
+                coupon_record = UserCouponRecord.objects.get(no=coupon_no, user=user)
             except UserCouponRecord.DoesNotExist:
                 raise CustomAPIException(detail=u'优惠券信息有误')
             try:
@@ -425,7 +425,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
                                                express_fee)
         coupon_record = None
         if is_coupon:
-            actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=show,
+            actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=show, user=user,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
                                                                                                  actual_amount=actual_amount)
@@ -475,7 +475,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
         except Exception as e:
             self.return_change_stock(ticket_list)
             raise CustomAPIException(e)
-        return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
+        return inst, validated_data['receipt'].payno, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
     class Meta(TicketOrderCreateNoCommonSerializer.Meta):
         model = TicketOrder
