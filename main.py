@@ -99,6 +99,7 @@ def pika_redis():
 
 @app.get("/tapi/szpw/new_info/")
 async def new_info(req: FastAPIRequest):
+    log.error(req.query_params)
     config = get_config()
     token = req.headers.get('actoken') or req.query_params.get('token')
     from mall.user_cache import token_to_cache_user
@@ -106,7 +107,6 @@ async def new_info(req: FastAPIRequest):
     if not user:
         return ORJSONResponse(status_code=403, content=dict(msg='请重新登录'))
     share_code = req.query_params.get('share_code')
-    log.error(req.query_params)
     if share_code:
         try:
             user.bind_parent(share_code)
