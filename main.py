@@ -108,10 +108,16 @@ async def new_info(req: FastAPIRequest):
         return ORJSONResponse(status_code=403, content=dict(msg='请重新登录'))
     share_code = req.query_params.get('share_code')
     if share_code:
+        from restframework_ext.exceptions import CustomAPIException
+        loop = asyncio.get_event_loop()
         try:
-            user.bind_parent(share_code)
+            data = await loop.run_in_executor(executor, lambda: user.bind_parent(share_code))
+            return data
+        except CustomAPIException as e:
+            log.error(e)
+            return ORJSONResponse(status_code=e.status_code, content=dict(msg=e.msg))
         except Exception as e:
-            log.error('绑定上级失败,{}'.format(e))
+            log.error('绑定上级失败')
     from mall.serializers import UserInfoCacheSerializer
     user_info = UserInfoCacheSerializer(user).data
     if user_info.get('avatar') and 'http' not in user_info['avatar']:
@@ -171,7 +177,6 @@ async def noseat_order(req: FastAPIRequest):
     except Exception as e:
         log.error(e)
         return ORJSONResponse(status_code=400, content=dict(msg='下单失败'))
-
 
 # @app.get("/tapi/szpw/test_order/")
 # async def test_order(req: FastAPIRequest):
