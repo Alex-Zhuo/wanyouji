@@ -111,8 +111,7 @@ async def new_info(req: FastAPIRequest):
         from restframework_ext.exceptions import CustomAPIException
         loop = asyncio.get_event_loop()
         try:
-            data = await loop.run_in_executor(executor, lambda: user.bind_parent(share_code))
-            return data
+            await loop.run_in_executor(executor, lambda: user.bind_parent(share_code))
         except CustomAPIException as e:
             log.error(e)
             return ORJSONResponse(status_code=e.status_code, content=dict(msg=e.msg))
