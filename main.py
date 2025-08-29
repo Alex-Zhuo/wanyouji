@@ -97,7 +97,7 @@ def pika_redis():
 #         return user_info
 
 
-@app.get("/tapi/szpw/new_info/")
+@app.get("/tapi/new_info/")
 async def new_info(req: FastAPIRequest):
     # log.error(req.query_params)
     config = get_config()
@@ -132,7 +132,7 @@ class DjRequest:
         self.query_params = query_params
 
 
-@app.post("/tapi/szpw/noseat_order/")
+@app.post("/tapi/noseat_order/")
 async def noseat_order(req: FastAPIRequest):
     token = req.headers.get('actoken') or req.query_params.get('token')
     if not token:
