@@ -383,7 +383,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
             data['promotion_list'] = promotion_list
         if address_info:
             data['address_info'] = address_info
-        logger.error(data)
+        logger.debug(data)
         ret = self._post('api/order/v1/orders/create', params=params, data=data, headers=headers)
         # self.parse_resp(ret)
         return ret
