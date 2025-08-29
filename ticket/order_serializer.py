@@ -269,7 +269,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             elif session.name_buy_num:
                 show_user = show_users.first()
                 TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, order.multiply, is_get=False)
-        order.change_scroll_list()
+        # order.change_scroll_list()
 
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
                            pack_multiply=0):
