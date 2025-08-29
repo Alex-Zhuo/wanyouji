@@ -472,7 +472,7 @@ class TicketOrderOnSeatNewCreateSerializer(TicketOrderCreateNoCommonSerializer):
         # elif inst.pay_type == Receipt.PAY_XHS:
         #     from xiaohongshu.models import XhsOrder
         #     xhs_order_info = XhsOrder.push_order(inst, seat_dict=seat_dict)
-        pay_end_at = inst.get_end_at()
+        pay_end_at = inst.get_wx_pay_end_at_old()
         self.change_stock_end(ticket_list)
         try:
             self.after_create(inst, show_type, show_users, ticket_order_discount_list)

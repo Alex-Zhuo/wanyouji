@@ -3548,6 +3548,14 @@ class TicketOrder(models.Model):
                 pay_end_at = cy_pay_end_at
         return pay_end_at
 
+    def get_wx_pay_end_at_old(self):
+        from datetime import timedelta
+        from mp.models import BasicConfig
+        bc = BasicConfig.get()
+        cancel_minutes = bc.auto_cancel_minutes - 1 if bc.auto_cancel_minutes > 1 else bc.auto_cancel_minutes
+        pay_end_at = self.create_at + timedelta(minutes=cancel_minutes)
+        return pay_end_at
+
     def get_end_at(self):
         # 转时间戳
         pay_end_at = self.get_wx_pay_end_at()
