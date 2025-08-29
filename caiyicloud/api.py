@@ -19,8 +19,10 @@ from decimal import Decimal
 from caiyicloud.sign_utils import do_check, deal_params, sign_top_request
 
 logger = logging.getLogger(__name__)
-
-deubg = True
+config = get_config()
+cy_config = config.get('cy')
+LOG_DEBUG = cy_config.get('log_debug') if config else True
+HOST_DEBUG = cy_config.get('host_debug') if config else False
 
 
 def random_string(length=16):
@@ -34,7 +36,7 @@ class CaiYiCloudAbstract(object):
     API_BASE_URL_TEST = 'https://openapi-qad.caiyicloud.com/'
 
     def _request(self, method, url_or_endpoint, params=None, data=None, headers=None, **kwargs):
-        uri = self.API_BASE_URL
+        uri = self.API_BASE_URL if not HOST_DEBUG else self.API_BASE_URL_TEST
         if not url_or_endpoint.startswith(('http://', 'https://')):
             url = '{base}{endpoint}'.format(
                 base=uri,
@@ -69,7 +71,7 @@ class CaiYiCloudAbstract(object):
         #         client=self,
         #         request=res.request,
         #         response=res)
-        if deubg:
+        if LOG_DEBUG:
             logger.debug('url:{}'.format(url))
             logger.debug(ret_data)
         return ret_data
