@@ -1817,6 +1817,114 @@ class PromoteActivity(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def init_activity(cls, is_new=False):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        page = 1
+        page_size = 50
+        promotion_data = cy.promotions_list(page=page, page_size=page_size)
+        total = promotion_data['total']
+        promotion_list = promotion_data.get('list') or []
+        while total > page * page_size and page < 50:
+            page += 1
+            promotion_data = cy.promotions_list(page=page, page_size=page_size)
+            if promotion_data.get('list'):
+                promotion_list += promotion_data['list']
+        for pm in promotion_list:
+            has_promotion = False
+            if is_new:
+                has_promotion = cls.objects.filter(act_id=pm['id']).exists()
+            if not has_promotion:
+                cls.update_or_create_record(pm['id'])
+
+    @classmethod
+    def update_or_create_record(cls, act_id: str):
+        cy = caiyi_cloud()
+        if not cy.is_init:
+            return
+        promotion_detail = cy.promotion_detail(act_id)
+        start_time = None
+        end_time = None
+        if promotion_detail.get('start_time'):
+            start_time = datetime.strptime(promotion_detail['start_time'], '%Y-%m-%d %H:%M:%S')
+        if promotion_detail.get('end_time'):
+            end_time = datetime.strptime(promotion_detail['end_time'], '%Y-%m-%d %H:%M:%S')
+        promotion_data = {
+            "name": promotion_detail['name'],
+            "category": promotion_detail['category'],
+            "type": promotion_detail['type'],
+            "enabled": promotion_detail['enabled'],
+            "start_time": start_time,
+            "end_time": end_time,
+            "display_name": True if promotion_detail.get('display_name') else False,
+            "cross_product": True if promotion_detail.get('cross_product') else False,
+            "description": promotion_detail.get('cross_product'),
+            "rule": promotion_detail.get('rule')
+        }
+        qs = cls.objects.filter(act_id=act_id)
+        if qs:
+            qs.update(**promotion_data)
+            obj = qs.first()
+        else:
+            promotion_data['act_id'] = act_id
+            obj = cls.objects.create(**promotion_data)
+        rules = promotion_data.get('rules')
+        PromoteRule.objects.filter(activity=obj).delete()
+        if rules:
+            pr_list = []
+            for ru in rules:
+                pr_list.append(PromoteRule(activity=obj, num=ru.get('num') or 0, amount=ru.get('amount') or 0,
+                                           discount_value=ru.get('discount_value') or 0))
+            if pr_list:
+                PromoteRule.objects.bulk_create(pr_list)
+        products = promotion_data.get('products')
+        PromoteProduct.objects.filter(activity=obj).delete()
+        if products:
+            pp_list = []
+            event_dict = dict()
+            session_dict = dict()
+            ticket_type_dict = dict()
+            for prod in products:
+                event_id = prod.get('event_id')
+                session_id = prod.get('session_id')
+                ticket_type_id = prod.get('ticket_type_id')
+                event = None
+                session = None
+                ticket_type = None
+                if event_id:
+                    if event_dict.get(event_id):
+                        event = event_dict[event_id]
+                    else:
+                        event = CyShowEvent.objects.filter(event_id=event_id).first()
+                        event_dict[event_id] = event
+                if not event:
+                    continue
+                if session_id:
+                    if session_dict.get(session_id):
+                        session = session_dict[session_id]
+                    else:
+                        session = CySession.objects.filter(cy_no=session_id).first()
+                        session_dict[session_id] = session
+                    if not session:
+                        continue
+                if ticket_type_id:
+                    if ticket_type_dict.get(ticket_type_id):
+                        ticket_type = ticket_type_dict[ticket_type_id]
+                    else:
+                        ticket_type = CyTicketType.objects.filter(cy_no=ticket_type_id).first()
+                        ticket_type_dict[ticket_type_id] = ticket_type
+                    if not ticket_type:
+                        continue
+                must_session = False
+                if prod.get('must_session') and prod.get('must_session') == 1:
+                    must_session = True
+                pp_list.append(PromoteProduct(activity=obj, event=event, session=session, ticket_type=ticket_type,
+                                              must_session=must_session, scope_type=int(prod.get('scope_type'))))
+            if pp_list:
+                PromoteProduct.objects.bulk_create(pp_list)
+
 
 class PromoteRule(models.Model):
     activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='rules')
