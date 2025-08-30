@@ -1,0 +1,21 @@
+[Unit]
+Description=szpw_fast daemon
+After=network.target
+
+[Service]
+PIDFile=/run/szpw_fast.pid
+User=root
+Group=root
+WorkingDirectory=/disk4/Sites/cts_backend
+ExecStart=/home/ubuntu/.virtualenvs/szpw/bin/gunicorn -w 20 -k uvicorn.workers.UvicornWorker main:app -b 127.0.0.1:8001
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
+[Socket]
+ListenStream=0.0.0.0:8001
