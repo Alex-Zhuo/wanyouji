@@ -1151,8 +1151,10 @@ class TicketOrderDetailSerializer(TicketOrderSerializer):
             from caches import get_pika_redis, redis_shows_copy_key
             redis = get_pika_redis()
             data = redis.hget(redis_shows_copy_key, str(show.id))
-            data = json.loads(data)
-            data['notice'] = data.get('watching_notice')
+            data['notice'] = []
+            if data:
+                data = json.loads(data)
+                data['notice'] = data.get('watching_notice')
         return data
 
     def get_code_list(self, obj):
