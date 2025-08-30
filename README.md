@@ -56,6 +56,12 @@
 │   ├── sms.py // 腾讯和阿里短信调用方法  
 │   ├── serializers.py // 短信api通用验证方法  
 
+├── production // django方法重载  
+│   ├── celery_szpw.service // celery 异步任务shell服务          
+│   ├── celery_szpw_beat.service // celery 定时任务shell服务      
+│   ├── ly_szpw.service // 主服务shell  
+│   ├── qcluster_szpw.service // django_q 异步服务用于处理文件  
+
 ├── restframework_ext // django方法重载  
 │   ├── exceptions.py // 通用异常处理方法        
 │   ├── filterbackends.py // 通用后台过滤方法    
@@ -77,6 +83,7 @@
 ├── env.yml.sample // 配置文件模板  
 ├── README.md // 模块注释  
 ├── manage.py // django 内置启动文件  
+
 
 
 App功能模块如下：  

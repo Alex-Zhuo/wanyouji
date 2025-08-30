@@ -1,0 +1,16 @@
+[Unit]
+Description=celery beat ly_szpw
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/disk4/Sites/cts_backend
+ExecStart=/home/ubuntu/.virtualenvs/szpw/bin/celery -A dj beat -l info
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=False
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

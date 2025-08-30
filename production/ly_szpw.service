@@ -1,0 +1,22 @@
+[Unit]
+Description=ly_szpw daemon
+After=network.target
+
+[Service]
+PIDFile=/run/gunicorn/ly_szpw.pid
+LimitNOFILE=30000
+User=root
+Group=root
+WorkingDirectory=/disk4/Sites/cts_backend
+ExecStart=/home/ubuntu/.virtualenvs/szpw/bin/gunicorn --pid /run/gunicorn/ly_szpw.pid dj.wsgi:application -b 127.0.0.1:8168 --timeout 120 --workers 24 -k gevent --worker-connections 20000
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
+[Socket]
+ListenStream=0.0.0.0:8168
