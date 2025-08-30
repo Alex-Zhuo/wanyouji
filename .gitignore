@@ -18,3 +18,5 @@ static/config.json
 .vscode/*
 venv/*
 others/*
+generate_*
+config.py
