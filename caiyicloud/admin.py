@@ -3,7 +3,8 @@ from django.contrib import admin
 from django.contrib import messages
 
 from caiyicloud.models import CaiYiCloudApp, CyCategory, CyVenue, CyShowEvent, CyDeliveryMethods, CyCheckInMethods, \
-    CyIdTypes, CySession, CyTicketType, CyFirstCategory, CyOrder, CyTicketCode, CyOrderRefund, CyEventLog, CySessionLog
+    CyIdTypes, CySession, CyTicketType, CyFirstCategory, CyOrder, CyTicketCode, CyOrderRefund, CyEventLog, CySessionLog, \
+    PromoteRule, PromoteProduct, PromoteActivity
 from dj import technology_admin
 from dj_ext.permissions import TechnologyModelAdmin, OnlyViewAdmin, RemoveDeleteModelAdmin, OnlyReadTabularInline
 from dj_ext.exceptions import AdminException
@@ -133,6 +134,39 @@ class CySessionAdmin(AllOnlyViewAdmin):
     actions = [refresh_session]
 
 
+class PromoteRuleInline(OnlyReadTabularInline):
+    model = PromoteRule
+    extra = 0
+    list_display = ['num', 'amount', 'discount_value']
+
+
+class PromoteProductInline(OnlyReadTabularInline):
+    model = PromoteProduct
+    extra = 0
+    list_display = ['event', 'session', 'ticket_type', 'must_session', 'scope_type']
+
+
+def refresh_pro_act(modeladmin, request, queryset):
+    if queryset.count() > 1:
+        raise AdminException('每次最多刷新一场')
+    inst = queryset.first()
+    try:
+        inst.refresh_pro_activity('后台场次刷新')
+    except Exception as e:
+        raise AdminException(e)
+    messages.success(request, '执行成功')
+
+
+refresh_pro_act.short_description = '刷新营销活动'
+
+
+class PromoteActivityAdmin(AllOnlyViewAdmin):
+    list_display = ['act_id', 'name', 'category', 'type', 'enabled', 'start_time', 'end_time', 'display_name',
+                    'description']
+    inlines = [PromoteRuleInline, PromoteProductInline]
+    actions = [refresh_pro_act]
+
+
 class CyTicketCodeInline(OnlyReadTabularInline):
     model = CyTicketCode
     extra = 0
@@ -166,6 +200,7 @@ admin.site.register(CyIdTypes, CyIdTypesAdmin)
 admin.site.register(CyCheckInMethods, CyCheckInMethodsAdmin)
 admin.site.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 admin.site.register(CySession, CySessionAdmin)
+admin.site.register(PromoteActivity, PromoteActivityAdmin)
 admin.site.register(CyOrder, CyOrderAdmin)
 admin.site.register(CyOrderRefund, CyOrderRefundAdmin)
 admin.site.register(CyEventLog, CyEventLogAdmin)
@@ -180,6 +215,7 @@ technology_admin.register(CyIdTypes, CyIdTypesAdmin)
 technology_admin.register(CyCheckInMethods, CyCheckInMethodsAdmin)
 technology_admin.register(CyDeliveryMethods, CyDeliveryMethodsAdmin)
 technology_admin.register(CySession, CySessionAdmin)
+technology_admin.register(PromoteActivity, PromoteActivityAdmin)
 technology_admin.register(CyOrder, CyOrderAdmin)
 technology_admin.register(CyOrderRefund, CyOrderRefundAdmin)
 technology_admin.register(CyEventLog, CyEventLogAdmin)

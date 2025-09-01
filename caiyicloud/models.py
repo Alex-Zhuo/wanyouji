@@ -1925,6 +1925,9 @@ class PromoteActivity(models.Model):
             if pp_list:
                 PromoteProduct.objects.bulk_create(pp_list)
 
+    def refresh_pro_activity(self):
+        self.update_or_create_record(self.act_id)
+
 
 class PromoteRule(models.Model):
     activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='rules')
