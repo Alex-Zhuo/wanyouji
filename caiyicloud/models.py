@@ -1969,6 +1969,7 @@ class PromoteActivity(models.Model):
         # 搜索用的是分
         promote_amount = 0
         can_use = False
+        ticket_type = None
         if is_event:
             can_use = True
         else:
@@ -1990,7 +1991,7 @@ class PromoteActivity(models.Model):
                 if self.type in self.discount_type_list():
                     # 打折类型
                     promote_amount = int(amount * (100 - rule.discount_value)) / 100
-        return can_use, promote_amount, amount
+        return can_use, promote_amount, amount, ticket_type
 
 
 class PromoteRule(models.Model):

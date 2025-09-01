@@ -12,7 +12,7 @@ from mall.models import Receipt, TheaterCardUserRecord, TheaterCardUserBuy, Thea
 from datetime import datetime
 from django.utils import timezone
 import json
-from caches import redis_ticket_level_cache, get_pika_redis
+from caches import redis_ticket_level_cache, get_pika_redis, get_redis_name
 from django.core.cache import cache
 from caches import cache_order_seat_key
 
@@ -572,8 +572,8 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
 
 
 class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
-
-    def cy_create_order(self, ticket_order, session, amounts_data:dict, seat_info: dict = None, ticket_list: list = None,
+    def cy_create_order(self, ticket_order, session, amounts_data: dict, seat_info: dict = None,
+                        ticket_list: list = None,
                         show_users=None):
         """
         ticket_list 无座下单使用，有座不用传
@@ -590,9 +590,11 @@ class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
 
 
 class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
+    order_promote_data = serializers.CharField(required=False)
 
     @atomic
     def create(self, validated_data):
+        # order_promote_data json 数据
         # ticket_list [dict(level_id=1,multiply=2)]
         request = self.context.get('request')
         is_tiktok = is_ks = is_xhs = False
@@ -615,6 +617,19 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         pack_multiply = 0
         pack_amount = 0
         is_cy_promotion = False
+        order_promote_data = validated_data.pop('order_promote_data', None)
+        if order_promote_data:
+            is_cy_promotion = True
+        # promote_act = None
+        #     promote_act_id = order_promote_data['id']
+        #     from caiyicloud.models import PromoteActivity
+        #     key = get_redis_name(f'cy_pm_{promote_act_id}')
+        #     promote_act = cache.get(key)
+        #     if not promote_act:
+        #         promote_act = PromoteActivity.objects.filter(act_id=promote_act_id, enabled=1).first()
+        #         cache.set(key, promote_act, 60)
+        #     if not promote_act:
+        #         raise CustomAPIException('下单失败，营销活动已结束，请重新选择购票')
         for level_data in ticket_list:
             key = cache_order_seat_key.format(level_data['level_id'], session.id)
             level_inst = cache.get(key)
@@ -647,7 +662,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
                             pack_multiply += total
                             pack_amount += total * Decimal(pack['price'])
                 else:
-                    raise CustomAPIException('下单错误，票档错误..')
+                    raise CustomAPIException('下单失败，票档错误..')
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
         if multiply != validated_data['multiply']:
             raise CustomAPIException('购票数量错误，请重新选择')
@@ -675,6 +690,15 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             amount = cy_amount
         amounts_data['original_total_amount'] = amount
         amounts_data['actual_total_amount'] = cy_amount
+        if order_promote_data:
+            order_promote_data = json.loads(order_promote_data)
+            if amounts_data.get('promotion_list'):
+                amounts_data['promotion_list'].append(order_promote_data)
+            else:
+                amounts_data['promotion_list'] = [order_promote_data]
+                ticket_order_discount_list.append(
+                    dict(discount_type=TicketOrderDiscount.DISCOUNT_PROMOTION, title='营销活动',
+                         amount=order_promote_data['discount_amount']))
         # 加上邮费
         amount = amount + express_fee
         actual_amount = actual_amount + express_fee
@@ -730,7 +754,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
 
     class Meta:
         model = TicketOrder
-        fields = CyTicketOrderCommonSerializer.Meta.fields
+        fields = CyTicketOrderCommonSerializer.Meta.fields + ['order_promote_data']
 
 
 class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
@@ -769,6 +793,14 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         promotion_list = seat_info.get('promotion_list')
         if promotion_list:
             is_cy_promotion = True
+            for promote_data in promotion_list:
+                discount_type = TicketOrderDiscount.DISCOUNT_PACK
+                title = '套票优惠'
+                if promote_data['category'] == 2:
+                    discount_type = TicketOrderDiscount.DISCOUNT_PROMOTION
+                    title = '营销活动'
+                ticket_order_discount_list.append(
+                    dict(discount_type=discount_type, title=title, amount=promote_data['discount_amount']))
         amounts_data['original_total_amount'] = cy_amount
         amounts_data['actual_total_amount'] = cy_actual_amount
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)

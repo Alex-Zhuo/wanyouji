@@ -61,5 +61,5 @@ class CaiYiViewSet(viewsets.ViewSet):
     def check_promote(self, request):
         s = GetPromoteActivitySerializer(data=request.data, context={'request': request})
         s.is_valid(True)
-        ret_promote_amount, act_data = s.create(s.validated_data)
-        return Response(dict(ret_promote_amount=ret_promote_amount, act_data=act_data))
+        has_promote, act_data, order_promote_data = s.create(s.validated_data)
+        return Response(dict(has_promote=has_promote, act_data=act_data, order_promote_data=order_promote_data))
