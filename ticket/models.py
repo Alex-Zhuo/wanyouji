@@ -3838,16 +3838,17 @@ class TicketOrder(models.Model):
             # 彩艺订单不返回库存和座位等
             return
         if self.session.has_seat == SessionInfo.SEAT_NO:
-            # 无座位的只需要退库存
-            snapshot = json.loads(self.snapshot)
-            price_list = snapshot['price_list']
-            for ll in price_list:
-                tf = TicketFile.objects.filter(id=int(ll['level_id']), session_id=self.session.id).first()
-                if tf:
-                    tf.change_stock(int(ll['multiply']))
-                    if not is_cancel:
-                        # 取消订单不用减销量
-                        tf.update_sales(-int(ll['multiply']))
+            if is_cancel or self.status_before_refund == self.STATUS_PAID:
+                # 无座位的只需要退库存
+                snapshot = json.loads(self.snapshot)
+                price_list = snapshot['price_list']
+                for ll in price_list:
+                    tf = TicketFile.objects.filter(id=int(ll['level_id']), session_id=self.session.id).first()
+                    if tf:
+                        tf.change_stock(int(ll['multiply']))
+                        if not is_cancel:
+                            # 取消订单不用减销量
+                            tf.update_sales(-int(ll['multiply']))
         else:
             qs = SessionSeat.objects.filter(order_no=self.order_no)
             from caches import get_redis, session_seat_key
