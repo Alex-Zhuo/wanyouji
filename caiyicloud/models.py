@@ -4,7 +4,7 @@ from django.db import models
 from django.conf import settings
 import logging
 from mall.models import User
-from common.utils import get_config, save_url_img, hash_ids, random_str, sha256_str, qrcode_dir_cy
+from common.utils import get_config, save_url_img, hash_ids, random_str, sha256_str, qrcode_dir_cy, truncate_float
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
@@ -1933,6 +1933,64 @@ class PromoteActivity(models.Model):
 
     def refresh_pro_activity(self):
         self.update_or_create_record(self.act_id)
+
+    @classmethod
+    def get_promotes(cls, session_no: str):
+        event_qs = []
+        ticket_qs = []
+        session = SessionInfo.objects.filter(no=session_no, status=SessionInfo.STATUS_ON,
+                                             source_type=SessionInfo.SR_CY).first()
+        if session and session.is_cy_session:
+            show = session.show
+            cy_session = session.cy_session
+            cy_event = show.cy_show
+            qs = cls.objects.filter(products__event_id=cy_event.id, enabled=1)
+            event_qs = qs.filter(products__scope_type=PromoteProduct.SCOPE_EVENT).distinct()
+            ticket_qs = qs.filter(products__session_id=cy_session.id,
+                                  products__scope_type=PromoteProduct.SCOPE_TICKET).distinct()
+        return event_qs, ticket_qs, session
+
+    @classmethod
+    def num_type_list(cls):
+        # 满件减
+        return [3, 5, 6]
+
+    @classmethod
+    def amount_type_list(cls):
+        # 满额减
+        return [1, 2, 4]
+
+    @classmethod
+    def discount_type_list(cls):
+        # 打折类型
+        return [3, 4]
+
+    def get_promote_amount(self, num, session, amount=0, ticket_file_id=None, is_event=False):
+        # 搜索用的是分
+        promote_amount = 0
+        can_use = False
+        if is_event:
+            can_use = True
+        else:
+            tf = TicketFile.objects.filter(id=ticket_file_id, session_id=session.id).first()
+            if tf and tf.is_cy:
+                ticket_type = tf.cy_tf
+                can_use = PromoteProduct.objects.filter(activity_id=self.id, ticket_type=ticket_type).exists()
+                amount = tf.price * num
+        c_amount = int(amount * 100)
+        if can_use:
+            if self.type in self.num_type_list():
+                # 满件减,取打折最大的
+                qs = PromoteRule.objects.filter(activity_id=self.id, num__lte=num)
+            else:
+                # 满额减,取金额最大的
+                qs = PromoteRule.objects.filter(activity_id=self.id, amount__lte=c_amount)
+            if qs:
+                rule = qs.order_by('-discount_value').first()
+                if self.type in self.discount_type_list():
+                    # 打折类型
+                    promote_amount = int(amount * (100 - rule.discount_value)) / 100
+        return can_use, promote_amount, amount
 
 
 class PromoteRule(models.Model):

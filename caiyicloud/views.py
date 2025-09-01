@@ -11,7 +11,7 @@ import jwt
 import uuid
 from caiyicloud.models import CyOrder, CaiYiCloudApp
 from caiyicloud.api import caiyi_cloud
-from caiyicloud.serializers import CySeatUrlSerializer
+from caiyicloud.serializers import CySeatUrlSerializer, GetPromoteActivitySerializer
 from datetime import datetime
 
 log = logger = logging.getLogger(__name__)
@@ -56,3 +56,10 @@ class CaiYiViewSet(viewsets.ViewSet):
             raise CustomAPIException('获取已选择信息失败')
         ret = CyOrder.get_cy_seat_info(biz_id=request.GET.get('biz_id'))
         return Response(ret)
+
+    @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
+    def check_promote(self, request):
+        s = GetPromoteActivitySerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        ret_promote_amount, act_data = s.create(s.validated_data)
+        return Response(dict(ret_promote_amount=ret_promote_amount, act_data=act_data))
