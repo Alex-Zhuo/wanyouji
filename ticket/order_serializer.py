@@ -678,6 +678,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             can_member_card=can_member_card)
         if ticket_order_discount_card_dict:
             ticket_order_discount_list.append(ticket_order_discount_card_dict)
+        # cy_amount 计算了套票后的价格
         if pack_amount > 0:
             # 套票原价,type优惠策略,1:套票优惠；2:营销活动
             amount = Decimal(pack_amount)
@@ -688,17 +689,18 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         else:
             # 票档价
             amount = cy_amount
-        amounts_data['original_total_amount'] = amount
-        amounts_data['actual_total_amount'] = cy_amount
         if order_promote_data:
             order_promote_data = json.loads(order_promote_data)
             if amounts_data.get('promotion_list'):
                 amounts_data['promotion_list'].append(order_promote_data)
             else:
                 amounts_data['promotion_list'] = [order_promote_data]
-                ticket_order_discount_list.append(
-                    dict(discount_type=TicketOrderDiscount.DISCOUNT_PROMOTION, title='营销活动',
-                         amount=order_promote_data['discount_amount']))
+            ticket_order_discount_list.append(
+                dict(discount_type=TicketOrderDiscount.DISCOUNT_PROMOTION, title='营销活动',
+                     amount=order_promote_data['discount_amount']))
+            cy_amount -= order_promote_data['discount_amount']
+        amounts_data['original_total_amount'] = amount
+        amounts_data['actual_total_amount'] = cy_amount
         # 加上邮费
         amount = amount + express_fee
         actual_amount = actual_amount + express_fee
@@ -782,11 +784,11 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         seat_info = CyOrder.get_cy_seat_info(biz_id)
         if not seat_info:
             raise CustomAPIException('下单失败，biz_id参数错误')
-        cy_actual_amount = 0  # 实付总金额
         cy_amount = 0  # 原总价
         real_multiply = 0  # 实际数量
+        total_discount_amount = 0
         for t_info in seat_info['price_infos']:
-            cy_actual_amount += t_info['price']
+            # cy_actual_amount += t_info['price']
             real_multiply += t_info['count']
             for seat in t_info['seat_infos']:
                 cy_amount += seat['seat_price']
@@ -801,6 +803,8 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
                     title = '营销活动'
                 ticket_order_discount_list.append(
                     dict(discount_type=discount_type, title=title, amount=promote_data['discount_amount']))
+                total_discount_amount += promote_data['discount_amount']
+        cy_actual_amount = cy_amount - total_discount_amount
         amounts_data['original_total_amount'] = cy_amount
         amounts_data['actual_total_amount'] = cy_actual_amount
         is_coupon, can_member_card = self.check_can_promotion(session, validated_data, is_cy_promotion)
