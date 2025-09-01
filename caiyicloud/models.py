@@ -1838,11 +1838,12 @@ class PromoteActivity(models.Model):
             if promotion_data.get('list'):
                 promotion_list += promotion_data['list']
         for pm in promotion_list:
-            has_promotion = False
-            if is_new:
-                has_promotion = cls.objects.filter(act_id=pm['id']).exists()
-            if not has_promotion:
-                cls.update_or_create_record(pm['id'])
+            if pm['enabled']:
+                has_promotion = False
+                if is_new:
+                    has_promotion = cls.objects.filter(act_id=pm['id']).exists()
+                if not has_promotion:
+                    cls.update_or_create_record(pm['id'])
 
     @classmethod
     def update_or_create_record(cls, act_id: str):

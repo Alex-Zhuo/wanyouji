@@ -160,11 +160,22 @@ def refresh_pro_act(modeladmin, request, queryset):
 refresh_pro_act.short_description = '刷新营销活动'
 
 
+def pull_new_pro_act(modeladmin, request, queryset):
+    try:
+        PromoteActivity.init_activity()
+    except Exception as e:
+        raise AdminException(e)
+    messages.success(request, '执行成功')
+
+
+pull_new_pro_act.short_description = '拉取新营销活动'
+
+
 class PromoteActivityAdmin(AllOnlyViewAdmin):
     list_display = ['act_id', 'name', 'category', 'type', 'enabled', 'start_time', 'end_time', 'display_name',
                     'description']
     inlines = [PromoteRuleInline, PromoteProductInline]
-    actions = [refresh_pro_act]
+    actions = [refresh_pro_act, pull_new_pro_act]
 
 
 class CyTicketCodeInline(OnlyReadTabularInline):
