@@ -70,7 +70,7 @@ class PromoteRuleSerializer(serializers.ModelSerializer):
 
 
 class PromoteActivitySerializer(serializers.ModelSerializer):
-    type_display = serializers.ReadOnlyField(soucre='get_type_display')
+    type_display = serializers.ReadOnlyField(source='get_type_display')
     rules = serializers.SerializerMethodField()
 
     def get_rules(self, obj):
