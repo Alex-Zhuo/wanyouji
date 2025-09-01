@@ -162,7 +162,7 @@ refresh_pro_act.short_description = '刷新营销活动'
 
 def pull_new_pro_act(modeladmin, request, queryset):
     try:
-        PromoteActivity.init_activity()
+        PromoteActivity.init_activity(True)
     except Exception as e:
         raise AdminException(e)
     messages.success(request, '执行成功')
