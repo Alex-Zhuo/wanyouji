@@ -1870,7 +1870,7 @@ class PromoteActivity(models.Model):
         else:
             promotion_data['act_id'] = act_id
             obj = cls.objects.create(**promotion_data)
-        rules = promotion_data.get('rules')
+        rules = promotion_detail.get('rules')
         PromoteRule.objects.filter(activity=obj).delete()
         if rules:
             pr_list = []
@@ -1879,7 +1879,7 @@ class PromoteActivity(models.Model):
                                            discount_value=ru.get('discount_value') or 0))
             if pr_list:
                 PromoteRule.objects.bulk_create(pr_list)
-        products = promotion_data.get('products')
+        products = promotion_detail.get('products')
         PromoteProduct.objects.filter(activity=obj).delete()
         if products:
             pp_list = []
