@@ -610,3 +610,8 @@ def validate_mobile(value):
     if not R_MOBILE.match(value):
         return False
     return True
+
+
+def truncate_float(number):
+    # 向下取保留两位数字
+    return int(number * 100) / 100

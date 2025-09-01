@@ -462,6 +462,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'caiyicloud.tasks.cy_update_stock_task',
         'schedule': timedelta(seconds=183),  # 更新库存
     },
+    'promote_auto_end_task': {
+        'task': 'caiyicloud.tasks.promote_auto_end_task',
+        'schedule': timedelta(seconds=57),  # 营销活动设为已结束
+    },
 
     # 快手任务
     # 'session_push_to_ks': {

@@ -1,6 +1,6 @@
 from celery import shared_task
 import logging
-from caiyicloud.models import CyOrder, CySession, CyShowEvent
+from caiyicloud.models import CyOrder, CySession, CyShowEvent, PromoteActivity
 
 log = logging.getLogger(__name__)
 
@@ -54,3 +54,9 @@ def notify_update_session(event_change_type: int, cy_sessions_list: list):
 def notify_update_ticket_type(event_change_type: int, price_ids: list):
     # 更新场次
     return CyShowEvent.notify_update_ticket_type(event_change_type, price_ids)
+
+
+@shared_task
+def promote_auto_end_task():
+    # 营销活动设为已结束
+    return PromoteActivity.do_auto_end_task()

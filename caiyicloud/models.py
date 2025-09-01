@@ -1795,6 +1795,7 @@ class PromoteActivity(models.Model):
     )
     # 是否启用选项
     ENABLED_CHOICES = (
+        (2, '已结束'),
         (1, '启用'),
         (0, '未启用'),
     )
@@ -1803,8 +1804,8 @@ class PromoteActivity(models.Model):
     category = models.PositiveSmallIntegerField(choices=CATEGORY_CHOICES, verbose_name="营销活动策略")
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES, verbose_name="营销活动类型")
     enabled = models.PositiveSmallIntegerField(choices=ENABLED_CHOICES, verbose_name="是否启用")
-    start_time = models.DateTimeField(null=True, blank=True, verbose_name="开始时间")
-    end_time = models.DateTimeField(null=True, blank=True, verbose_name="结束时间")
+    start_time = models.DateTimeField(null=True, blank=True, verbose_name="开始时间", db_index=True)
+    end_time = models.DateTimeField(null=True, blank=True, verbose_name="结束时间", db_index=True)
     display_name = models.BooleanField(default=False, verbose_name="是否显示名称")
     cross_product = models.BooleanField(default=False, verbose_name="允许跨项目/场次")
     description = models.TextField(null=True, blank=True, verbose_name="活动描述")
@@ -1816,6 +1817,10 @@ class PromoteActivity(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def do_auto_end_task(cls):
+        cls.objects.filter(enabled=1, end_time__lte=timezone.now()).update(enabled=2)
 
     @classmethod
     def init_activity(cls, is_new=False):
