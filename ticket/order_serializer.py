@@ -3,7 +3,8 @@
 from rest_framework import serializers
 from django.db.transaction import atomic
 from restframework_ext.exceptions import CustomAPIException
-from ticket.models import SessionInfo, TicketFile, SessionSeat, TicketOrder, ShowType, ShowUser, TicketOrderDiscount
+from ticket.models import SessionInfo, TicketFile, SessionSeat, TicketOrder, ShowType, ShowUser, TicketOrderDiscount, \
+    TicketOrderRealName
 import logging
 from decimal import Decimal
 from ticket.serializers import get_origin
@@ -266,9 +267,11 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             if session.one_id_one_ticket:
                 for show_user in show_users:
                     TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, 1, is_get=False)
+                    TicketOrderRealName.create_record(order, show_user.name, show_user.mobile, show_user.id_card)
             elif session.name_buy_num:
                 show_user = show_users.first()
                 TicketOrder.get_or_set_real_name_buy_num(session.id, show_user.id_card, order.multiply, is_get=False)
+                TicketOrderRealName.create_record(order, show_user.name, show_user.mobile, show_user.id_card)
         # order.change_scroll_list()
 
     def set_validated_data(self, session, user, real_multiply, validated_data, user_tc_card=None, user_buy_inst=None,
