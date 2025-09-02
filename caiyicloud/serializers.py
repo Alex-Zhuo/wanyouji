@@ -54,6 +54,10 @@ class CyOrderBasicSerializer(serializers.ModelSerializer):
 
 class PromoteRuleSerializer(serializers.ModelSerializer):
     discount_value = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
+
+    def get_amount(self, obj):
+        return int(obj.amount) / 100
 
     def get_discount_value(self, obj):
         discount_value = obj.discount_value
