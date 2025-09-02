@@ -136,11 +136,21 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
         has_promote = False
         event_apply_tickets = []
         t_apply_tickets = []
+        total_amount = 0
+        real_multiply = 0
         if event_qs:
+            from ticket.models import TicketFile
+            for tf_data in validated_data['ticket_list']:
+                tf = TicketFile.objects.filter(id=tf_data['level_id'], session_id=session.id).first()
+                if tf and tf.is_cy:
+                    ticket_type = tf.cy_tf
+                    event_apply_tickets.append({"ticket_type_id": ticket_type.cy_no})
+                    total_amount += tf.price * tf_data['multiply']
+                    real_multiply += tf_data['multiply']
             for act in event_qs:
                 is_change = False
-                can_use, promote_amount, _, _ = act.get_promote_amount(validated_data['multiply'],
-                                                                       amount=validated_data['total_amount'],
+                can_use, promote_amount, _, _ = act.get_promote_amount(real_multiply,
+                                                                       amount=total_amount,
                                                                        session=session,
                                                                        is_event=True)
                 # 取最优惠的活动
@@ -194,15 +204,7 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
         else:
             ret_act = ticket_act
             ret_promote_amount = ticket_promote_amount
-        apply_tickets = t_apply_tickets
-        if is_event:
-            from ticket.models import TicketFile
-            for tf_data in validated_data['ticket_list']:
-                tf = TicketFile.objects.filter(id=tf_data['level_id'], session_id=session.id).first()
-                if tf and tf.is_cy:
-                    ticket_type = tf.cy_tf
-                    event_apply_tickets.append({"ticket_type_id": ticket_type.cy_no})
-            apply_tickets = event_apply_tickets
+        apply_tickets = event_apply_tickets if is_event else t_apply_tickets
         if ret_act:
             has_promote = True
             order_promote_data = {
