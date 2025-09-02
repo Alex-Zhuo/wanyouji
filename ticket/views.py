@@ -51,7 +51,7 @@ from django.utils.decorators import method_decorator
 from ticket.serializers import get_origin
 from caches import get_prefix
 from ticket.order_serializer import ticket_order_dispatch
-
+import random
 log = logging.getLogger(__name__)
 
 PREFIX = get_prefix()
@@ -166,12 +166,15 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.debug('retrieve')
         from caches import get_pika_redis, redis_shows_copy_key, show_collect_copy_key, redis_shows_no_key
         no = kwargs['pk']
-        with get_pika_redis() as pika:
-            show_id = pika.hget(redis_shows_no_key, no)
-        if not show_id:
-            show = self.get_object()
-            show.set_shows_no_pk()
-            show_id = show.id
+        try:
+            show_id = int(no)[:-2]
+        except Exception as e:
+            with get_pika_redis() as pika:
+                show_id = pika.hget(redis_shows_no_key, no)
+            if not show_id:
+                show = self.get_object()
+                show.set_shows_no_pk()
+                show_id = show.id
         # show_id = kwargs['pk']
         is_tiktok, is_ks, is_xhs = get_origin(request)
         name = '{}_{}{}'.format(show_id, int(is_tiktok), int(is_ks), int(is_xhs))
@@ -421,6 +424,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
                 buf = qrutils.generate(ks_url, size=(410, 410))
                 is_img = True
             else:
+                random_number = random.randint(10, 99)
+                sno = f'{show.pk}{random_number}'
                 if tiktok:
                     from douyin import get_tiktok
                     tk = get_tiktok()
@@ -429,12 +434,12 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
                 elif is_xhs:
                     from xiaohongshu.api import get_xhs_wxa
                     xhs_wxa = get_xhs_wxa()
-                    scene = 'sg_%s_%s' % (show.no, user.share_code)
+                    scene = 'sg_%s_%s' % (sno, user.share_code)
                     buf = xhs_wxa.get_qrcode_unlimited(scene, url)
                 else:
                     from mp.wechat_client import get_wxa_client
                     wxa = get_wxa_client()
-                    scene = 'sg_%s_%s' % (show.no, user.share_code)
+                    scene = 'sg_%s_%s' % (sno, user.share_code)
                     # url = 'pages/pagesKage/showDetail/showDetail'
                     buf = wxa.biz_get_wxa_code_unlimited(scene, url)
             if buf:
