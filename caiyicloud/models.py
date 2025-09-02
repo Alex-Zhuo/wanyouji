@@ -1962,6 +1962,11 @@ class PromoteActivity(models.Model):
         return event_qs, ticket_qs
 
     @classmethod
+    def one_type_list(cls):
+        # 每满立减
+        return [2, 5]
+
+    @classmethod
     def num_type_list(cls):
         # 满件减
         return [3, 5, 6]
@@ -1978,7 +1983,8 @@ class PromoteActivity(models.Model):
 
     def get_promote_amount(self, num, session, amount=0, ticket_file_id=None, is_event=False):
         # 搜索用的是分
-        promote_amount = 0
+        promote_amount = 0  # 优惠金额
+        is_num = False
         can_use = False
         ticket_type = None
         if is_event:
@@ -1991,17 +1997,32 @@ class PromoteActivity(models.Model):
                 amount = tf.price * num
         c_amount = int(amount * 100)
         if can_use:
+            qs = PromoteRule.objects.filter(activity_id=self.id)
             if self.type in self.num_type_list():
-                # 满件减,取打折最大的
-                qs = PromoteRule.objects.filter(activity_id=self.id, num__lte=num)
+                qs = qs.filter(num__lte=num)
+                is_num = True
             else:
-                # 满额减,取金额最大的
-                qs = PromoteRule.objects.filter(activity_id=self.id, amount__lte=c_amount)
-            if qs:
+                qs = qs.filter(amount__lte=c_amount)
+            if self.type in self.one_type_list():
+                # 每满减
+                for rr in qs:
+                    if is_num:
+                        # 每满件
+                        p_amount = int(num / rr.num) * rr.discount_value
+                    else:
+                        # 每满额
+                        p_amount = int(c_amount / rr.amount) * rr.discount_value
+                    if p_amount > promote_amount:
+                        promote_amount = p_amount
+                promote_amount = promote_amount / 100
+            else:
+                # 满件或满额
                 rule = qs.order_by('-discount_value').first()
                 if self.type in self.discount_type_list():
-                    # 打折类型
+                    # 打折
                     promote_amount = int(amount * (100 - rule.discount_value)) / 100
+                else:
+                    promote_amount = rule.discount_value / 100
         return can_use, promote_amount, amount, ticket_type
 
 
