@@ -4950,7 +4950,7 @@ class TicketUserCode(models.Model):
                         status = False
                         msg = '该场次已结束了'
                     else:
-                        if inst.session.no != session_id and (
+                        if session.no != session_id and (
                                 not session.main_session or session.main_session.no != session_id):
                             status = False
                             msg = '不是本场次门票，请核对后重试！'
