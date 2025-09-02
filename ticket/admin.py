@@ -2140,7 +2140,7 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
     search_fields = ['=order__order_no', '=out_refund_no', '=transaction_id', '=user__mobile', 'user__last_name']
     list_filter = ['status', 'create_at']
     autocomplete_fields = ['user', 'order', 'op_user']
-    actions = [set_confirm, set_cancel, check_refund, check_refund_order, retry_refund]
+    actions = [set_confirm, set_cancel, check_refund_order, retry_refund]
     readonly_fields = [f.name for f in TicketOrderRefund._meta.fields if
                        f.name not in ['refund_amount', 'return_reason', 'theater_amount']]
 
