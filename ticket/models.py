@@ -3840,6 +3840,8 @@ class TicketOrder(models.Model):
                 TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply,
                                                          is_get=False)
         if self.channel_type == self.SR_CY:
+            if self.cy_order:
+                self.cy_order.cancel_order()
             # 彩艺订单不返回库存和座位等
             return
         if self.session.has_seat == SessionInfo.SEAT_NO:

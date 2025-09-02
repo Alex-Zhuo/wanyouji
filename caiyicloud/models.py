@@ -1453,8 +1453,9 @@ class CyOrder(models.Model):
         if not cy.is_init:
             return
         try:
-            has_cancel = cy.cancel_order(cy_order_no=self.cy_order_no)
+            has_cancel = cy.cancel_order(self.cy_order_no)
         except Exception as e:
+            log.error(e)
             log.error('彩艺云取消订单失败,{}'.format(self.cy_order_no))
         self.order_state = self.ST_CANCEL
         self.save(update_fields=['order_state'])
