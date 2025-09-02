@@ -444,6 +444,7 @@ class User(AbstractUser):
         else:
             parent = parent
         if parent:
+            # log.warning(parent.id)
             # 每次都更新 新上级，用于订单绑定 代理或者验票员
             # self.set_new_parent(parent)
             if self.id != parent.id:
@@ -1024,6 +1025,16 @@ class User(AbstractUser):
     def refresh_user_cache(self, token):
         from mall.user_cache import login_refresh_cache
         login_refresh_cache(token, self)
+
+    def cache_info_token(self, token):
+        key = get_redis_name('token_info_{}'.format(token))
+        from mall.user_cache import TOKEN_EXPIRE_HOURS
+        expire_in = TOKEN_EXPIRE_HOURS * 3600 - 10
+        from mall.serializers import UserInfoCacheSerializer
+        data = UserInfoCacheSerializer(self).data
+        with get_pika_redis() as pika:
+            pika.set(key, json.dumps(data))
+            pika.expire(key, expire_in)
 
     def upgrade_member_level(self, incr=1):
         assert incr >= 1

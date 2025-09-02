@@ -57,3 +57,4 @@ selenium==3.141.0
 alibabacloud_dytnsapi20200217==2.8.1
 tencentcloud-sdk-python==3.0.1439
 aioredis==2.0.1
+orjson

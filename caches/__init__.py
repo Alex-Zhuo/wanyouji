@@ -16,13 +16,24 @@ def get_redis_name(name):
     prefix = get_prefix()
     return prefix + '_' + name
 
+
 def redis_client():
     redis_conf = get_config().get('redis')
     return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', 0),
                        decode_responses=True)
 
 
+def pika_client():
+    config = get_config()
+    pika = config.get('pika')
+    host = pika.get('host')
+    port = pika.get('port')
+    db = pika.get('db')
+    return StrictRedis(host=host, port=port, db=db, decode_responses=True)
+
+
 _redis = redis_client()
+_pika = pika_client()
 sms_url = get_redis_name('sms_url')
 session_info_recent_qs = get_redis_name('session_info_recent_qs')
 session_info_recommend_qs = get_redis_name('session_info_recommend_qs')
@@ -139,6 +150,7 @@ save_model_key = get_redis_name('save_m_{}')
 show_project_change_key = get_redis_name('showp_c_{}')
 show_collect_copy_key = get_redis_name('show_collect_copy_key')
 cache_order_session_key = get_redis_name('cache_order_session_{}')
+cache_order_show_key = get_redis_name('cache_order_show_{}')
 cache_order_seat_key = get_redis_name('cache_order_seat_{}_{}')
 matrix_seat_data_key = get_redis_name('matrix_seat_data_key_{}')
 
@@ -204,13 +216,7 @@ def subscribe(channel, func):
 
 
 def get_pika_redis():
-    from common.config import get_config
-    config = get_config()
-    pika = config.get('pika')
-    host = pika.get('host')
-    port = pika.get('port')
-    db = pika.get('db')
-    return StrictRedis(host=host, port=port, db=db, decode_responses=True)
+    return _pika
 
 
 def check_lock_time_out(lock_key, time_out=5):

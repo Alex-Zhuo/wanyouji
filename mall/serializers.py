@@ -137,6 +137,27 @@ class UserInfoNewSerializer(serializers.ModelSerializer):
                   'flag', 'uid', 'agree_member', 'agree_privacy', 'agree_agent']
 
 
+class UserInfoCacheSerializer(serializers.ModelSerializer):
+    nickname = serializers.ReadOnlyField(source='get_full_name')
+    subscribe = serializers.ReadOnlyField(source='follow')
+    avatar = serializers.SerializerMethodField()
+    uid = serializers.SerializerMethodField()
+
+    def get_uid(self, obj):
+        return obj.get_share_code()
+
+    def get_avatar(self, obj):
+        if obj.icon:
+            return obj.icon.url
+        else:
+            return obj.avatar
+
+    class Meta:
+        model = get_user_model()
+        fields = ['avatar', 'subscribe', 'first_name', 'last_name', 'nickname', 'share_code', 'mobile',
+                  'flag', 'uid', 'agree_member', 'agree_privacy', 'agree_agent']
+
+
 class SetUserMobileSerializer(serializers.ModelSerializer):
     def validate_mobile(self, value):
         if User.objects.filter(mobile=value).exclude(id=self.instance.id).exists():

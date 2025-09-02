@@ -3548,6 +3548,14 @@ class TicketOrder(models.Model):
                 pay_end_at = cy_pay_end_at
         return pay_end_at
 
+    def get_wx_pay_end_at_old(self):
+        from datetime import timedelta
+        from mp.models import BasicConfig
+        bc = BasicConfig.get()
+        cancel_minutes = bc.auto_cancel_minutes - 1 if bc.auto_cancel_minutes > 1 else bc.auto_cancel_minutes
+        pay_end_at = self.create_at + timedelta(minutes=cancel_minutes)
+        return pay_end_at
+
     def get_end_at(self):
         # 转时间戳
         pay_end_at = self.get_wx_pay_end_at()
@@ -3799,11 +3807,25 @@ class TicketOrder(models.Model):
         from common.utils import get_config
         config = get_config()
         data = dict(show_name=self.title, show_id=session.show.id, venue_name=session.show.venues.name, price_list=dd,
-                    logo='{}{}'.format(config['template_url'], session.show.logo_mobile.url),
+                    logo=session.show.logo_mobile.url,
                     start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
                     has_seat=session.has_seat,
                     end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))
         return json.dumps(data)
+
+    @classmethod
+    def get_snapshot_new(cls, dd, session, show, venue_name):
+        """
+        商品快照
+        :return:
+        """
+        config = get_config()
+        data = dict(show_name=show.title, show_id=show.id, venue_name=venue_name, price_list=dd,
+                    logo=show.logo_mobile.url,
+                    start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
+                    has_seat=session.has_seat,
+                    end_at=session.end_at.strftime('%Y-%m-%d %H:%M'))
+        return data
 
     def cancel(self):
         """
