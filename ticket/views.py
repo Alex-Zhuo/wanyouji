@@ -166,6 +166,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.debug('retrieve')
         from caches import get_pika_redis, redis_shows_copy_key, show_collect_copy_key, redis_shows_no_key
         no = kwargs['pk']
+        log.error(no)
         try:
             show_id = int(no)[:-2]
         except Exception as e:
