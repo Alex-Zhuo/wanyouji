@@ -52,6 +52,7 @@ from ticket.serializers import get_origin
 from caches import get_prefix
 from ticket.order_serializer import ticket_order_dispatch
 import random
+
 log = logging.getLogger(__name__)
 
 PREFIX = get_prefix()
@@ -166,16 +167,17 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.debug('retrieve')
         from caches import get_pika_redis, redis_shows_copy_key, show_collect_copy_key, redis_shows_no_key
         no = kwargs['pk']
-        log.error(no)
-        try:
-            show_id = int(no)[:-2]
-        except Exception as e:
-            with get_pika_redis() as pika:
-                show_id = pika.hget(redis_shows_no_key, no)
+        with get_pika_redis() as pika:
+            show_id = pika.hget(redis_shows_no_key, no)
+        if not show_id:
+            show = self.get_object()
+            show.set_shows_no_pk()
+            show_id = show.id
             if not show_id:
-                show = self.get_object()
-                show.set_shows_no_pk()
-                show_id = show.id
+                try:
+                    show_id = int(no[:-2])
+                except Exception as e:
+                    raise CustomAPIException('找不到项目')
         # show_id = kwargs['pk']
         is_tiktok, is_ks, is_xhs = get_origin(request)
         name = '{}_{}{}'.format(show_id, int(is_tiktok), int(is_ks), int(is_xhs))
@@ -1123,7 +1125,8 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 venue = obj.order.venue.name
                 if len(title) > 12:
                     venue = '{}...'.format(title[:12])
-                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath,
+                                         deadline_at)
                 # log.debug(ret)
                 obj.change_share_code_img(filepath)
             url = request.build_absolute_uri('/'.join([rel_url, filename]))
