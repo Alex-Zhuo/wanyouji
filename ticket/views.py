@@ -404,7 +404,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             nn = 'xhs{}'.format(show.pk)
         else:
             nn = show.pk
-        filename = 'show_{}_{}_4v{}.png'.format(nn, user.id, show.version)
+        filename = 'show_{}_{}_5v{}.png'.format(nn, user.id, show.version)
         filepath = os.path.join(dir, filename)
         if not os.path.isfile(filepath):
             url = 'pages/pagesKage/showDetail/showDetail'
@@ -429,12 +429,12 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
                 elif is_xhs:
                     from xiaohongshu.api import get_xhs_wxa
                     xhs_wxa = get_xhs_wxa()
-                    scene = 'sg_%s_%s' % (show.pk, user.share_code)
+                    scene = 'sg_%s_%s' % (show.no, user.share_code)
                     buf = xhs_wxa.get_qrcode_unlimited(scene, url)
                 else:
                     from mp.wechat_client import get_wxa_client
                     wxa = get_wxa_client()
-                    scene = 'sg_%s_%s' % (show.pk, user.share_code)
+                    scene = 'sg_%s_%s' % (show.no, user.share_code)
                     # url = 'pages/pagesKage/showDetail/showDetail'
                     buf = wxa.biz_get_wxa_code_unlimited(scene, url)
             if buf:
