@@ -122,9 +122,10 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # ticket_list [dict(level_id=1,multiply=2)]
         event_qs, ticket_qs, session = PromoteActivity.get_promotes(validated_data['session_no'])
+        # 优惠金额
         event_promote_amount = 0
-        event_act = None
         ticket_promote_amount = 0
+        event_act = None
         ticket_act = None
         order_promote_data = None
         act_data = None
@@ -161,9 +162,8 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
                                                                                                  'level_id'])
                     if can_use:
                         # 优惠金额
-                        discount_amount = amount - tf_promote_amount
-                        if discount_amount > 0:
-                            m_amount += discount_amount
+                        if tf_promote_amount > 0:
+                            m_amount += tf_promote_amount
                             c_apply_tickets.append({"ticket_type_id": ticket_type.cy_no})
                 if ticket_promote_amount > 0:
                     if ticket_promote_amount < m_amount:
@@ -201,12 +201,11 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
             apply_tickets = event_apply_tickets
         if ret_act:
             has_promote = True
-            discount_amount = validated_data['total_amount'] - ret_promote_amount
             order_promote_data = {
                 "id": ret_act.act_id,
                 "category": 2,
                 "name": ret_act.name,
-                "discount_amount": discount_amount,
+                "discount_amount": ret_promote_amount,
                 "apply_tickets": apply_tickets
             }
             act_data = PromoteActivitySerializer(ret_act).data

@@ -2015,16 +2015,16 @@ class PromoteActivity(models.Model):
                         p_amount = int(c_amount / rr.amount) * rr.discount_value
                     if p_amount > promote_amount:
                         promote_amount = p_amount
-                promote_amount = promote_amount / 100
+                promote_amount = promote_amount
             else:
                 # 满件或满额
                 rule = qs.order_by('-discount_value').first()
                 if self.type in self.discount_type_list():
                     # 打折
-                    promote_amount = int(amount * (100 - rule.discount_value)) / 100
+                    promote_amount = amount * (100 - rule.discount_value)
                 else:
-                    promote_amount = rule.discount_value / 100
-        return can_use, promote_amount, amount, ticket_type
+                    promote_amount = rule.discount_value
+        return can_use, int(promote_amount) / 100, amount, ticket_type
 
 
 class PromoteRule(models.Model):
