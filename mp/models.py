@@ -257,7 +257,7 @@ class BasicConfig(models.Model):
     plateindex = models.IntegerField('模块显示配置(技术人员使用)', default=0, editable=False)
 
     class Meta:
-        verbose_name_plural = verbose_name = '商城基本配置'
+        verbose_name_plural = verbose_name = '系统基本配置'
 
     def __str__(self):
         return self.mall_name
