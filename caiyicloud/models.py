@@ -1983,6 +1983,7 @@ class PromoteActivity(models.Model):
 
     def get_promote_amount(self, num, session, amount=0, ticket_file_id=None, is_event=False):
         # 搜索用的是分
+        amount = Decimal(amount)
         promote_amount = 0  # 优惠金额
         is_num = False
         can_use = False
