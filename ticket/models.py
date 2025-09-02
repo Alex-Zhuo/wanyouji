@@ -4994,6 +4994,7 @@ class TicketUserCode(models.Model):
                 status = False
                 msg = '该二维码已经核销过了'
         except Exception as e:
+            log.error(e)
             redis.delete(key)
             status = False
             msg = '二维码无效'
