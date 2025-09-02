@@ -9,9 +9,10 @@ from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 import jwt
 import uuid
-from caiyicloud.models import CyOrder, CaiYiCloudApp
+from caiyicloud.models import CyOrder, CaiYiCloudApp, PromoteActivity
 from caiyicloud.api import caiyi_cloud
-from caiyicloud.serializers import CySeatUrlSerializer, GetPromoteActivitySerializer
+from caiyicloud.serializers import CySeatUrlSerializer, GetPromoteActivitySerializer, CheckPromoteActivitySerializer, \
+    PromoteActivitySerializer
 from datetime import datetime
 
 log = logger = logging.getLogger(__name__)
@@ -59,7 +60,21 @@ class CaiYiViewSet(viewsets.ViewSet):
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
     def check_promote(self, request):
-        s = GetPromoteActivitySerializer(data=request.data, context={'request': request})
+        s = CheckPromoteActivitySerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         has_promote, act_data, order_promote_data = s.create(s.validated_data)
         return Response(dict(has_promote=has_promote, act_data=act_data, order_promote_data=order_promote_data))
+
+    @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
+    def get_promotes(self, request):
+        session_no = request.GET.get('session_no')
+        if not session_no:
+            raise CustomAPIException('参数错误')
+        event_qs, ticket_qs, session = PromoteActivity.get_promotes(session_no)
+        show_promotes = None
+        ticket_promotes = None
+        if event_qs:
+            show_promotes = PromoteActivitySerializer(event_qs, many=True, context={'request': request}).data
+        if ticket_qs:
+            ticket_promotes = PromoteActivitySerializer(ticket_qs, many=True, context={'request': request}).data
+        return Response(dict(show_promotes=show_promotes, ticket_promotes=ticket_promotes))

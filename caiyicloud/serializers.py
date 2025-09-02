@@ -83,7 +83,7 @@ class PromoteActivitySerializer(serializers.ModelSerializer):
         fields = ['act_id', 'name', 'type', 'type_display', 'start_time', 'end_time', 'description', 'rules']
 
 
-class GetPromoteActivitySerializer(serializers.ModelSerializer):
+class CheckPromoteActivitySerializer(serializers.ModelSerializer):
     ticket_list = serializers.ListField(required=True)
     session_no = serializers.CharField(required=True)
     multiply = serializers.IntegerField(required=True)
