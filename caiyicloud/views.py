@@ -11,7 +11,7 @@ import jwt
 import uuid
 from caiyicloud.models import CyOrder, CaiYiCloudApp, PromoteActivity
 from caiyicloud.api import caiyi_cloud
-from caiyicloud.serializers import CySeatUrlSerializer, GetPromoteActivitySerializer, CheckPromoteActivitySerializer, \
+from caiyicloud.serializers import CySeatUrlSerializer, CheckPromoteActivitySerializer, \
     PromoteActivitySerializer
 from datetime import datetime
 
