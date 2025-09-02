@@ -5,7 +5,7 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 from restframework_ext.exceptions import CustomAPIException
-from caiyicloud.models import CyTicketPack, CyTicketType, CyOrder, PromoteActivity, PromoteRule
+from caiyicloud.models import CyTicketPack, CyTicketType, CyOrder, PromoteActivity, PromoteRule, PromoteProduct
 import pysnooper
 
 log = logging.getLogger(__name__)
@@ -83,15 +83,33 @@ class PromoteActivitySerializer(serializers.ModelSerializer):
         fields = ['act_id', 'name', 'type', 'type_display', 'start_time', 'end_time', 'description', 'rules']
 
 
+class PromoteProductSerializer(serializers.ModelSerializer):
+    scope_type_display = serializers.ReadOnlyField(source='get_scope_type_display')
+    session_no = serializers.SerializerMethodField()
+    ticket_id = serializers.SerializerMethodField()
+
+    def get_session_no(self, obj):
+        return obj.session.c_session.no if obj.session else None
+
+    def get_ticket_id(self, obj):
+        return obj.ticket_type.ticket_file.id if obj.ticket_type else None
+
+    class Meta:
+        model = PromoteProduct
+        fields = ['scope_type', 'scope_type_display', 'ticket_id', 'session_no']
+
+
 class PromoteActivityDetailSerializer(PromoteActivitySerializer):
     products = serializers.SerializerMethodField()
 
-    def get_products(self):
-        pass
+    def get_products(self, obj):
+        qs = obj.products.all()
+        data = PromoteProductSerializer(qs, many=True, context=self.context).data
+        return data
 
     class Meta:
         model = PromoteActivity
-        fields = PromoteActivitySerializer.Meta.fields
+        fields = PromoteActivitySerializer.Meta.fields + ['products']
 
 
 class CheckPromoteActivitySerializer(serializers.ModelSerializer):
