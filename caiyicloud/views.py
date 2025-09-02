@@ -14,7 +14,11 @@ from caiyicloud.api import caiyi_cloud
 from caiyicloud.serializers import CySeatUrlSerializer, CheckPromoteActivitySerializer, \
     PromoteActivitySerializer
 from datetime import datetime
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from caches import get_prefix
 
+PREFIX = get_prefix()
 log = logger = logging.getLogger(__name__)
 
 
@@ -65,12 +69,13 @@ class CaiYiViewSet(viewsets.ViewSet):
         has_promote, act_data, order_promote_data = s.create(s.validated_data)
         return Response(dict(has_promote=has_promote, act_data=act_data, order_promote_data=order_promote_data))
 
+    @method_decorator(cache_page(60, key_prefix=PREFIX))
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
     def get_promotes(self, request):
-        session_no = request.GET.get('session_no')
-        if not session_no:
+        show_no = request.GET.get('show_no')
+        if not show_no:
             raise CustomAPIException('参数错误')
-        event_qs, ticket_qs, session = PromoteActivity.get_promotes(session_no)
+        event_qs, ticket_qs = PromoteActivity.get_promotes_show(show_no)
         show_promotes = None
         ticket_promotes = None
         if event_qs:

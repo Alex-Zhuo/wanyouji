@@ -1951,6 +1951,17 @@ class PromoteActivity(models.Model):
         return event_qs, ticket_qs, session
 
     @classmethod
+    def get_promotes_show(cls, show_no: str):
+        event_qs = []
+        ticket_qs = []
+        cy_show = CyShowEvent.objects.filter(show__no=show_no).first()
+        if cy_show:
+            qs = cls.objects.filter(products__event_id=cy_show.id, enabled=1)
+            event_qs = qs.filter(products__scope_type=PromoteProduct.SCOPE_EVENT).distinct()
+            ticket_qs = qs.filter(products__scope_type=PromoteProduct.SCOPE_TICKET).distinct()
+        return event_qs, ticket_qs
+
+    @classmethod
     def num_type_list(cls):
         # 满件减
         return [3, 5, 6]
