@@ -2021,7 +2021,7 @@ class PromoteActivity(models.Model):
                 rule = qs.order_by('-discount_value').first()
                 if self.type in self.discount_type_list():
                     # 打折
-                    promote_amount = amount * (100 - rule.discount_value)
+                    promote_amount = amount * rule.discount_value
                 else:
                     promote_amount = rule.discount_value
         return can_use, int(promote_amount) / 100, amount, ticket_type
@@ -2030,8 +2030,8 @@ class PromoteActivity(models.Model):
 class PromoteRule(models.Model):
     activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='rules')
     num = models.PositiveIntegerField(null=True, blank=True, verbose_name="满足件数")
-    amount = models.DecimalField(null=True, blank=True, verbose_name="满足金额", max_digits=10, decimal_places=2, default=0)
-    discount_value = models.DecimalField(null=True, blank=True, verbose_name="打折金额/费率", max_digits=10, decimal_places=2,
+    amount = models.DecimalField(null=True, blank=True, verbose_name="满足金额(分)", max_digits=10, decimal_places=2, default=0)
+    discount_value = models.DecimalField(null=True, blank=True, verbose_name="打折金额(分)/费率(九折为10)", max_digits=10, decimal_places=2,
                                          default=0, help_text='打折金额/费率，金额时，单位分；费率时，打九折为10')
 
     class Meta:
