@@ -78,8 +78,15 @@ class CaiYiViewSet(viewsets.ViewSet):
         event_qs, ticket_qs = PromoteActivity.get_promotes_show(show_no)
         show_promotes = None
         ticket_promotes = None
+        act_data = None
+        act = None
         if event_qs:
             show_promotes = PromoteActivitySerializer(event_qs, many=True, context={'request': request}).data
+            act = event_qs.first()
         if ticket_qs:
             ticket_promotes = PromoteActivitySerializer(ticket_qs, many=True, context={'request': request}).data
-        return Response(dict(show_promotes=show_promotes, ticket_promotes=ticket_promotes))
+            if not act:
+                act = ticket_qs.first()
+        if act:
+            act_data = PromoteActivityDetailSerializer(act, context={'request': request}).data
+        return Response(dict(show_promotes=show_promotes, ticket_promotes=ticket_promotes, act_data=act_data))

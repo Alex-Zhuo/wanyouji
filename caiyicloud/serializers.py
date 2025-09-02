@@ -83,6 +83,17 @@ class PromoteActivitySerializer(serializers.ModelSerializer):
         fields = ['act_id', 'name', 'type', 'type_display', 'start_time', 'end_time', 'description', 'rules']
 
 
+class PromoteActivityDetailSerializer(PromoteActivitySerializer):
+    products = serializers.SerializerMethodField()
+
+    def get_products(self):
+        pass
+
+    class Meta:
+        model = PromoteActivity
+        fields = PromoteActivitySerializer.Meta.fields
+
+
 class CheckPromoteActivitySerializer(serializers.ModelSerializer):
     ticket_list = serializers.ListField(required=True)
     session_no = serializers.CharField(required=True)
