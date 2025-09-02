@@ -3856,7 +3856,14 @@ class TicketOrder(models.Model):
         return True, ''
 
     def release_seat(self, is_cancel=False):
+        if (is_cancel or self.status_before_refund == self.STATUS_PAID) and hasattr(self, 'real_name_order'):
+            for real_user in self.real_name_order.all():
+                # 减去已买的
+                TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply,
+                                                         is_get=False)
         if self.channel_type == self.SR_CY:
+            if self.cy_order:
+                self.cy_order.cancel_order()
             # 彩艺订单不返回库存和座位等
             return
         if self.session.has_seat == SessionInfo.SEAT_NO:
@@ -3884,11 +3891,6 @@ class TicketOrder(models.Model):
                     inst.change_pika_mz_seat(False)
                     inst.set_pika_buy(False)
             qs.update(order_no=None, is_buy=False, buy_desc=None)
-        if hasattr(self, 'real_name_order'):
-            for real_user in self.real_name_order.all():
-                # 减去已买的
-                TicketOrder.get_or_set_real_name_buy_num(self.session.id, real_user.id_card, -self.multiply,
-                                                         is_get=False)
 
     def cancel_code(self):
         TicketUserCode.objects.filter(order_id=self.id).update(status=TicketUserCode.STATUS_CANCEL, msg='退款作废')
