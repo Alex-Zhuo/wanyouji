@@ -1123,7 +1123,6 @@ class TicketOrderSerializer(serializers.ModelSerializer):
         if logo and 'http' not in logo:
             config = get_config()
             snapshot['logo'] = '{}/{}'.format(config['template_url'], logo)
-        log.error(snapshot)
         sc = SessionChangeRecord.objects.filter(session=obj.session).first()
         if sc:
             snapshot['start_at'] = sc.new_start_at.strftime('%Y-%m-%d %H:%M')
@@ -1175,6 +1174,10 @@ class TicketOrderDetailSerializer(TicketOrderSerializer):
                     vl = VenuesLayers.objects.filter(venue=obj.venue, layer=int(layer)).first()
                     if vl:
                         dd['layer_name'] = vl.name
+        logo = snapshot.get('logo')
+        if logo and 'http' not in logo:
+            config = get_config()
+            snapshot['logo'] = '{}/{}'.format(config['template_url'], logo)
         sc = SessionChangeRecord.objects.filter(session=obj.session).first()
         if sc:
             snapshot['start_at'] = sc.new_start_at.strftime('%Y-%m-%d %H:%M')
@@ -1251,6 +1254,10 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
 
     def get_snapshot(self, obj):
         snapshot = json.loads(obj.snapshot)
+        logo = snapshot.get('logo')
+        if logo and 'http' not in logo:
+            config = get_config()
+            snapshot['logo'] = '{}/{}'.format(config['template_url'], logo)
         return snapshot
 
     class Meta:
