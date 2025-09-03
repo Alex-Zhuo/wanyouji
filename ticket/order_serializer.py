@@ -703,7 +703,8 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
                 dict(discount_type=TicketOrderDiscount.DISCOUNT_PROMOTION, title='营销活动',
                      amount=order_promote_data['discount_amount']))
             # cy_amount 计算了套票后的价格-优惠活动价 为实付价格
-            cy_amount -= order_promote_data['discount_amount']
+            cy_amount -= Decimal(order_promote_data['discount_amount'])
+            actual_amount -= Decimal(order_promote_data['discount_amount'])
         amounts_data['original_total_amount'] = amount
         amounts_data['actual_total_amount'] = cy_amount
         # 加上邮费
