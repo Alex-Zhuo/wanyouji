@@ -966,12 +966,13 @@ class CySession(models.Model):
         session.redis_show_date_copy()
         return cy_session
 
-    def get_seat_url(self, ticket_type_id: str, navigate_url: str):
+    def get_seat_url(self, ticket_type_id: str, navigate_url: str, has_promotion=False):
         cy = caiyi_cloud()
         if not cy.is_init:
             return
         try:
-            data = cy.seat_url(self.event.event_id, self.cy_no, ticket_type_id, navigate_url)
+            data = cy.seat_url(self.event.event_id, self.cy_no, ticket_type_id, navigate_url,
+                               has_promotion=has_promotion)
             return data
         except Exception as e:
             raise CustomAPIException(e)
@@ -2031,8 +2032,10 @@ class PromoteActivity(models.Model):
 class PromoteRule(models.Model):
     activity = models.ForeignKey(PromoteActivity, on_delete=models.CASCADE, related_name='rules')
     num = models.PositiveIntegerField(null=True, blank=True, verbose_name="满足件数")
-    amount = models.DecimalField(null=True, blank=True, verbose_name="满足金额(分)", max_digits=10, decimal_places=2, default=0)
-    discount_value = models.DecimalField(null=True, blank=True, verbose_name="打折金额(分)/费率(九折为10)", max_digits=10, decimal_places=2,
+    amount = models.DecimalField(null=True, blank=True, verbose_name="满足金额(分)", max_digits=10, decimal_places=2,
+                                 default=0)
+    discount_value = models.DecimalField(null=True, blank=True, verbose_name="打折金额(分)/费率(九折为10)", max_digits=10,
+                                         decimal_places=2,
                                          default=0, help_text='打折金额/费率，金额时，单位分；费率时，打九折为10')
 
     class Meta:

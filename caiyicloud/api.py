@@ -279,7 +279,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         return ret['data']
 
     def seat_url(self, event_id: str, session_id: str, ticket_type_id: str, navigate_url: str,
-                 display_ticket_type_ids: list = None):
+                 display_ticket_type_ids: list = None, has_promotion=False):
         """
         该接口用于获取选座H5的UR
         """
@@ -289,7 +289,8 @@ class CaiYiCloud(CaiYiCloudAbstract):
         request_id = uuid.uuid4().hex
         params = dict(supplier_id=self.supplier_id)
         data = dict(event_id=event_id, session_id=session_id, ticket_type_id=ticket_type_id, request_id=request_id,
-                    navigate_url=navigate_url, display_ticket_type_ids=display_ticket_type_ids)
+                    navigate_url=navigate_url, display_ticket_type_ids=display_ticket_type_ids,
+                    has_promotion=has_promotion)
         ret = self._post('api/event/v1/ticket_types/url', params=params, data=data, headers=headers)
         self.parse_resp(ret)
         return ret['data']
@@ -511,7 +512,7 @@ class CaiYiCloud(CaiYiCloudAbstract):
         self.parse_resp(ret)
         return ret['data']
 
-    def promotion_detail(self,promotion_id:str):
+    def promotion_detail(self, promotion_id: str):
         """
         https://platform.caiyicloud.com/doc/v1/distribution/promotions/promotions_info
         该接口用于查询商户营销活动详细信息
