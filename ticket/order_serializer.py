@@ -621,7 +621,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         pack_amount = 0
         is_cy_promotion = False
         order_promote_data = validated_data.pop('order_promote_data', None)
-        log.debug(order_promote_data)
+        #log.debug(order_promote_data)
         if order_promote_data:
             is_cy_promotion = True
         # promote_act = None
