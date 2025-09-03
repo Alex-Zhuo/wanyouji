@@ -123,7 +123,7 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
     ticket_list = serializers.ListField(required=True)
     session_no = serializers.CharField(required=True)
 
-    @pysnooper.snoop(log.debug)
+    # @pysnooper.snoop(log.debug)
     def create(self, validated_data):
         # ticket_list [dict(level_id=1,multiply=2)]
         event_qs, ticket_qs, session = PromoteActivity.get_promotes(validated_data['session_no'])
