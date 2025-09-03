@@ -1123,7 +1123,7 @@ class TicketOrderSerializer(serializers.ModelSerializer):
         if logo and 'http' not in logo:
             config = get_config()
             snapshot['logo'] = '{}/{}'.format(config['template_url'], logo)
-        log.debug(snapshot)
+        log.error(snapshot)
         sc = SessionChangeRecord.objects.filter(session=obj.session).first()
         if sc:
             snapshot['start_at'] = sc.new_start_at.strftime('%Y-%m-%d %H:%M')
