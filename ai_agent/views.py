@@ -27,7 +27,7 @@ class DefaultQuestionsViewSet(ReturnNoDetailViewSet):
 
     @method_decorator(cache_page(60, key_prefix=PREFIX))
     def list(self, request, *args, **kwargs):
-        log.error('aa')
+        log.debug('get_ai_question')
         return Response(self.serializer_class(self.queryset, many=True, context={'request': request}).data)
 
     @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
