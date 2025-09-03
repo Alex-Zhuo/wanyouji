@@ -73,6 +73,7 @@ class CaiYiViewSet(viewsets.ViewSet):
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
     def get_promotes(self, request):
         show_no = request.GET.get('show_no')
+        log.debug(show_no)
         if not show_no:
             raise CustomAPIException('参数错误')
         event_qs, ticket_qs = PromoteActivity.get_promotes_show(show_no)
