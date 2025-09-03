@@ -122,8 +122,6 @@ class PromoteActivityDetailSerializer(PromoteActivitySerializer):
 class CheckPromoteActivitySerializer(serializers.ModelSerializer):
     ticket_list = serializers.ListField(required=True)
     session_no = serializers.CharField(required=True)
-    multiply = serializers.IntegerField(required=True)
-    total_amount = serializers.FloatField(required=True)
 
     @pysnooper.snoop(log.debug)
     def create(self, validated_data):
@@ -222,4 +220,4 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PromoteActivity
-        fields = ['ticket_list', 'multiply', 'total_amount', 'session_no']
+        fields = ['ticket_list', 'session_no']
