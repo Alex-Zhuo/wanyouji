@@ -785,7 +785,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         # 处理彩艺云座位数据
         biz_id = validated_data.pop('biz_id', None)
         from caiyicloud.models import CyOrder
-        seat_info = CyOrder.get_cy_seat_info(biz_id)
+        seat_info = CyOrder.get_cy_seat_info(user.id, biz_id)
         if not seat_info:
             raise CustomAPIException('下单失败，biz_id参数错误')
         cy_amount = 0  # 原总价
@@ -850,7 +850,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         xhs_order_info = None
         pay_end_at = inst.get_end_at()
         self.after_create(inst, show_type, show_users, ticket_order_discount_list)
-        CyOrder.delete_redis_cache(biz_id)
+        CyOrder.delete_redis_cache(user.id, biz_id)
         return inst, prepare_order, pay_end_at, ks_order_info, xhs_order_info
 
     class Meta:

@@ -1302,21 +1302,21 @@ class CyOrder(models.Model):
         return self.cy_order_no
 
     @classmethod
-    def cy_seat_info_key(cls, biz_id: str):
-        return get_redis_name('cy_seat_i_{}'.format(biz_id))
+    def cy_seat_info_key(cls, user_id: int, biz_id: str):
+        return get_redis_name('cy_seat_i_{}_{}'.format(user_id, biz_id))
 
     @classmethod
-    def delete_redis_cache(cls, biz_id: str):
-        key = cls.cy_seat_info_key(biz_id)
+    def delete_redis_cache(cls, user_id: int, biz_id: str):
+        key = cls.cy_seat_info_key(user_id, biz_id)
         with get_pika_redis() as redis:
             redis.delete(key)
 
     @classmethod
-    def get_cy_seat_info(cls, biz_id: str):
+    def get_cy_seat_info(cls, user_id: int, biz_id: str):
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
-        key = cls.cy_seat_info_key(biz_id)
+        key = cls.cy_seat_info_key(user_id, biz_id)
         with get_pika_redis() as redis:
             seat_data = redis.get(key)
             if not seat_data:

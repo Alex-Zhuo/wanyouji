@@ -59,7 +59,7 @@ class CaiYiViewSet(viewsets.ViewSet):
         biz_id = request.GET.get('biz_id')
         if not biz_id:
             raise CustomAPIException('获取已选择信息失败')
-        ret = CyOrder.get_cy_seat_info(biz_id=request.GET.get('biz_id'))
+        ret = CyOrder.get_cy_seat_info(user_id=request.user.id, biz_id=request.GET.get('biz_id'))
         return Response(ret)
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
