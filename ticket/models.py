@@ -3760,7 +3760,7 @@ class TicketOrder(models.Model):
                 amount = self.amount - self.actual_amount
                 if amount > 0:
                     user_card.add_discount_total(amount)
-        self.change_scroll_list(is_pay=True)
+        # self.change_scroll_list(is_pay=True)
         # 增加场次实收
         self.session.update_actual_amount(self.actual_amount)
 
