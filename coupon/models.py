@@ -120,7 +120,7 @@ class UserCouponRecord(UseNoAbstract):
         show_types_names = []
         for show in coupon.shows.all():
             shows_ids.append(show.no)
-            shows_names.append(show.name)
+            shows_names.append(show.title)
         for f in coupon.limit_show_types_second.all():
             show_types_ids.append(f.id)
             show_types_names.append(f.name)
