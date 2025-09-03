@@ -480,14 +480,13 @@ class CyShowEvent(models.Model):
         cate = show_second_cate.cate
         venue = CyVenue.init_venue(event_detail['venue_id'])
         # 保存网络图片
-        logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
+        # logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
                          venues=venue, lat=venue.lat,
                          lng=venue.lng, source_type=ShowProject.SR_CY,
                          city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
                          # status=cls.get_show_status(event_detail['state']),
-                         status=ShowProject.STATUS_OFF,
-                         logo_mobile=logo_mobile_path)
+                         status=ShowProject.STATUS_OFF)
         cy_show_qs = cls.objects.filter(event_id=event_id)
         snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
         cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
@@ -515,8 +514,8 @@ class CyShowEvent(models.Model):
                 TicketPurchaseNotice.objects.get_or_create(show=show, title=nt['title'], content=nt['content'])
         show.shows_detail_copy_to_pika()
         CyEventLog.create_record(cy_show, log_title)
-        if not os.path.isfile(logo_mobile_path):
-            logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
+        # if not os.path.isfile(logo_mobile_path):
+        #     logo_mobile_path = save_url_img(event_detail['poster_url'], logo_mobile_dir)
         return cy_show
     # except Exception as e:
     #     log.error(e)
