@@ -850,7 +850,7 @@ close_comment.short_description = '关闭评论'
 
 
 class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
-    list_display = ['id', 'info', 'has_seat', 'order_limit_num', 'create_at', 'op']
+    list_display = ['no', 'info', 'has_seat', 'order_limit_num', 'create_at', 'op']
     # actions = [set_on_session, set_off_session, dy_set_on_session, dy_set_off_session, push_to_tiktok, 'change_end_at',
     #            'copy_session', refresh_from_tiktok, pull_maizuo, 'change_sale_time', set_delete, cancel_delete,
     #            set_sale_off, close_comment]
