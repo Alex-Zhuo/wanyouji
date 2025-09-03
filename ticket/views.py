@@ -891,7 +891,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         refresh 是否主动刷新动态码
         """
         order_no = request.GET.get('order_no')
-        log.debug(order_no)
+        # log.debug(order_no)
         # log.debug(request.META)
         try:
             order = TicketOrder.objects.get(order_no=order_no, user_id=request.user.id)
