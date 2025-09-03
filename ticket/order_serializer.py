@@ -701,6 +701,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             ticket_order_discount_list.append(
                 dict(discount_type=TicketOrderDiscount.DISCOUNT_PROMOTION, title='营销活动',
                      amount=order_promote_data['discount_amount']))
+            # cy_amount 计算了套票后的价格-优惠活动价 为实付价格
             cy_amount -= order_promote_data['discount_amount']
         amounts_data['original_total_amount'] = amount
         amounts_data['actual_total_amount'] = cy_amount
@@ -799,11 +800,12 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
         if promotion_list:
             is_cy_promotion = True
             for promote_data in promotion_list:
-                discount_type = TicketOrderDiscount.DISCOUNT_PACK
-                title = '套票优惠'
                 if promote_data['category'] == 2:
                     discount_type = TicketOrderDiscount.DISCOUNT_PROMOTION
                     title = '营销活动'
+                else:
+                    discount_type = TicketOrderDiscount.DISCOUNT_PACK
+                    title = '套票优惠'
                 ticket_order_discount_list.append(
                     dict(discount_type=discount_type, title=title, amount=promote_data['discount_amount']))
                 total_discount_amount += promote_data['discount_amount']
