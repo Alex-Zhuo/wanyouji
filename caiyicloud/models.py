@@ -2005,27 +2005,28 @@ class PromoteActivity(models.Model):
                 is_num = True
             else:
                 qs = qs.filter(amount__lte=c_amount)
-            if self.type in self.one_type_list():
-                # 每满减
-                for rr in qs:
-                    if is_num:
-                        # 每满件
-                        p_amount = int(num / rr.num) * rr.discount_value
-                    else:
-                        # 每满额
-                        p_amount = int(c_amount / rr.amount) * rr.discount_value
-                    if p_amount > promote_amount:
-                        promote_amount = p_amount
-                promote_amount = promote_amount
-            else:
-                # 满件或满额
-                rule = qs.order_by('-discount_value').first()
-                if rule:
-                    if self.type in self.discount_type_list():
-                        # 打折
-                        promote_amount = amount * rule.discount_value
-                    else:
-                        promote_amount = rule.discount_value
+            if qs:
+                if self.type in self.one_type_list():
+                    # 每满减
+                    for rr in qs:
+                        if is_num:
+                            # 每满件
+                            p_amount = int(num / rr.num) * rr.discount_value
+                        else:
+                            # 每满额
+                            p_amount = int(c_amount / rr.amount) * rr.discount_value
+                        if p_amount > promote_amount:
+                            promote_amount = p_amount
+                    promote_amount = promote_amount
+                else:
+                    # 满件或满额
+                    rule = qs.order_by('-discount_value').first()
+                    if rule:
+                        if self.type in self.discount_type_list():
+                            # 打折
+                            promote_amount = amount * rule.discount_value
+                        else:
+                            promote_amount = rule.discount_value
         return can_use, int(promote_amount) / 100, amount, ticket_type
 
 
