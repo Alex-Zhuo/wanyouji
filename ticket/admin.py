@@ -1624,8 +1624,10 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         html += '<p>退款金额：{}</p>'.format(obj.refund_amount)
         if obj.discount_order.all():
             html += '<p>优惠：{}</p>'
-            for discount_order in obj.discount_order.all():
-                html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
+            discount_orders = obj.discount_order.all()
+            if discount_orders:
+                for discount_order in discount_orders:
+                    html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
         html += '<p>渠道类型：{}</p>'.format(obj.get_channel_type_display())
         if obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'):
             html += '<p>彩艺云订单号：{}</p>'.format(obj.cy_order.cy_order_no)
