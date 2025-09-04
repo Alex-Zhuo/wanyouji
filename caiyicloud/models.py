@@ -1432,9 +1432,9 @@ class CyOrder(models.Model):
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
                                              address_info=address_info,
-                                             express_amount=express_amount,
-                                             )
+                                             express_amount=express_amount)
         except Exception as e:
+            log.error(e)
             raise CustomAPIException('下单失败，请稍后再试。。。')
         from caiyicloud.error_codes import is_success
         if not is_success(response_data["code"]):
