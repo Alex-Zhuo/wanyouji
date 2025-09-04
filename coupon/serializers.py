@@ -31,10 +31,13 @@ class CouponSerializer(serializers.ModelSerializer):
     is_upper_limit = serializers.SerializerMethodField()
 
     def get_is_upper_limit(self, obj):
+        st = False
         user = self.context.get('request').user
-        obtain_num = user.coupons.filter(coupon_id=obj.id).count()
-        # obtain_num = UserCouponRecord.user_obtain_cache(obj.no, user.id)
-        return obtain_num >= obj.user_obtain_limit if obj.user_obtain_limit > 0 else False
+        if obj.user_obtain_limit > 0:
+            obtain_num = user.coupons.filter(coupon_id=obj.id).count()
+            # obtain_num = UserCouponRecord.user_obtain_cache(obj.no, user.id)
+            st = obtain_num >= obj.user_obtain_limit
+        return st
 
     class Meta:
         model = Coupon
@@ -89,7 +92,8 @@ class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
         obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
         if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
             raise CustomAPIException('已达到领取上限')
-        inst = UserCouponRecord.objects.create(user=user, coupon=coupon, expire_time=coupon.expire_time)
+        inst = UserCouponRecord.objects.create(user=user, coupon=coupon, expire_time=coupon.expire_time,
+                                               require_amount=coupon.require_amount, amount=coupon.amount)
         inst.save_common()
         return inst
 

@@ -65,6 +65,7 @@ class UserCouponRecord(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_DEFAULT, u'未使用'), (STATUS_USE, u'已使用'), (STATUS_EXPIRE, u'已过期'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
     expire_time = models.DateTimeField('使用截止时间')
+    amount = models.DecimalField(u'减免金额', max_digits=13, decimal_places=2, default=0)
     require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
     used_time = models.DateTimeField('使用时间', null=True, blank=True)
     create_at = models.DateTimeField('领取时间', auto_now_add=True)
@@ -239,7 +240,9 @@ class UserCouponImport(models.Model):
                     else:
                         for i in list(range(0, num)):
                             inst = UserCouponRecord.objects.create(user=user, coupon=coupon,
-                                                                   expire_time=coupon.expire_time)
+                                                                   expire_time=coupon.expire_time,
+                                                                   require_amount=coupon.require_amount,
+                                                                   amount=coupon.amount)
                             inst.save_common()
                     success_num += 1
                 except Exception as e:
@@ -279,7 +282,7 @@ class UserCouponCacheRecord(models.Model):
         for obj in qs:
             coupon = obj.coupon
             for i in list(range(0, obj.num)):
-                inst = UserCouponRecord.objects.create(user_id=user_id, coupon=coupon,
-                                                       expire_time=coupon.expire_time)
+                inst = UserCouponRecord.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time,
+                                                       require_amount=coupon.require_amount, amount=coupon.amount)
                 inst.save_common()
         qs.delete()
