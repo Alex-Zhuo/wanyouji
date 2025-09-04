@@ -113,6 +113,7 @@ class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
         show_no = validated_data['show_no']
         amount = validated_data['amount']
         log.error(validated_data)
+        log.error(request.user.id)
         records = UserCouponRecord.objects.filter(user=request.user, status=UserCouponRecord.STATUS_DEFAULT,
                                                   expire_time__gte=now_date, require_amount__lte=amount)
         for record in records:
