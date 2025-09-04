@@ -125,6 +125,7 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
 
     # @pysnooper.snoop(log.debug)
     def create(self, validated_data):
+        log.debug(validated_data)
         # ticket_list [dict(level_id=1,multiply=2)]
         event_qs, ticket_qs, session = PromoteActivity.get_promotes(validated_data['session_no'])
         # 优惠金额
