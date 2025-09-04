@@ -1436,6 +1436,7 @@ class CyOrder(models.Model):
                                              express_amount=quantize(express_amount,2)
                                              )
         except Exception as e:
+            log.error(e)
             raise CustomAPIException('下单失败，请稍后再试。。。')
         from caiyicloud.error_codes import is_success
         if not is_success(response_data["code"]):
