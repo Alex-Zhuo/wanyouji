@@ -1425,9 +1425,15 @@ class CyOrder(models.Model):
             # 一单一证
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
+            original_total_amount = amounts_data['original_total_amount']
+            actual_total_amount = amounts_data['actual_total_amount']
+            if type(original_total_amount) == Decimal:
+                original_total_amount = quantize(original_total_amount, 2)
+            if type(actual_total_amount) == Decimal:
+                actual_total_amount = quantize(actual_total_amount, 2)
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=quantize(amounts_data['original_total_amount'], 2),
-                                             actual_total_amount=quantize(amounts_data['actual_total_amount'], 2),
+                                             original_total_amount=original_total_amount,
+                                             actual_total_amount=actual_total_amount,
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
