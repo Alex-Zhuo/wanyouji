@@ -282,7 +282,7 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     def wxa_code_display(self, obj):
         if obj and obj.is_cy_show and obj.cy_show.poster_url and (
                 not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
-                obj.logo_mobile.path)):
+            obj.logo_mobile.path)):
             from caiyicloud.models import logo_mobile_dir
             obj.logo_mobile = save_url_img(obj.cy_show.poster_url, logo_mobile_dir)
             obj.save(update_fields=['logo_mobile'])
@@ -1622,12 +1622,12 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         html += '<p>实付金额(包含邮费)：{}</p>'.format(obj.actual_amount)
         html += '<p>邮费：{}</p>'.format(obj.express_fee)
         html += '<p>退款金额：{}</p>'.format(obj.refund_amount)
-        if obj.discount_order.all():
+        discount_orders = obj.discount_order.all()
+        if discount_orders:
             html += '<p>优惠：{}</p>'
-            discount_orders = obj.discount_order.all()
-            if discount_orders:
-                for discount_order in discount_orders:
-                    html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
+            for discount_order in discount_orders:
+                logger.error((discount_order.title, discount_order.amount))
+                html += '<p>{}：{}</p>'.format(discount_order.title, discount_order.amount)
         html += '<p>渠道类型：{}</p>'.format(obj.get_channel_type_display())
         if obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'):
             html += '<p>彩艺云订单号：{}</p>'.format(obj.cy_order.cy_order_no)
