@@ -157,7 +157,7 @@ class UserCouponRecord(UseNoAbstract):
 
     def cancel_use(self):
         self.order = None
-        self.status = self.STATUS_DEFAULT if self.expire_time < timezone.now() else self.STATUS_EXPIRE
+        self.status = self.STATUS_DEFAULT if self.expire_time > timezone.now() else self.STATUS_EXPIRE
         self.used_time = None
         self.save(update_fields=['used_time', 'order', 'status'])
 
