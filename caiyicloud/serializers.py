@@ -206,17 +206,18 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
         else:
             ret_act = ticket_act
             ret_promote_amount = ticket_promote_amount
-        apply_tickets = event_apply_tickets if is_event else t_apply_tickets
-        if ret_act:
-            has_promote = True
-            order_promote_data = {
-                "id": ret_act.act_id,
-                "category": 2,
-                "name": ret_act.name,
-                "discount_amount": ret_promote_amount,
-                "apply_tickets": apply_tickets
-            }
-            act_data = PromoteActivitySerializer(ret_act).data
+        if ret_promote_amount > 0:
+            apply_tickets = event_apply_tickets if is_event else t_apply_tickets
+            if ret_act:
+                has_promote = True
+                order_promote_data = {
+                    "id": ret_act.act_id,
+                    "category": 2,
+                    "name": ret_act.name,
+                    "discount_amount": ret_promote_amount,
+                    "apply_tickets": apply_tickets
+                }
+                act_data = PromoteActivitySerializer(ret_act).data
         return has_promote, act_data, order_promote_data
 
     class Meta:
