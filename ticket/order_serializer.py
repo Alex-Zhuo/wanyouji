@@ -44,8 +44,6 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
         return value
 
     def handle_coupon(self, show, coupon_no: str, actual_amount):
-        log.debug(actual_amount)
-        log.debug(coupon_no)
         coupon_record = None
         ticket_order_discount_dict = None
         if coupon_no:
