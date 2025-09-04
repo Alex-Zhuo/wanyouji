@@ -192,7 +192,7 @@ class CheckPromoteActivitySerializer(serializers.ModelSerializer):
                     t_apply_tickets = c_apply_tickets.copy()
         is_event = False
         if event_act and ticket_act:
-            if event_promote_amount > ticket_promote_amount:
+            if event_promote_amount < ticket_promote_amount:
                 ret_promote_amount = ticket_promote_amount
                 ret_act = ticket_act
             else:
