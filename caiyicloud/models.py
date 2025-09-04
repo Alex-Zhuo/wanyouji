@@ -2020,11 +2020,12 @@ class PromoteActivity(models.Model):
             else:
                 # 满件或满额
                 rule = qs.order_by('-discount_value').first()
-                if self.type in self.discount_type_list():
-                    # 打折
-                    promote_amount = amount * rule.discount_value
-                else:
-                    promote_amount = rule.discount_value
+                if rule:
+                    if self.type in self.discount_type_list():
+                        # 打折
+                        promote_amount = amount * rule.discount_value
+                    else:
+                        promote_amount = rule.discount_value
         return can_use, int(promote_amount) / 100, amount, ticket_type
 
 
