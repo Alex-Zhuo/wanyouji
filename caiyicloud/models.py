@@ -1386,29 +1386,31 @@ class CyOrder(models.Model):
                     raise CustomAPIException('下单失败,彩艺票价未配置')
                 cy_tf = ticket_obj.cy_tf
                 if session.one_id_one_ticket or cy_tf.is_package_ticket:
-                    seat_data = dict(photo_url=None)
-                    if cy_tf.is_package_ticket:
-                        # 套票
-                        for pack in cy_tf.ticket_pack_list.all():
-                            seat_data['seat_group_id'] = pack.cy_no
-                            total_seat_num = pack.qty * multiply
-                            if session.one_id_one_ticket:
+                    for m in range(0, multiply):
+                        seat_data = dict(photo_url=None)
+                        if cy_tf.is_package_ticket:
+                            # 套票
+                            ticket_pack_list = cy_tf.ticket_pack_list.all()
+                            for pack in ticket_pack_list:
+                                seat_data['seat_group_id'] = f'{pack.cy_no}_{m}'
+                                total_seat_num = pack.qty
+                                if session.one_id_one_ticket:
+                                    for j in list(range(0, total_seat_num)):
+                                        # 随机填入实名人信息
+                                        seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                                    cellphone=real_name_list[i]['mobile'],
+                                                                    name=real_name_list[i]['name'], type=1)
+                                        i += 1
                                 for j in list(range(0, total_seat_num)):
-                                    # 随机填入实名人信息
-                                    seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                                                cellphone=real_name_list[i]['mobile'],
-                                                                name=real_name_list[i]['name'], type=1)
-                                    i += 1
-                            for j in list(range(0, total_seat_num)):
-                                # 例如这个套票里面数量2，则需要添加与数量相同的seats，seatGroupId每一个数量都要一个
+                                    # 例如这个套票里面数量2，则需要添加与数量相同的seats，seatGroupId每一个数量都要一个
+                                    seats.append(seat_data)
+                        else:
+                            if session.one_id_one_ticket:
+                                seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
+                                                            cellphone=real_name_list[i]['mobile'],
+                                                            name=real_name_list[i]['name'], type=1)
                                 seats.append(seat_data)
-                    else:
-                        if session.one_id_one_ticket:
-                            seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
-                                                        cellphone=real_name_list[i]['mobile'],
-                                                        name=real_name_list[i]['name'], type=1)
-                            seats.append(seat_data)
-                            i += 1
+                                i += 1
                 cy_ticket_list.append(dict(event_id=event_id, session_id=cy_session.cy_no,
                                            delivery_method=delivery_method.code,
                                            ticket_type_id=cy_tf.cy_no, ticket_category=cy_tf.category,
