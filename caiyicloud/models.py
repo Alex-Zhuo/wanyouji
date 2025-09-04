@@ -1433,7 +1433,7 @@ class CyOrder(models.Model):
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
                                              address_info=address_info,
-                                             express_amount=quantize(express_amount,2)
+                                             express_amount=express_amount,
                                              )
         except Exception as e:
             log.error(e)
