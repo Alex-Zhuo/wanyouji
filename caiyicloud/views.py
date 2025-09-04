@@ -69,11 +69,11 @@ class CaiYiViewSet(viewsets.ViewSet):
         has_promote, act_data, order_promote_data = s.create(s.validated_data)
         return Response(dict(has_promote=has_promote, act_data=act_data, order_promote_data=order_promote_data))
 
-    @method_decorator(cache_page(60, key_prefix=PREFIX))
+    # @method_decorator(cache_page(60, key_prefix=PREFIX))
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedUser])
     def get_promotes(self, request):
         show_no = request.GET.get('show_no')
-        # log.debug(show_no)
+        log.debug(show_no)
         if not show_no:
             raise CustomAPIException('参数错误')
         event_qs, ticket_qs = PromoteActivity.get_promotes_show(show_no)
