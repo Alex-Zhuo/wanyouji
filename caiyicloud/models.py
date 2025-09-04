@@ -1425,19 +1425,19 @@ class CyOrder(models.Model):
         if not session.one_id_one_ticket and session.is_name_buy:
             # 一单一证
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
-        try:
-            response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=quantize(amounts_data['original_total_amount'], 2),
-                                             actual_total_amount=quantize(amounts_data['actual_total_amount'], 2),
-                                             buyer_cellphone=ticket_order.mobile,
-                                             ticket_list=cy_ticket_list, id_info=id_info,
-                                             promotion_list=promotion_list,
-                                             address_info=address_info,
-                                             express_amount=express_amount,
-                                             )
-        except Exception as e:
-            log.error(e)
-            raise CustomAPIException('下单失败，请稍后再试。。。')
+        # try:
+        response_data = cy.orders_create(external_order_no=ticket_order.order_no,
+                                         original_total_amount=quantize(amounts_data['original_total_amount'], 2),
+                                         actual_total_amount=quantize(amounts_data['actual_total_amount'], 2),
+                                         buyer_cellphone=ticket_order.mobile,
+                                         ticket_list=cy_ticket_list, id_info=id_info,
+                                         promotion_list=promotion_list,
+                                         address_info=address_info,
+                                         express_amount=express_amount,
+                                         )
+        # except Exception as e:
+        #     log.error(e)
+        #     raise CustomAPIException('下单失败，请稍后再试。。。')
         from caiyicloud.error_codes import is_success
         if not is_success(response_data["code"]):
             error_msg = response_data.get('message') or response_data.get('msg')
