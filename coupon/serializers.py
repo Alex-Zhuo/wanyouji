@@ -106,13 +106,13 @@ class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
         model = UserCouponRecord
         fields = ['show_no', 'amount']
 
-    @atomic
     def create(self, validated_data):
         res = []
         request = self.context.get('request')
         now_date = timezone.now().date()
         show_no = validated_data['show_no']
         amount = validated_data['amount']
+        log.error(validated_data)
         records = UserCouponRecord.objects.filter(user=request.user, status=UserCouponRecord.STATUS_DEFAULT,
                                                   expire_time__gte=now_date, require_amount__lte=amount)
         for record in records:
