@@ -16,6 +16,7 @@ import json
 from caches import redis_ticket_level_cache, get_pika_redis, get_redis_name
 from django.core.cache import cache
 from caches import cache_order_seat_key
+from common.utils import quantize
 
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
@@ -687,7 +688,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         if pack_amount > 0:
             # 套票原价,type优惠策略,1:套票优惠；2:营销活动
             amount = Decimal(pack_amount)
-            discount_amount = pack_amount - cy_amount
+            discount_amount = quantize(pack_amount - cy_amount, 2)
             amounts_data['promotion_list'] = [{"category": 1, "discount_amount": discount_amount}]
             ticket_order_discount_list.append(
                 dict(discount_type=TicketOrderDiscount.DISCOUNT_PACK, title='套票优惠', amount=discount_amount))

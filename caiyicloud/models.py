@@ -1336,6 +1336,7 @@ class CyOrder(models.Model):
         amounts_data = dict(original_total_amount=11,actual_total_amount=44, promotion_list=[])
         无座的才会有promotion_list，有座直接取seat_info里面的
         """
+        from common.utils import quantize
         cy = caiyi_cloud()
         if not cy.is_init:
             raise CustomAPIException('彩艺云账号未配置')
@@ -1426,13 +1427,13 @@ class CyOrder(models.Model):
             id_info = dict(number=real_name_list[0]['id_card'], name=real_name_list[0]['name'], type=1)
         try:
             response_data = cy.orders_create(external_order_no=ticket_order.order_no,
-                                             original_total_amount=amounts_data['original_total_amount'],
-                                             actual_total_amount=amounts_data['actual_total_amount'],
+                                             original_total_amount=quantize(amounts_data['original_total_amount'], 2),
+                                             actual_total_amount=quantize(amounts_data['actual_total_amount'], 2),
                                              buyer_cellphone=ticket_order.mobile,
                                              ticket_list=cy_ticket_list, id_info=id_info,
                                              promotion_list=promotion_list,
                                              address_info=address_info,
-                                             express_amount=express_amount
+                                             express_amount=quantize(express_amount,2)
                                              )
         except Exception as e:
             raise CustomAPIException('下单失败，请稍后再试。。。')
