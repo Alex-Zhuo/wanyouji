@@ -576,29 +576,21 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
 
 
 class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
+    def cy_create_order(self, ticket_order, session, amounts_data: dict, seat_info: dict = None,
+                        ticket_list: list = None,
+                        show_users=None):
+        """
+        ticket_list 无座下单使用，有座不用传
+        """
+        # 彩艺云下单
+        from caiyicloud.models import CyOrder
+        real_name_list = list(show_users.values('id_card', 'name', 'mobile')) if show_users else None
+        CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
+                             seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
 
-    << << << < HEAD
-== == == =
-
->> >> >> > master
-
-
-def cy_create_order(self, ticket_order, session, amounts_data: dict, seat_info: dict = None,
-                    ticket_list: list = None,
-                    show_users=None):
-    """
-    ticket_list 无座下单使用，有座不用传
-    """
-    # 彩艺云下单
-    from caiyicloud.models import CyOrder
-    real_name_list = list(show_users.values('id_card', 'name', 'mobile')) if show_users else None
-    CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
-                         seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
-
-
-class Meta:
-    model = TicketOrder
-    fields = TicketOrderCreateCommonSerializer.Meta.fields
+    class Meta:
+        model = TicketOrder
+        fields = TicketOrderCreateCommonSerializer.Meta.fields
 
 
 class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
