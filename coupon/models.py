@@ -132,14 +132,21 @@ class UserCouponRecord(UseNoAbstract):
         return json.dumps(data)
 
     def check_can_show_use(self, show: ShowProject):
-        snapshot = json.loads(self.snapshot)
-        limit_show_types_second_ids = snapshot['show_types_second_ids']
-        limit_shows_nos = snapshot['shows_nos']
-        can_use = False
-        if not (limit_show_types_second_ids and show.cate_second.id not in limit_show_types_second_ids):
-            can_use = True
-        if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
-            can_use = True
+        # snapshot = json.loads(self.snapshot)
+        # limit_show_types_second_ids = snapshot['show_types_second_ids']
+        # limit_shows_nos = snapshot['shows_nos']
+        # can_use = False
+        # if not (limit_show_types_second_ids and show.cate_second.id not in limit_show_types_second_ids):
+        #     can_use = True
+        # if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
+        #     can_use = True
+        shows = self.coupon.shows.all()
+        show_types = self.coupon.limit_show_types_second.all()
+        can_use = True
+        if show_types and not show_types.filter(id=show.cate_second.id).exists():
+            can_use = False
+        if shows and not shows.filter(id=show.id).exists():
+            can_use = False
         return can_use
 
     def set_use(self, order):

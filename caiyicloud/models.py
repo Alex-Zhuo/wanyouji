@@ -1392,14 +1392,15 @@ class CyOrder(models.Model):
                         # 套票
                         for pack in cy_tf.ticket_pack_list.all():
                             seat_data['seat_group_id'] = pack.cy_no
+                            total_seat_num = pack.qty * multiply
                             if session.one_id_one_ticket:
-                                for j in list(range(0, pack.qty)):
+                                for j in list(range(0, total_seat_num)):
                                     # 随机填入实名人信息
                                     seat_data['id_info'] = dict(number=real_name_list[i]['id_card'],
                                                                 cellphone=real_name_list[i]['mobile'],
                                                                 name=real_name_list[i]['name'], type=1)
                                     i += 1
-                            for j in list(range(0, pack.qty)):
+                            for j in list(range(0, total_seat_num)):
                                 # 例如这个套票里面数量2，则需要添加与数量相同的seats，seatGroupId每一个数量都要一个
                                 seats.append(seat_data)
                     else:
