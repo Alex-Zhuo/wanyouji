@@ -52,7 +52,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             except UserCouponRecord.DoesNotExist:
                 raise CustomAPIException(detail=u'优惠券信息有误')
             try:
-                snapshot = json.loads(coupon_record.snapshot)
+                # snapshot = json.loads(coupon_record.snapshot)
                 coupon = coupon_record.coupon
                 if actual_amount < coupon_record.require_amount:
                     raise CustomAPIException(detail=u'未达到优惠券使用条件')
@@ -69,7 +69,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                     raise CustomAPIException(detail=u'当前演出不能使用此优惠券')
             except Coupon.DoesNotExist:
                 raise CustomAPIException(detail=u'优惠券信息有误')
-            coupon_amount = Decimal(snapshot['amount'])
+            coupon_amount = coupon_record.amount
             actual_amount = Decimal(actual_amount)
             actual_amount = 0 if actual_amount <= coupon_amount else actual_amount - coupon_amount
             ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_COUPON, title='消费卷优惠',
@@ -576,21 +576,29 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
 
 
 class CyTicketOrderCommonSerializer(TicketOrderCreateCommonSerializer):
-    def cy_create_order(self, ticket_order, session, amounts_data: dict, seat_info: dict = None,
-                        ticket_list: list = None,
-                        show_users=None):
-        """
-        ticket_list 无座下单使用，有座不用传
-        """
-        # 彩艺云下单
-        from caiyicloud.models import CyOrder
-        real_name_list = list(show_users.values('id_card', 'name', 'mobile')) if show_users else None
-        CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
-                             seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
 
-    class Meta:
-        model = TicketOrder
-        fields = TicketOrderCreateCommonSerializer.Meta.fields
+    << << << < HEAD
+== == == =
+
+>> >> >> > master
+
+
+def cy_create_order(self, ticket_order, session, amounts_data: dict, seat_info: dict = None,
+                    ticket_list: list = None,
+                    show_users=None):
+    """
+    ticket_list 无座下单使用，有座不用传
+    """
+    # 彩艺云下单
+    from caiyicloud.models import CyOrder
+    real_name_list = list(show_users.values('id_card', 'name', 'mobile')) if show_users else None
+    CyOrder.order_create(ticket_order=ticket_order, session=session, real_name_list=real_name_list,
+                         seat_info=seat_info, ticket_list=ticket_list, amounts_data=amounts_data)
+
+
+class Meta:
+    model = TicketOrder
+    fields = TicketOrderCreateCommonSerializer.Meta.fields
 
 
 class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
@@ -622,7 +630,7 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
         pack_amount = 0
         is_cy_promotion = False
         order_promote_data = validated_data.pop('order_promote_data', None)
-        #log.debug(order_promote_data)
+        # log.debug(order_promote_data)
         if order_promote_data:
             is_cy_promotion = True
         # promote_act = None
