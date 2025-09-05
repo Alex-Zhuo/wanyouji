@@ -171,11 +171,27 @@ def pull_new_pro_act(modeladmin, request, queryset):
 pull_new_pro_act.short_description = '拉取新营销活动'
 
 
+def promote_set_on(modeladmin, request, queryset):
+    queryset.update(enabled=1)
+    messages.success(request, '执行成功')
+
+
+promote_set_on.short_description = '批量启用'
+
+
+def promote_set_off(modeladmin, request, queryset):
+    queryset.update(enabled=0)
+    messages.success(request, '执行成功')
+
+
+promote_set_off.short_description = '批量关闭'
+
+
 class PromoteActivityAdmin(AllOnlyViewAdmin):
     list_display = ['act_id', 'name', 'category', 'type', 'enabled', 'start_time', 'end_time', 'display_name',
                     'description']
     inlines = [PromoteRuleInline, PromoteProductInline]
-    actions = [refresh_pro_act, pull_new_pro_act]
+    actions = [refresh_pro_act, pull_new_pro_act, promote_set_on, promote_set_off]
 
 
 class CyTicketCodeInline(OnlyReadTabularInline):
