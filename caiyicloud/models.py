@@ -492,6 +492,7 @@ class CyShowEvent(models.Model):
         cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
                         show_type=cy_show_type, ticket_mode=event_detail.get('ticket_mode') or cls.MD_DEFAULT,
                         poster_url=event_detail.get('poster_url'),
+                        state=event_detail['state'],
                         content_url=event_detail.get('content_url'), category=event_detail['category'],
                         expire_order_minute=event_detail.get('expire_order_minute', 10), snapshot=json.dumps(snapshot))
         if not cy_show_qs:
