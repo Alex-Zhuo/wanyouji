@@ -223,7 +223,15 @@ class CaiYiCloud(CaiYiCloudAbstract):
         params = dict(supplier_id=self.supplier_id, auth_type=auth_type)
         ret = self._get(f'api/event/v1/events/{event_id}', params=params, headers=headers)
         self.parse_resp(ret)
-        return ret['data']
+        data = ret['data']
+        if data.get('content_url'):
+            try:
+                res = requests.get(data.get('content_url'))
+                if res.status_code == 200:
+                    data['content'] = res.content.decode('utf-8', 'ignore')
+            except Exception as e:
+                logger.error(e)
+        return data
 
     def venue_detail(self, venue_id: str):
         """

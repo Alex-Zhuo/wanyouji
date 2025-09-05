@@ -484,16 +484,16 @@ class CyShowEvent(models.Model):
         show_data = dict(title=event_detail['name'], cate=cate, cate_second=show_second_cate, show_type=show_type,
                          venues=venue, lat=venue.lat,
                          lng=venue.lng, source_type=ShowProject.SR_CY,
-                         city_id=venue.city.id, sale_time=timezone.now(), content=event_detail['content'],
+                         city_id=venue.city.id, sale_time=timezone.now(), content=event_detail.get('content'),
                          # status=cls.get_show_status(event_detail['state']),
                          status=ShowProject.STATUS_OFF)
         cy_show_qs = cls.objects.filter(event_id=event_id)
-        snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail['group_info'])
+        snapshot = dict(supplier_info=event_detail.get('supplier_info'), group_info=event_detail.get('group_info'))
         cls_data = dict(event_id=event_id, std_id=event_detail['std_id'], seat_type=event_detail['seat_type'],
                         show_type=cy_show_type, ticket_mode=event_detail.get('ticket_mode') or cls.MD_DEFAULT,
-                        poster_url=event_detail['poster_url'],
-                        content_url=event_detail['content_url'], category=event_detail['category'],
-                        expire_order_minute=event_detail['expire_order_minute'], snapshot=json.dumps(snapshot))
+                        poster_url=event_detail.get('poster_url'),
+                        content_url=event_detail.get('content_url'), category=event_detail['category'],
+                        expire_order_minute=event_detail.get('expire_order_minute', 10), snapshot=json.dumps(snapshot))
         if not cy_show_qs:
             show = ShowProject.objects.create(**show_data)
             cls_data['show'] = show
