@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 class UserAccountLevelSerializer(ModelSerializer):
     class Meta:
         model = UserAccountLevel
-        fields = ['name', 'grade', 'slug', 'share_ratio', 'team_ratio', 'share_ratio_xy', 'team_ratio_xy', 'card_ratio',
-                  'theater_ratio']
+        fields = ['name', 'grade', 'slug', 'share_ratio', 'team_ratio']
 
 
 # class UserAccountLevelSummarySerializer(ModelSerializer):
