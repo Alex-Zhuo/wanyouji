@@ -108,6 +108,7 @@ def exception_handler(exc, context):
     from django.utils.translation import ugettext_lazy as _
 
     from django.core.exceptions import PermissionDenied
+    logger.error(context)
     if isinstance(exc, exceptions.APIException):
         headers = {}
         if getattr(exc, 'auth_header', None):
