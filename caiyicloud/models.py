@@ -1445,7 +1445,10 @@ class CyOrder(models.Model):
             raise CustomAPIException('下单失败，请稍后再试。。。')
         from caiyicloud.error_codes import is_success
         if not is_success(response_data["code"]):
-            error_msg = response_data.get('message') or response_data.get('msg')
+            if response_data["code"] in ['100002', 100002]:
+                error_msg = '场次或票档已下架'
+            else:
+                error_msg = response_data.get('message') or response_data.get('msg')
             raise CustomAPIException(error_msg)
         else:
             data = response_data['data']
