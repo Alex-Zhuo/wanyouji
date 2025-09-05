@@ -147,13 +147,13 @@ class PromoteProductInline(OnlyReadTabularInline):
 
 
 def refresh_pro_act(modeladmin, request, queryset):
-    if queryset.count() > 1:
-        raise AdminException('每次最多刷新一场')
-    inst = queryset.first()
-    try:
-        inst.refresh_pro_activity()
-    except Exception as e:
-        raise AdminException(e)
+    if queryset.count() > 10:
+        raise AdminException('每次最多刷新10条记录')
+    for inst in queryset:
+        try:
+            inst.refresh_pro_activity()
+        except Exception as e:
+            raise AdminException(e)
     messages.success(request, '执行成功')
 
 
