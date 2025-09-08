@@ -532,6 +532,14 @@ class ShowContentCategorySecondSerializer(serializers.ModelSerializer):
 class ShowProjectCommonRelateSerializer(PKtoNoSerializer):
     cate = serializers.SerializerMethodField()
     show_type = serializers.SerializerMethodField()
+    has_promote = serializers.SerializerMethodField()
+
+    def get_has_promote(self, obj):
+        has_promote = False
+        if obj.source_type == ShowProject.SR_CY and obj.is_cy_show:
+            from caiyicloud.models import PromoteProduct
+            has_promote = PromoteProduct.objects.filter(event_id=obj.cy_show.id, activity__enabled=1).exists()
+        return has_promote
 
     def get_show_type(self, obj):
         from caches import get_pika_redis, redis_show_type_copy_key
@@ -584,7 +592,8 @@ class ShowProjectRecommendSerializer(ShowProjectCommonRelateSerializer):
 
     class Meta:
         model = ShowProject
-        fields = ['id', 'no', 'title', 'logo_mobile', 'date', 'price', 'venue', 'flag', 'cate', 'show_type']
+        fields = ['id', 'no', 'title', 'logo_mobile', 'date', 'price', 'venue', 'flag', 'cate', 'show_type',
+                  'has_promote']
 
 
 class ShowProjectSerializer(ShowProjectCommonRelateSerializer):
@@ -617,7 +626,7 @@ class ShowProjectSerializer(ShowProjectCommonRelateSerializer):
 
     class Meta:
         model = ShowProject
-        fields = ['id', 'no', 'title', 'logo_mobile', 'date', 'price', 'venues', 'cate', 'show_type']
+        fields = ['id', 'no', 'title', 'logo_mobile', 'date', 'price', 'venues', 'cate', 'show_type', 'has_promote']
 
 
 class ShowStaffSerializer(PKtoNoSerializer):
