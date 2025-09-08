@@ -79,6 +79,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dj_ext.middlewares.ExceptionMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
+    'dj_ext.middlewares.ResponseParserMiddleware',
 ]
 CACHES = {
     'default': {

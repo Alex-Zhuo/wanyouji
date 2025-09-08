@@ -76,6 +76,7 @@ class ExceptionMiddleware(MiddlewareMixin):
                 return HttpResponse(detail)
         pass
 
+
 class AfterRequestMiddleware(MiddlewareMixin):
     @classmethod
     def register_hook(cls, hook, request):
@@ -89,4 +90,50 @@ class AfterRequestMiddleware(MiddlewareMixin):
             logger.debug("hooks: %s" % request.hooks)
             for hook in request.hooks:
                 hook()
+        return response
+
+
+class ResponseParserMiddleware(MiddlewareMixin):
+    def process_response(self, request, response):
+        print(response.accepted_media_type)
+        if hasattr(response, 'accepted_media_type') and 'application/json' in response.accepted_media_type:
+            if getattr(response, 'not_parse', False):
+                return response
+            data = response.data
+            sc = response.status_code
+            if sc == 200 and isinstance(data, dict):
+                keys = list(data.keys())
+                if 'statusCode' in keys and ('result' in keys or 'msg' in keys):
+                    logger.debug('not parse')
+                    return response
+            logger.debug('begin to parse')
+            if 200 <= response.status_code < 300:
+                response.status_code = 200
+                response.data = dict(success=True, statusCode=200, msg=None, result=data)
+                response._is_rendered = False
+                response.render()
+                return response
+            else:
+                logger.debug('data: %s' % data)
+                if response.status_code == 404:
+                    if data is not None:
+                        msg = data.get('detail') or data.get('msg') if isinstance(data, dict) else data
+                    else:
+                        msg = '请求找不到404'
+                elif response.status_code == 400:
+                    # try:
+                    #     msg = str(data.values()[0][0])
+                    # except Exception:
+                    msg = (data.get('detail') or data.get('msg')) if isinstance(data, dict) else str(data)
+                else:
+                    logger.debug('sc: %s' % response.status_code)
+                    if data is not None:
+                        msg = (data.get('detail') or data.get('msg')) if isinstance(data, dict) else data
+                    else:
+                        msg = None
+                response.data = dict(success=False, statusCode=response.status_code, msg=msg)
+                response.status_code = 200
+                response._is_rendered = False
+                response.render()
+                return response
         return response
