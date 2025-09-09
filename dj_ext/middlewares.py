@@ -95,6 +95,7 @@ class AfterRequestMiddleware(MiddlewareMixin):
 
 class ResponseParserMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
+        logger.error(request.META)
         # print(response.accepted_media_type)
         if hasattr(response, 'accepted_media_type') and 'application/json' in response.accepted_media_type:
             if getattr(response, 'not_parse', False):
