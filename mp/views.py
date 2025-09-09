@@ -521,8 +521,7 @@ class LpViewSet(viewsets.ViewSet):
 
         encryptedData, iv = map(request.data.get, ['encryptedData', 'iv'])
         session_key = request.user.session_key
-        logger.error(request.data)
-        logger.error(session_key)
+        # logger.error(request.data)
         if not session_key:
             return Response(status=401, data=dict(error='小程序没有登陆'))
         """
