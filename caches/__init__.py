@@ -20,7 +20,7 @@ def get_redis_name(name):
 def redis_client():
     redis_conf = get_config().get('redis')
     return StrictRedis(host=redis_conf.get('host', '127.0.0.1'), db=redis_conf.get('db', 0),
-                       decode_responses=True)
+                       decode_responses=True, health_check_interval=30)
 
 
 def pika_client():
@@ -29,7 +29,7 @@ def pika_client():
     host = pika.get('host')
     port = pika.get('port')
     db = pika.get('db')
-    return StrictRedis(host=host, port=port, db=db, decode_responses=True)
+    return StrictRedis(host=host, port=port, db=db, decode_responses=True, health_check_interval=30)
 
 
 _redis = redis_client()
