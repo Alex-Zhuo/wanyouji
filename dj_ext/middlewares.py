@@ -95,9 +95,9 @@ class AfterRequestMiddleware(MiddlewareMixin):
 
 class ResponseParserMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
-        logger.error(request.META)
+        http_sz_code = request.META.get('HTTP_SZ_CODE')
         # print(response.accepted_media_type)
-        if hasattr(response, 'accepted_media_type') and 'application/json' in response.accepted_media_type:
+        if http_sz_code and hasattr(response, 'accepted_media_type') and 'application/json' in response.accepted_media_type:
             if getattr(response, 'not_parse', False):
                 return response
             data = response.data
