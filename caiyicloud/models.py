@@ -312,6 +312,7 @@ class CyShowEvent(models.Model):
     # 时间信息
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    error_msg = models.CharField('拉取错误信息', max_length=500, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '节目'
@@ -380,6 +381,7 @@ class CyShowEvent(models.Model):
                 CySession.init_cy_session(event_id, log_title)
             except Exception as e:
                 log.error(e)
+                cls.objects.filter(event_id=event_id).update(error_msg='节目找不到或已结束')
 
     @classmethod
     def sync_create_event(cls, event_ids: list, log_title: str):
@@ -494,7 +496,8 @@ class CyShowEvent(models.Model):
                         poster_url=event_detail.get('poster_url'),
                         state=event_detail['state'],
                         content_url=event_detail.get('content_url'), category=event_detail['category'],
-                        expire_order_minute=event_detail.get('expire_order_minute', 10), snapshot=json.dumps(snapshot))
+                        expire_order_minute=event_detail.get('expire_order_minute', 10), snapshot=json.dumps(snapshot),
+                        error_msg=None)
         if not cy_show_qs:
             show = ShowProject.objects.create(**show_data)
             cls_data['show'] = show

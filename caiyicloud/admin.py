@@ -72,7 +72,7 @@ pull_new_event.short_description = '拉取新项目'
 
 class CyShowEventAdmin(AllOnlyViewAdmin):
     list_display = ['event_id', 'show', 'category', 'show_type', 'seat_type', 'ticket_mode', 'state',
-                    'expire_order_minute', 'updated_at']
+                    'expire_order_minute', 'updated_at', 'error_msg']
     list_filter = ['state', 'show_type', 'updated_at']
     actions = [refresh_event, pull_new_event, pull_all_event]
 
