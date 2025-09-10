@@ -53,6 +53,7 @@ from mall.serializers import SubPagesSerializer
 from renovation.models import Resource
 from mall.models import UserAddress
 from datetime import timedelta
+from caches import get_pika_redis, get_redis_name
 
 logger = log = logging.getLogger(__name__)
 
@@ -645,13 +646,27 @@ class UserAddressViewSet(SerializerSelector, viewsets.ModelViewSet):
     permission_classes = [IsPermittedUser]
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
 
-    @action(methods=['get', 'post'], permission_classes=[IsPermittedUser], detail=False)
+    @action(methods=['get', 'post'], detail=True)
     def set_default(self, request, pk):
         add = get_object_or_404(UserAddress, pk=pk)
         UserAddress.objects.filter(user=add.user).update(default=False)
         add.default = True
         add.save(update_fields=['default'])
         return Response(status=200)
+
+    @action(methods=['get'], detail=False)
+    def get_street(self, request):
+        areacode = request.query_params.get('areacode')
+        citycode = request.query_params.get('citycode')
+        provincecode = request.query_params.get('provincecode')
+        if not (areacode and citycode and provincecode):
+            return Response(data=[])
+        pika = get_pika_redis()
+        key = get_redis_name('streets_cache')
+        name = "{}_{}_{}".format(provincecode, citycode, areacode)
+        data = pika.hget(key, name)
+        data = json.loads(data) if data else []
+        return Response(data=data)
 
 
 class HotSearchViewSet(viewsets.ReadOnlyModelViewSet):
