@@ -20,3 +20,4 @@ venv/*
 others/*
 generate_*
 config.py
+streets.json
