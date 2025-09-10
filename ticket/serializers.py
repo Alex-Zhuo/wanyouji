@@ -1356,7 +1356,7 @@ class ShowUserCreateSerializer(serializers.ModelSerializer):
                     raise CustomAPIException('姓名与身份证不匹配或有误，请核对后重试！')
         try:
             if pk:
-                inst = ShowUser.objects.filter(no=pk).first()
+                inst = ShowUser.objects.filter(no=pk, user=request.user).first()
                 inst.name = validated_data['name']
                 inst.mobile = validated_data['mobile']
                 inst.save(update_fields=['name', 'mobile'])
