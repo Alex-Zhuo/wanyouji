@@ -212,7 +212,7 @@ class ShowContentCategory(models.Model):
             pika.hset(redis_show_content_copy_key, str(self.id), json.dumps(data))
 
     def get_index_data(self, context):
-        qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON)
+        qs = ShowProject.objects.filter(cate_id=self.id, status=ShowProject.STATUS_ON).order_by('-display_order')
         data = dict(recent_num=qs.count(), shows=[], color_code=self.color_code)
         from caches import get_pika_redis, redis_show_content_second_key
         from ticket.serializers import ShowIndexSerializer
