@@ -1243,7 +1243,7 @@ class TicketUserCodeCySerializer(TicketUserCodeSerializer):
                     url = request.build_absolute_uri(cy_code.check_in_code_img.url)
             elif cy_code.check_in_type == 3:
                 url = cy_code.check_in_code
-        return dict(url=url, code=cy_code.ticket_no if cy_code else None, can_share=True if cy_code else False,
+        return dict(url=url, code=cy_code.ticket_no if cy_code else None, can_share=True if url else False,
                     deadline_at=None, deadline_timestamp=None)
 
     class Meta:
