@@ -1595,13 +1595,13 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         logger.error(obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'))
         if obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'):
             cy_order = obj.cy_order
-            html = '<p>彩艺订单号：{}</p>'.format(cy_order.cy_order_no)
-            html += '<p>换票码：{}</p>'.format(cy_order.exchange_code)
-            html += '<p>换二维票码：{}</p>'.format(obj.exchange_qr_code)
+            html = '彩艺订单号：{}</br>'.format(cy_order.cy_order_no)
+            html += '换票码：{}</br>'.format(cy_order.exchange_code)
+            html += '换二维票码：{}</br>'.format(obj.exchange_qr_code)
             if obj.exchange_qr_code_img:
                 config = get_config()
-                html += '<p>换二维票码二维码：{}/{}</p>'.format(config['template_url'], obj.exchange_qr_code_img.url)
-            html += '<p>二维码类型：{}</p>'.format(obj.get_code_type_display())
+                html += '换二维票码二维码：{}/{}</br>'.format(config['template_url'], obj.exchange_qr_code_img.url)
+            html += '二维码类型：{}</br>'.format(obj.get_code_type_display())
             logger.error(html)
             return mark_safe(html)
         return ''
