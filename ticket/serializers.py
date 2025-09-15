@@ -1260,7 +1260,11 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
 
     def get_code_list(self, obj):
         qs = TicketUserCode.objects.filter(order=obj)
-        data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
+        code = qs.first()
+        if code.is_cy_code:
+            data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
+        else:
+            data = []
         return data
 
     def get_snapshot(self, obj):
