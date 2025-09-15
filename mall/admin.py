@@ -76,25 +76,25 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
         (_('Permissions'), {'fields': ('agree_member',
                                        'agree_privacy', 'agree_agent', 'is_active', 'is_staff', 'is_superuser',
                                        'groups')}),
-        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache', 'parent_rule')}),
+        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
     )
     # 技术人员账号不能修改密码
     tg_changeform_fieldsets = (
         (None,
          {'fields': ('username', 'last_name', 'first_name', 'mobile', 'flag')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
-        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache', 'parent_rule')}),
+        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
     )
 
     nonsuperuser_changeform_fieldsets = (
         (None,
          {'fields': ('password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
-                     'new_parent_at_cache', 'parent_rule')}),
+                     'new_parent_at_cache')}),
     )
 
     nonsuperuser_changable_fields = (
         'password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
-        'new_parent_at_cache', 'parent_rule'
+        'new_parent_at_cache'
     )
     list_per_page = 100
 
