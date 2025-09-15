@@ -58,7 +58,7 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     readonly_fields = ['new_parent_cache', 'new_parent_at_cache']
     list_display = (
         'id', 'username', 'mobile', 'last_name', 'first_name',
-        'parent', 'new_parent_cache', 'new_parent_at_cache', 'is_active','flag', 'agree_member',
+        'parent', 'new_parent_cache', 'new_parent_at_cache', 'is_active', 'flag', 'agree_member',
         'agree_privacy', 'agree_agent', 'date_joined', 'share_code', 'follow', 'unionid', 'lp_openid', 'openid',
         'unionid_tiktok',
         'openid_tiktok')
@@ -72,29 +72,29 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
     )
     superuser_changeform_fieldsets = (
         (None,
-         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile','flag')}),
+         {'fields': ('username', 'password', 'last_name', 'first_name', 'mobile', 'flag')}),
         (_('Permissions'), {'fields': ('agree_member',
                                        'agree_privacy', 'agree_agent', 'is_active', 'is_staff', 'is_superuser',
                                        'groups')}),
-        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
+        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache', 'parent_rule')}),
     )
     # 技术人员账号不能修改密码
     tg_changeform_fieldsets = (
         (None,
          {'fields': ('username', 'last_name', 'first_name', 'mobile', 'flag')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups')}),
-        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache')}),
+        (_('上级'), {'fields': ('parent', 'parent_at', 'new_parent_cache', 'new_parent_at_cache', 'parent_rule')}),
     )
 
     nonsuperuser_changeform_fieldsets = (
         (None,
          {'fields': ('password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
-                     'new_parent_at_cache')}),
+                     'new_parent_at_cache', 'parent_rule')}),
     )
 
     nonsuperuser_changable_fields = (
         'password', 'first_name', 'last_name', 'mobile', 'parent', 'parent_at', 'new_parent_cache',
-        'new_parent_at_cache'
+        'new_parent_at_cache', 'parent_rule'
     )
     list_per_page = 100
 
@@ -136,6 +136,12 @@ class UserAdmin(BaseUserAdmin, RemoveDeleteModelAdmin):
             '%Y-%m-%d %H:%M') if new_parent and new_parent['date_at_timestamp'] else ''
 
     new_parent_at_cache.short_description = '被推荐时间'
+
+    def parent_rule(self, obj):
+        desc = '<上级用户>每3个月可以换绑一次，<最新推荐人>每次扫码不是同一推荐人都会换绑'
+        return desc
+
+    parent_rule.short_description = '规则'
 
     def get_readonly_fields(self, request, obj=None):
         if request.user.is_superuser:
