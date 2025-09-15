@@ -37,8 +37,10 @@ class UserAccountLevel(models.Model):
     slug = models.CharField('识别标识', max_length=10, null=True, help_text='识别序号(请勿修改)')
     share_ratio = models.DecimalField('分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
     team_ratio = models.DecimalField('团队奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%')
-    card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',editable=False)
-    theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',editable=False)
+    card_ratio = models.DecimalField('会员卡分销奖比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',
+                                     editable=False)
+    theater_ratio = models.DecimalField('剧场会员卡分销比率', max_digits=13, decimal_places=1, default=0, help_text='70为70%',
+                                        editable=False)
 
     class Meta:
         verbose_name_plural = verbose_name = '代理等级'
@@ -91,7 +93,7 @@ class UserAccount(models.Model):
     level = models.ForeignKey(UserAccountLevel, verbose_name='代理等级', null=True, blank=True, on_delete=models.SET_NULL)
     venue = models.ManyToManyField(Venues, verbose_name='场馆', blank=True)
     promote_venue = models.ForeignKey(Venues, verbose_name='运营推广门店', null=True, blank=True,
-                                      related_name='promote_venue', on_delete=models.SET_NULL)
+                                      related_name='promote_venue', on_delete=models.SET_NULL, editable=False)
     team_starter_account = models.ForeignKey('self', verbose_name='团队初始人账号', related_name='team_members',
                                              null=True, blank=True, editable=False, on_delete=models.SET_NULL)
     inviter = models.ForeignKey('self', verbose_name='邀请人', null=True, help_text='平级邀请时设置，是上级和邀请人的区别',
