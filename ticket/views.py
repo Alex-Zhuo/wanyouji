@@ -278,7 +278,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         # log.error(q)
         return ret
 
-    # @method_decorator(cache_page(60, key_prefix=PREFIX))
+    @method_decorator(cache_page(60, key_prefix=PREFIX))
     @action(methods=['get'], detail=False)
     def home_page(self, request):
         # log.debug(request.META)
