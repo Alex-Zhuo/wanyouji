@@ -1592,6 +1592,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         return queryset, use_distinct
 
     def cy_order_data(self, obj):
+        logger.error(obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'))
         if obj.channel_type == TicketOrder.SR_CY and hasattr(obj, 'cy_order'):
             cy_order = obj.cy_order
             html = '<p>彩艺订单号：{}</p>'.format(cy_order.cy_order_no)
@@ -1601,7 +1602,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                 config = get_config()
                 html += '<p>换二维票码二维码：{}/{}</p>'.format(config['template_url'], obj.exchange_qr_code_img.url)
             html += '<p>二维码类型：{}</p>'.format(obj.get_code_type_display())
-            logger.debug(html)
+            logger.error(html)
             return mark_safe(html)
         return ''
 
