@@ -1235,6 +1235,7 @@ class TicketUserCodeCySerializer(TicketUserCodeSerializer):
     def get_code_img_data(self, obj):
         request = self.context.get('request')
         url = None
+        cy_code = None
         if obj.is_cy_code:
             cy_code = obj.cy_code
             if cy_code.check_in_type == 1:
@@ -1242,7 +1243,7 @@ class TicketUserCodeCySerializer(TicketUserCodeSerializer):
                     url = request.build_absolute_uri(cy_code.check_in_code_img.url)
             elif cy_code.check_in_type == 3:
                 url = cy_code.check_in_code
-        return dict(url=url, code=cy_code.ticket_no, can_share=True,
+        return dict(url=url, code=cy_code.ticket_no if cy_code else None, can_share=True if cy_code else False,
                     deadline_at=None, deadline_timestamp=None)
 
     class Meta:
