@@ -1593,6 +1593,7 @@ class CyOrder(models.Model):
 class CyTicketCode(models.Model):
     # 二维码类型
     CHECK_IN_TYPE_CHOICES = [
+        (0, '无'),
         (1, '二维码类型'),
         (3, 'URL链接'),
     ]
@@ -1668,7 +1669,7 @@ class CyTicketCode(models.Model):
         for ticket in ticket_list:
             ticket_id = ticket.pop('id')
             ticket_no = ticket.pop('ticket_no', None)
-            check_in_type = ticket.pop('check_in_type', 1)
+            check_in_type = ticket.pop('check_in_type', 0) or 0
             check_in_code = ticket.pop('check_in_code', None)
             state = ticket.pop('state', None)
             check_state = ticket.pop('check_state', None)

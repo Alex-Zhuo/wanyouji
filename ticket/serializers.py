@@ -1263,7 +1263,7 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
     def get_code_list(self, obj):
         qs = TicketUserCode.objects.filter(order=obj)
         code = qs.first()
-        if code.is_cy_code:
+        if code.is_cy_code and code.cy_code.check_in_code:
             data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
         else:
             data = []
