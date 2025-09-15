@@ -371,6 +371,9 @@ class ShowType(models.Model):
         data = ShowTypeSerializer(self).data
         with get_pika_redis() as pika:
             pika.hset(redis_show_type_copy_key, str(self.id), json.dumps(data))
+        qs = ShowContentCategorySecond.objects.filter(show_type=self)
+        for ss in qs:
+            ss.show_content_second_copy_to_pika()
 
 
 class ShowContentCategorySecond(models.Model):
