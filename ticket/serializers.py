@@ -1255,8 +1255,10 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
     cy_exchange = serializers.SerializerMethodField()
 
     def get_cy_exchange(self, obj):
-        from caiyicloud.serializers import CyOrderBasicSerializer
-        return CyOrderBasicSerializer(obj.cy_order, context=self.context).data
+        if hasattr(obj, 'cy_order'):
+            from caiyicloud.serializers import CyOrderBasicSerializer
+            return CyOrderBasicSerializer(obj.cy_order, context=self.context).data
+        return dict(exchange_code=None, exchange_qr_code_url=None, code_type=None)
 
     def get_code_list(self, obj):
         qs = TicketUserCode.objects.filter(order=obj)
