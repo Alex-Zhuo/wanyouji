@@ -1601,7 +1601,6 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                 config = get_config()
                 html += '<p>换二维票码二维码：{}/{}</p>'.format(config['template_url'], obj.exchange_qr_code_img.url)
             html += '<p>二维码类型：{}</p>'.format(obj.get_code_type_display())
-            html += ' </div>'
             return mark_safe(html)
         return ''
 
