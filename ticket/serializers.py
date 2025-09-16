@@ -1211,8 +1211,10 @@ class TicketOrderDetailNewSerializer(TicketOrderDetailSerializer):
         return data
 
     def get_code_list(self, obj):
-        qs = TicketUserCode.objects.filter(order=obj)
-        data = TicketUserCodeNewSerializer(qs, many=True, context=self.context).data
+        data = []
+        if obj.status in [TicketOrder.STATUS_PAID, TicketOrder.STATUS_FINISH]:
+            qs = TicketUserCode.objects.filter(order=obj)
+            data = TicketUserCodeNewSerializer(qs, many=True, context=self.context).data
         return data
 
     def get_promotion_amount_list(self, obj):
