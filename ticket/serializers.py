@@ -1261,12 +1261,12 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
         return dict(exchange_code=None, exchange_qr_code_url=None, code_type=None)
 
     def get_code_list(self, obj):
-        qs = TicketUserCode.objects.filter(order=obj)
-        code = qs.first()
-        if code.is_cy_code and code.cy_code.check_in_code:
-            data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
-        else:
-            data = []
+        data = []
+        if obj.status in [TicketOrder.STATUS_PAID, TicketOrder.STATUS_FINISH]:
+            qs = TicketUserCode.objects.filter(order=obj)
+            code = qs.first()
+            if code and code.is_cy_code and code.cy_code.check_in_code:
+                data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
         return data
 
     def get_snapshot(self, obj):
