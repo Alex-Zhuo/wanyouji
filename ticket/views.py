@@ -480,7 +480,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
 
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedStaffUser])
     def staff_record_new(self, request):
-        queryset = self.queryset.filter(sale_time__lte=timezone.now(), session_end_at__gt=timezone.now())
+        queryset = self.queryset.filter(sale_time__lte=timezone.now(), session_end_at__gt=timezone.now(),
+                                        source_type=ShowProject.SR_DEFAULT)
         title = request.GET.get('title')
         city = request.GET.get('city')
         if title:
@@ -505,7 +506,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
     @method_decorator(cache_page(60, key_prefix=PREFIX))
     @action(methods=['get'], detail=False, permission_classes=[IsPermittedStaffUser])
     def statistics(self, request):
-        queryset = ShowProject.objects.all()
+        queryset = ShowProject.objects.filter(source_type=ShowProject.SR_DEFAULT)
         status = request.GET.get('status')
         # status 1 未结束 2已结束
         title = request.GET.get('title')
