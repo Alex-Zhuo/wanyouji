@@ -846,14 +846,14 @@ class ShowProject(UseNoAbstract):
         from caches import get_pika_redis
         tiktok_data = None
         with get_pika_redis() as pika:
-            if is_tiktok:
-                data = pika.hget(key, tiktok_name)
-            elif is_ks:
-                data = pika.hget(key, ks_name)
-            elif is_xhs:
-                data = pika.hget(key, xhs_name)
-            else:
-                data = pika.hget(key, name)
+            # if is_tiktok:
+            #     data = pika.hget(key, tiktok_name)
+            # elif is_ks:
+            #     data = pika.hget(key, ks_name)
+            # elif is_xhs:
+            #     data = pika.hget(key, xhs_name)
+            # else:
+            data = pika.hget(key, name)
             if not data or is_init:
                 from common.dateutils import get_month_day
                 start_at, end_at = get_month_day(year, month, 1)
@@ -861,29 +861,29 @@ class ShowProject(UseNoAbstract):
                                                 start_at__lt=end_at)
                 if city_id:
                     qs = qs.filter(show__city_id=city_id)
-                tiktok_qs = qs.filter(dy_status=SessionInfo.STATUS_ON)
                 data = dict()
                 for inst in qs:
                     d_key = inst.start_at.strftime('%Y-%m-%d')
                     data[d_key] = data[d_key] + 1 if data.get(d_key) else 1
-                tiktok_data = dict()
-                for inst in tiktok_qs:
-                    d_key = inst.start_at.strftime('%Y-%m-%d')
-                    tiktok_data[d_key] = tiktok_data[d_key] + 1 if tiktok_data.get(d_key) else 1
                 if data:
                     pika.hset(key, name, json.dumps(data))
-                if tiktok_data:
-                    pika.hset(key, tiktok_name, json.dumps(tiktok_data))
-                # 快手
-                from kuaishou_wxa.models import KsGoodsConfig
-                ks_data = KsGoodsConfig.ks_show_calendar(qs)
-                if ks_data:
-                    pika.hset(key, ks_name, json.dumps(ks_data))
-                # 小红书
-                from xiaohongshu.models import XhsGoodsConfig
-                xhs_data = XhsGoodsConfig.xhs_show_calendar(qs)
-                if xhs_data:
-                    pika.hset(key, xhs_name, json.dumps(xhs_data))
+                # tiktok_qs = qs.filter(dy_status=SessionInfo.STATUS_ON)
+                # tiktok_data = dict()
+                # for inst in tiktok_qs:
+                #     d_key = inst.start_at.strftime('%Y-%m-%d')
+                #     tiktok_data[d_key] = tiktok_data[d_key] + 1 if tiktok_data.get(d_key) else 1
+                # if tiktok_data:
+                #     pika.hset(key, tiktok_name, json.dumps(tiktok_data))
+                # # 快手
+                # from kuaishou_wxa.models import KsGoodsConfig
+                # ks_data = KsGoodsConfig.ks_show_calendar(qs)
+                # if ks_data:
+                #     pika.hset(key, ks_name, json.dumps(ks_data))
+                # # 小红书
+                # from xiaohongshu.models import XhsGoodsConfig
+                # xhs_data = XhsGoodsConfig.xhs_show_calendar(qs)
+                # if xhs_data:
+                #     pika.hset(key, xhs_name, json.dumps(xhs_data))
                 is_init = True
             else:
                 data = json.loads(data)

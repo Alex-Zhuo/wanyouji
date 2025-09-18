@@ -52,6 +52,7 @@ from ticket.serializers import get_origin
 from caches import get_prefix
 from ticket.order_serializer import ticket_order_dispatch
 import random
+
 log = logging.getLogger(__name__)
 
 PREFIX = get_prefix()
@@ -292,7 +293,8 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         now = timezone.now()
         year = request.GET.get('year') or now.year
         month = request.GET.get('month') or now.month
-        is_tiktok, is_ks, is_xhs = get_origin(request)
+        # is_tiktok, is_ks, is_xhs = get_origin(request)
+        is_tiktok, is_ks, is_xhs = False
         data, _, _ = ShowProject.get_show_calendar(city_id=int(city_id), year=int(year), month=int(month),
                                                    is_tiktok=is_tiktok, is_ks=is_ks, is_xhs=is_xhs)
         return Response(data)
@@ -1122,7 +1124,8 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 venue = obj.order.venue.name
                 if len(title) > 12:
                     venue = '{}...'.format(title[:12])
-                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath, deadline_at)
+                ret = order_code_img_new(code_path, header, date_at, title, seat, code_str, venue, filepath,
+                                         deadline_at)
                 # log.debug(ret)
                 obj.change_share_code_img(filepath)
             url = request.build_absolute_uri('/'.join([rel_url, filename]))
