@@ -2075,6 +2075,29 @@ def set_confirm(modeladmin, request, queryset):
 set_confirm.short_description = u'确认退款'
 
 
+def set_confirm_wx(modeladmin, request, queryset):
+    inst = queryset.filter(status=TicketOrderRefund.STATUS_DEFAULT).first()
+    if inst:
+        from caches import run_with_lock, ticket_order_refund_key
+        key = '{}_{}'.format(ticket_order_refund_key, inst.id)
+        with run_with_lock(key, 5) as got:
+            if got:
+                try:
+                    st, msg = inst.set_confirm(request.user)
+                    if not st:
+                        raise AdminException(msg)
+                    messages.success(request, '执行成功')
+                except Exception as e:
+                    raise AdminException(str(e))
+            else:
+                messages.error(request, '请勿操作太快')
+    else:
+        messages.error(request, '待退款状态才可执行')
+
+
+set_confirm_wx.short_description = u'（彩艺云先操作退款后）确认退款'
+
+
 def retry_refund(modeladmin, request, queryset):
     from caiyicloud.models import CyOrderRefund
     inst = queryset.filter(status=TicketOrderRefund.STATUS_PAY_FAILED,
@@ -2157,7 +2180,7 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
     search_fields = ['=order__order_no', '=out_refund_no', '=transaction_id', '=user__mobile', 'user__last_name']
     list_filter = ['status', 'create_at']
     autocomplete_fields = ['user', 'order', 'op_user']
-    actions = [set_confirm, set_cancel, check_refund_order, retry_refund]
+    actions = [set_confirm, set_cancel, check_refund_order, retry_refund, set_confirm_wx]
     readonly_fields = [f.name for f in TicketOrderRefund._meta.fields if
                        f.name not in ['refund_amount', 'return_reason', 'theater_amount']]
 
@@ -2178,10 +2201,13 @@ class TicketOrderRefundAdmin(ChangeAndViewAdmin):
 
     def op(self, obj):
         html = ''
-        if obj.status == TicketOrderRefund.STATUS_DEFAULT:
-            html = '<button type="button" class="el-button el-button--success el-button--small item_set_confirm" ' \
-                   'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
         if obj.status in [TicketOrderRefund.STATUS_DEFAULT, TicketOrderRefund.STATUS_PAY_FAILED]:
+            if obj.status == TicketOrderRefund.STATUS_DEFAULT:
+                html = '<button type="button" class="el-button el-button--success el-button--small item_set_confirm" ' \
+                       'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
+                if obj.order.channel_type == TicketOrder.SR_CY:
+                    html += '<button type="button" class="el-button el-button--danger el-button--small item_set_confirm_wx" ' \
+                            'style="margin-top:8px" alt={}>（彩艺云先操作退款后）确认退款</button><br>'.format(obj.id)
             can_cancel = True
             if hasattr(obj, 'cy_refund'):
                 cy_refund = obj.cy_refund

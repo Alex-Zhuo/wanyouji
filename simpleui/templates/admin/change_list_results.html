@@ -274,6 +274,8 @@
             if(window.location.href.indexOf('/ticket/ticketorderrefund/')>=0){
                 $('button[data-name="set_confirm"]').hide()
                 $('button[data-name="set_cancel"]').hide()
+                $('button[data-name="retry_refund"]').hide()
+                $('button[data-name="set_confirm_wx"]').hide()
                 this.cancel()
                 //确认退款
                 $('.item_set_confirm').click(function (event) {
@@ -287,6 +289,10 @@
                 //重新执行退款
                 $('.item_retry_refund').click(function (event) {
                     that.openPopup($('button[data-name="retry_refund"]'), event)
+                })
+                //直接微信退款
+                $('.item_set_confirm_wx').click(function (event) {
+                    that.openPopup($('button[data-name="set_confirm_wx"]'), event)
                 })
             }
 
