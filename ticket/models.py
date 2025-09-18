@@ -1080,7 +1080,7 @@ class SessionInfo(UseNoAbstract):
                              blank=True)
     start_at = models.DateTimeField('场次开始时间', db_index=True)
     end_at = models.DateTimeField('场次结束时间', db_index=True)
-    dy_sale_time = models.DateTimeField('开售时间', null=True, blank=True, help_text='其他平台用')
+    dy_sale_time = models.DateTimeField('开售时间', null=True, blank=True, help_text='其他平台用', editable=False)
     tiktok_store = models.ForeignKey(DouYinStore, verbose_name='抖音店铺', null=True, blank=True, help_text='推送商品到抖音必填',
                                      on_delete=models.SET_NULL, editable=False)
     valid_start_time = models.DateTimeField('门票有效期开始时间', null=True, blank=True, help_text='抖音用：不填默认场次开始时间前2个小时',
