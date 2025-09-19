@@ -763,7 +763,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         kw = request.GET.get('kw')
         status = request.GET.get('status') or None
         qs = self.queryset.filter(user=request.user)
-        # log.error(request.user.id)
+        log.warning(request.user.id)
         if status:
             qs = qs.filter(status=int(status))
         if kw:
@@ -894,7 +894,8 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         refresh 是否主动刷新动态码
         """
         order_no = request.GET.get('order_no')
-        # log.debug(order_no)
+        log.warning(request.user.id)
+        log.warning(order_no)
         # log.debug(request.META)
         try:
             order = TicketOrder.objects.get(order_no=order_no, user_id=request.user.id)
