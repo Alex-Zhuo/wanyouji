@@ -87,7 +87,7 @@ class User(AbstractUser):
     is_wechat_register = models.BooleanField('是否微信注册', default=False)
     is_binding_mobile = models.BooleanField('是否已绑定', default=True)
     share_code = models.CharField('share_code', max_length=32, null=True, unique=True, db_index=True)
-    mobile = models.CharField('手机', max_length=20, null=True, blank=True, db_index=True)
+    mobile = models.CharField('手机', max_length=20, null=True, blank=True, db_index=True, unique=True)
     idcard = models.CharField('身份证', max_length=20, null=True, blank=True, editable=False)
     wechat = models.CharField('微信号', max_length=20, null=True, blank=True, editable=False)
     follow = models.SmallIntegerField('是否关注', default=0, choices=FOLLOW_CHOICES)
