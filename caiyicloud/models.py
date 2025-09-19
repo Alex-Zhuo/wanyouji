@@ -1653,7 +1653,7 @@ class CyTicketCode(models.Model):
             key = get_redis_name('cy_check_code{}'.format(obj.cy_order.id))
             with run_with_lock(key, 2, 2) as got:
                 if got:
-                    obj.ticket_code.cy_check(check_times)
+                    obj.ticket_code.cy_check(ac_check_time)
                 else:
                     return False, '更新失败'
         return True, None
