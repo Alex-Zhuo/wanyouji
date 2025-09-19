@@ -1575,7 +1575,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
                                       'tiktok_commission_amount', 'plan_id', 'tiktok_refund_type', 'dy_pay_config',
                                       'auto_check',
                                       'need_refund_mz', 'ks_report', 'card_jc_amount', 'snapshot', 'u_user_id',
-                                      'u_agent_id',
+                                      'u_agent_id', 'status',
                                       'discount_amount', 'status_before_refund', 'item_order_info_list']] + [
                           'cy_order_data']
     inlines = [TicketOrderRealNameInline, TicketOrderDiscountInline, TicketUserCodeInline, TicketOrderChangePriceInline,
