@@ -25,6 +25,7 @@ from caches import get_redis_name, get_pika_redis, run_with_lock
 from common.utils import get_timestamp
 import os
 import pysnooper
+from django.db import close_old_connections
 
 log = logging.getLogger(__name__)
 """
@@ -1515,6 +1516,17 @@ class CyOrder(models.Model):
             if not self.exchange_code:
                 st = False
         return st, msg
+
+    @classmethod
+    def auto_check_order_out_task(cls):
+        close_old_connections()
+        date_at = timezone.now() - timedelta(minutes=30)
+        order = cls.objects.filter(order_state=cls.ST_PAY, created_at__lt=date_at)
+        if order:
+            st, msg = order.set_ticket_code()
+            return st, msg
+        else:
+            return True, None
 
     @classmethod
     def notify_issue_ticket(cls, cyy_order_no: str):

@@ -60,3 +60,9 @@ def notify_update_ticket_type(event_change_type: int, price_ids: list):
 def promote_auto_end_task():
     # 营销活动设为已结束
     return PromoteActivity.do_auto_end_task()
+
+
+@shared_task
+def auto_check_order_out_task():
+    # 定时拉取二维码
+    return CyOrder.auto_check_order_out_task()
