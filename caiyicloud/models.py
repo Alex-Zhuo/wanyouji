@@ -1520,7 +1520,7 @@ class CyOrder(models.Model):
     @classmethod
     def auto_check_order_out_task(cls):
         close_old_connections()
-        date_at = timezone.now() - timedelta(minutes=30)
+        date_at = timezone.now() - timedelta(minutes=20)
         order_qs = cls.objects.filter(order_state=cls.ST_PAY, created_at__lt=date_at)
         for order in order_qs:
             st, msg = order.set_ticket_code()
