@@ -1521,12 +1521,9 @@ class CyOrder(models.Model):
     def auto_check_order_out_task(cls):
         close_old_connections()
         date_at = timezone.now() - timedelta(minutes=30)
-        order = cls.objects.filter(order_state=cls.ST_PAY, created_at__lt=date_at)
-        if order:
+        order_qs = cls.objects.filter(order_state=cls.ST_PAY, created_at__lt=date_at)
+        for order in order_qs:
             st, msg = order.set_ticket_code()
-            return st, msg
-        else:
-            return True, None
 
     @classmethod
     def notify_issue_ticket(cls, cyy_order_no: str):
