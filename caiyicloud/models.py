@@ -1497,10 +1497,11 @@ class CyOrder(models.Model):
                 else:
                     try:
                         cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
-                        fields = ['exchange_code', 'exchange_qr_code', 'code_type']
+                        fields = ['exchange_code', 'exchange_qr_code', 'code_type', 'order_state']
                         self.exchange_code = cy_order_detail.get('exchange_code')
                         self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
                         self.code_type = cy_order_detail.get('code_type')
+                        self.order_state = self.ST_OUT
                         if self.exchange_qr_code and self.code_type == 1:
                             img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
                             self.exchange_qr_code_img = '{}/{}'.format(img_dir, filename)
