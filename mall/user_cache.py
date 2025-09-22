@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 # token 72小时过期
-TOKEN_EXPIRE_HOURS = 72
+TOKEN_EXPIRE_HOURS = 24
 # share_code-> user 90天过期
 SHARE_CODE_USER_EXPIRE = 3 * 30 * 24 * 3600
 
