@@ -4976,10 +4976,11 @@ class TicketUserCode(models.Model):
                         snapshot['seat'] = '无座'
                     session = SessionInfo.objects.get(id=inst.session_id)
                     check_at = session.can_check_at or session.start_at.date()
-                    if session.start_at < check_at:
+                    now = timezone.now()
+                    if now < check_at:
                         status = False
                         msg = '未到开始验票时间，请核对后重试！'
-                    elif session.end_at <= timezone.now():
+                    elif session.end_at <= now:
                         status = False
                         msg = '该场次已结束了'
                     else:
