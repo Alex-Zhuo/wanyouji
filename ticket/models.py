@@ -4975,7 +4975,7 @@ class TicketUserCode(models.Model):
                     if not inst.session_seat:
                         snapshot['seat'] = '无座'
                     session = SessionInfo.objects.get(id=inst.session_id)
-                    check_at = session.can_check_at or session.start_at.date()
+                    check_at = session.can_check_at or session.start_at.replace(hour=0, minute=0, second=0, microsecond=0)
                     now = timezone.now()
                     if now < check_at:
                         status = False
