@@ -647,7 +647,11 @@ class ShowStaffSerializer(PKtoNoSerializer):
 
     class Meta:
         model = ShowProject
-        fields = '__all__'
+        fields = PKtoNoSerializer.Meta.fields + ['no', 'title', 'lat', 'lng', 'display_order',
+                                                 'is_test', 'status', 'cate',
+                                                 'venues', 'show_type', 'is_recommend', 'price',
+                                                 'sale_time', 'session_end_at',
+                                                 'origin_amount', 'logo_mobile', 'date', 'source_type', 'use_schedule']
 
 
 class SessionSeatBackSerializer(serializers.ModelSerializer):
@@ -859,7 +863,7 @@ class ShowProjectStaffNewSerializer(ShowStaffSerializer):
 
     class Meta:
         model = ShowProject
-        fields = '__all__'
+        fields = ShowStaffSerializer.Meta.fields + ['sessions', 'content']
 
 
 class ShowProjectStatisticsSerializer(ShowStaffSerializer):
@@ -882,7 +886,7 @@ class ShowProjectStatisticsSerializer(ShowStaffSerializer):
 
     class Meta:
         model = ShowProject
-        fields = '__all__'
+        fields = ShowStaffSerializer.Meta.fields + ['sessions', 'content']
 
 
 class ShowCollectRecordSerializer(serializers.ModelSerializer):
