@@ -1081,6 +1081,7 @@ class SessionInfo(UseNoAbstract):
                              blank=True)
     start_at = models.DateTimeField('场次开始时间', db_index=True)
     end_at = models.DateTimeField('场次结束时间', db_index=True)
+    can_check_at = models.DateTimeField('验票开始时间', null=True, blank=True, help_text='自建场次用于限制开始可验票时间，不填为当天可验票')
     dy_sale_time = models.DateTimeField('开售时间', null=True, blank=True, help_text='其他平台用', editable=False)
     tiktok_store = models.ForeignKey(DouYinStore, verbose_name='抖音店铺', null=True, blank=True, help_text='推送商品到抖音必填',
                                      on_delete=models.SET_NULL, editable=False)
@@ -4974,7 +4975,11 @@ class TicketUserCode(models.Model):
                     if not inst.session_seat:
                         snapshot['seat'] = '无座'
                     session = SessionInfo.objects.get(id=inst.session_id)
-                    if session.end_at <= timezone.now():
+                    check_at = session.can_check_at or session.start_at.date()
+                    if session.start_at < check_at:
+                        status = False
+                        msg = '未到开始验票时间，请核对后重试！'
+                    elif session.end_at <= timezone.now():
                         status = False
                         msg = '该场次已结束了'
                     else:
