@@ -712,7 +712,7 @@ class ShowProject(UseNoAbstract):
         with get_pika_redis() as pika:
             data['show_type'] = json.loads(pika.hget(redis_show_type_copy_key, data['show_type']))
             data['venues'] = json.loads(pika.hget(redis_venues_copy_key, data['venues']))
-            if data['cate']:
+            if data.get('cate'):
                 data['cate'] = json.loads(pika.hget(redis_show_content_copy_key, data['cate']))
                 data['cate'].pop('show_type_list', None)
             date_data = pika.hget(redis_show_date_copy, show_id)
