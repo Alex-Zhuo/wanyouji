@@ -615,6 +615,7 @@ class ShowProject(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     is_recommend = models.BooleanField('为你推荐', default=True, help_text='勾选后节目将会显示在首页底部【为你推荐】板块')
+    use_schedule = models.BooleanField('是否使用日历样式', default=True, help_text='勾选后为日历样式')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     dy_pay_config = models.ForeignKey(DouYinPayConfig, verbose_name='抖音支付商户', null=True, blank=True,
@@ -798,7 +799,7 @@ class ShowProject(UseNoAbstract):
             domain = config.get('template_url')
             show_dict = model_to_dict(self)
             pop_list = ['no', 'title', 'lat', 'lng', 'content', 'display_order', 'is_test', 'status', 'cate',
-                        'venues', 'show_type', 'is_recommend', 'dy_show_date', 'source_type']
+                        'venues', 'show_type', 'is_recommend', 'dy_show_date', 'source_type', 'use_schedule']
             show_cache = dict()
             for key in pop_list:
                 if show_dict.get(key):
