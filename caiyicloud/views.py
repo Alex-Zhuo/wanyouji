@@ -35,7 +35,10 @@ class CaiYiViewSet(viewsets.ViewSet):
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         # return JsonResponse(ret)
         data = request.data
-        is_success, error_msg = CaiYiCloudApp.due_notify(data)
+        is_success = False
+        error_msg = None
+        if data:
+            is_success, error_msg = CaiYiCloudApp.due_notify(data)
         if is_success:
             log.debug(ret)
             return JsonResponse(ret)
