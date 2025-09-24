@@ -750,6 +750,14 @@ class ShowProjectDetailSerializer(ShowProjectSerializer):
     is_collect = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
     sale_time_timestamp = serializers.SerializerMethodField()
+    watching_notice = serializers.SerializerMethodField()
+    purchase_notice = serializers.SerializerMethodField()
+
+    def get_purchase_notice(self, obj):
+        return []
+
+    def get_watching_notice(self, obj):
+        return []
 
     def get_sale_time_timestamp(self, obj):
         from common.utils import get_timestamp
@@ -784,7 +792,8 @@ class ShowProjectDetailSerializer(ShowProjectSerializer):
 
     class Meta:
         model = ShowProject
-        fields = ['id', 'no', 'title', 'lat', 'lng', 'content', 'notice', 'display_order', 'is_test', 'status', 'cate',
+        fields = ['id', 'no', 'title', 'lat', 'lng', 'content', 'watching_notice', 'purchase_notice', 'display_order',
+                  'is_test', 'status', 'cate',
                   'venues', 'show_type', 'is_recommend', 'dy_show_date', 'price', 'sale_time', 'session_end_at',
                   'origin_amount', 'logo_mobile', 'date', 'sessions', 'can_buy', 'is_collect', 'images',
                   'sale_time_timestamp', 'source_type', 'use_schedule']
