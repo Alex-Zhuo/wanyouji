@@ -624,7 +624,7 @@ class ShowProject(UseNoAbstract):
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     version = models.IntegerField('版本号', default=0)
-    is_test = models.BooleanField('是否测试商品', default=False, editable=False)
+    is_test = models.BooleanField('是否测试商品', default=False)
     tiktok_code = models.ImageField('抖音分享二维码', null=True, blank=True, upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/project',
                                     validators=[validate_image_file_extension], editable=False)
     wxa_code = models.ImageField('小程序分享二维码', null=True, blank=True, upload_to=f'{IMAGE_FIELD_PREFIX}/ticket/project',
