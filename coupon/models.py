@@ -8,7 +8,7 @@ from django.conf import settings
 
 from common.config import FILE_FIELD_PREFIX
 from restframework_ext.models import UseNoAbstract
-from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond
+from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond, SessionInfo
 from caches import get_pika_redis, get_redis_name
 import json
 import logging
@@ -18,20 +18,28 @@ log = logging.getLogger(__name__)
 
 
 class Coupon(UseNoAbstract):
+    TYPE_MONEY_OFF = 1
+    TYPE_MONEY_DISCOUNT = 2
+    TYPE_NUM_DISCOUNT = 3
+    COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张数打折券'))
     name = models.CharField('名称', max_length=128)
-    amount = models.DecimalField(u'减免金额', max_digits=13, decimal_places=2, default=0)
+    type = models.PositiveSmallIntegerField('类型', choices=COUPON_TYPE_CHOICES, default=TYPE_MONEY_OFF)
+    amount = models.DecimalField('减免金额', max_digits=13, decimal_places=2, default=0)
+    discount = models.PositiveSmallIntegerField('打折比率', default=0, help_text='80为打8折')
+    require_amount = models.DecimalField('使用满足金额', max_digits=13, decimal_places=2, default=0, help_text='满减券、满额打折券必填')
+    require_num = models.PositiveSmallIntegerField('使用满足张数', default=0, help_text='满张数打折券必填')
     expire_time = models.DateTimeField('使用截止时间')
     user_tips = models.TextField('使用提示', help_text='提示使用范围等')
     STATUS_ON = 2
     STATUS_OFF = 1
-    STATUS_CHOICES = ((STATUS_ON, u'上架'), (STATUS_OFF, u'下架'))
-    status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_OFF)
+    STATUS_CHOICES = ((STATUS_ON, '上架'), (STATUS_OFF, '下架'))
+    status = models.IntegerField('状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     off_use = models.BooleanField('下架后是否可继续使用', default=True)
     user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
-    require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
+    sessions = models.ManyToManyField(SessionInfo, verbose_name='可使用的场次', related_name='sessions', blank=True)
     limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
-                                                     related_name='show_types_second', blank=True)
+                                                     related_name='show_types_second', blank=True, editable=False)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     update_at = models.DateTimeField('更新时间', auto_now=True)
 
@@ -122,9 +130,9 @@ class UserCouponRecord(UseNoAbstract):
         for show in coupon.shows.all():
             shows_ids.append(show.no)
             shows_names.append(show.title)
-        for f in coupon.limit_show_types_second.all():
-            show_types_ids.append(f.id)
-            show_types_names.append(f.name)
+        # for f in coupon.limit_show_types_second.all():
+        #     show_types_ids.append(f.id)
+        #     show_types_names.append(f.name)
         data = dict(name=coupon.name, no=coupon.no, amount=float(coupon.amount),
                     user_obtain_limit=coupon.user_obtain_limit,
                     shows_nos=shows_ids, shows_names=shows_names, show_types_second_ids=show_types_ids,
@@ -141,10 +149,10 @@ class UserCouponRecord(UseNoAbstract):
         # if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
         #     can_use = True
         shows = self.coupon.shows.all()
-        show_types = self.coupon.limit_show_types_second.all()
         can_use = True
-        if show_types and not show_types.filter(id=show.cate_second.id).exists():
-            can_use = False
+        # show_types = self.coupon.limit_show_types_second.all()
+        # if show_types and not show_types.filter(id=show.cate_second.id).exists():
+        #     can_use = False
         if shows and not shows.filter(id=show.id).exists():
             can_use = False
         return can_use
