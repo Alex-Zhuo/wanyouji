@@ -13,6 +13,7 @@ from caches import get_pika_redis, get_redis_name
 import json
 import logging
 from django.db import close_old_connections
+from decimal import Decimal
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class Coupon(UseNoAbstract):
     TYPE_MONEY_OFF = 1
     TYPE_MONEY_DISCOUNT = 2
     TYPE_NUM_DISCOUNT = 3
-    COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张数打折券'))
+    COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满额减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张数打折券'))
     name = models.CharField('名称', max_length=128)
     type = models.PositiveSmallIntegerField('类型', choices=COUPON_TYPE_CHOICES, default=TYPE_MONEY_OFF)
     amount = models.DecimalField('减免金额', max_digits=13, decimal_places=2, default=0)
@@ -37,7 +38,6 @@ class Coupon(UseNoAbstract):
     off_use = models.BooleanField('下架后是否可继续使用', default=True)
     user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
-    sessions = models.ManyToManyField(SessionInfo, verbose_name='可使用的场次', related_name='sessions', blank=True)
     limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
                                                      related_name='show_types_second', blank=True, editable=False)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
@@ -62,11 +62,28 @@ class Coupon(UseNoAbstract):
             st = False
         return st
 
+    @classmethod
+    def amount_type(cls):
+        # 满额类型
+        return [cls.TYPE_MONEY_OFF, cls.TYPE_MONEY_DISCOUNT]
+
+    @classmethod
+    def mul_type(cls):
+        # 满张类型
+        return [cls.TYPE_NUM_DISCOUNT]
+
+    @classmethod
+    def discount_type(cls):
+        # 打折类型
+        return [cls.TYPE_NUM_DISCOUNT, cls.TYPE_MONEY_DISCOUNT]
+
 
 class UserCouponRecord(UseNoAbstract):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', related_name='coupons',
                              on_delete=models.CASCADE)
     coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.CASCADE)
+    coupon_type = models.PositiveSmallIntegerField('优惠卷类型', choices=Coupon.COUPON_TYPE_CHOICES,
+                                                   default=Coupon.TYPE_MONEY_OFF)
     STATUS_DEFAULT = 1
     STATUS_USE = 2
     STATUS_EXPIRE = 3
@@ -92,7 +109,7 @@ class UserCouponRecord(UseNoAbstract):
     @classmethod
     def create_record(cls, user_id: int, coupon):
         obj = cls.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time, amount=coupon.amount,
-                                 discount=coupon.discount,
+                                 discount=coupon.discount, coupon_type=coupon.coupon_type,
                                  require_amount=coupon.require_amount, require_num=coupon.require_num)
         obj.save_common()
         return obj
@@ -149,7 +166,7 @@ class UserCouponRecord(UseNoAbstract):
                     show_types_names=show_types_names, user_tips=coupon.user_tips)
         return json.dumps(data)
 
-    def check_can_show_use(self, show: ShowProject):
+    def check_can_show_use(self, show: ShowProject, amount: Decimal = 0, multiply: int = 0):
         # snapshot = json.loads(self.snapshot)
         # limit_show_types_second_ids = snapshot['show_types_second_ids']
         # limit_shows_nos = snapshot['shows_nos']
@@ -158,8 +175,16 @@ class UserCouponRecord(UseNoAbstract):
         #     can_use = True
         # if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
         #     can_use = True
-        shows = self.coupon.shows.all()
         can_use = True
+        if self.coupon_type in Coupon.amount_type():
+            if amount < self.require_amount:
+                can_use = False
+        elif self.coupon_type in Coupon.mul_type():
+            if multiply < self.require_num:
+                can_use = False
+        if not can_use:
+            return can_use
+        shows = self.coupon.shows.all()
         # show_types = self.coupon.limit_show_types_second.all()
         # if show_types and not show_types.filter(id=show.cate_second.id).exists():
         #     can_use = False

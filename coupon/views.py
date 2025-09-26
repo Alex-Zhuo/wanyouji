@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from coupon.models import Coupon, UserCouponRecord
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
-    UserCouponRecordAvailableSerializer
+    UserCouponRecordAvailableSerializer, UserCouponRecordAvailableNewSerializer
 from home.views import ReturnNoDetailViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.mixins import SerializerSelector
@@ -42,6 +42,13 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
     @action(methods=['post'], detail=False)
     def get_available(self, request):
         s = UserCouponRecordAvailableSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        res = s.create(s.validated_data)
+        return Response(self.serializer_class(res, many=True, context={'request': request}).data)
+
+    @action(methods=['post'], detail=False)
+    def get_available_new(self, request):
+        s = UserCouponRecordAvailableNewSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         res = s.create(s.validated_data)
         return Response(self.serializer_class(res, many=True, context={'request': request}).data)

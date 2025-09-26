@@ -69,7 +69,8 @@ class UserCouponRecordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserCouponRecord
-        fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'order_no', 'require_amount']
+        fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'order_no', 'amount', 'discount',
+                  'require_amount', 'require_num']
 
 
 class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
@@ -124,6 +125,39 @@ class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
             except ShowProject.DoesNotExist:
                 raise CustomAPIException('找不到演出')
             can_use = record.check_can_show_use(show)
+            if can_use:
+                res.append(record)
+        return res
+
+
+class UserCouponRecordAvailableNewSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(required=True, max_digits=9, decimal_places=2)
+    show_no = serializers.CharField(required=True)
+    multiply = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = UserCouponRecord
+        fields = ['show_no', 'amount', 'multiply']
+
+    def create(self, validated_data):
+        res = []
+        request = self.context.get('request')
+        now_date = timezone.now().date()
+        show_no = validated_data['show_no']
+        amount = validated_data['amount']
+        multiply = validated_data['multiply']
+        from ticket.models import ShowProject
+        try:
+            show = ShowProject.objects.get(no=show_no)
+        except ShowProject.DoesNotExist:
+            raise CustomAPIException('找不到演出')
+        records = UserCouponRecord.objects.filter(user=request.user, status=UserCouponRecord.STATUS_DEFAULT,
+                                                  expire_time__gte=now_date)
+        for record in records:
+            coupon = record.coupon
+            if not coupon.check_can_use():
+                continue
+            can_use = record.check_can_show_use(show, amount, multiply)
             if can_use:
                 res.append(record)
         return res
