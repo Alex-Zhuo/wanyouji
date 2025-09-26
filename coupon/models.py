@@ -1,12 +1,12 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, validate_image_file_extension
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
 
-from common.config import FILE_FIELD_PREFIX
+from common.config import FILE_FIELD_PREFIX, IMAGE_FIELD_PREFIX
 from restframework_ext.models import UseNoAbstract
 from ticket.models import ShowProject, ShowType, TicketOrder, ShowContentCategorySecond, SessionInfo
 from caches import get_pika_redis, get_redis_name
@@ -17,6 +17,18 @@ from decimal import Decimal
 from common.utils import quantize
 
 log = logging.getLogger(__name__)
+
+
+class CouponBasic(models.Model):
+    image = models.ImageField('弹窗图片', upload_to=f'{IMAGE_FIELD_PREFIX}/coupon/basic',
+                              validators=[validate_image_file_extension])
+
+    class Meta:
+        verbose_name_plural = verbose_name = '消费券配置'
+
+    @classmethod
+    def get(cls):
+        return cls.objects.first()
 
 
 class Coupon(UseNoAbstract):
@@ -89,6 +101,12 @@ class Coupon(UseNoAbstract):
         key, name = cls.pop_up_key(user_id)
         with get_pika_redis() as pika:
             pika.hset(key, name, 1)
+
+    @classmethod
+    def get_pop_up(cls, user_id: int):
+        key, name = cls.pop_up_key(user_id)
+        with get_pika_redis() as pika:
+            return pika.hget(key, name)
 
     @classmethod
     def del_pop_up(cls):

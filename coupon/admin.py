@@ -1,10 +1,18 @@
 # coding=utf-8
 from django.contrib import admin
 from dj import technology_admin
-from coupon.models import UserCouponRecord, Coupon, UserCouponImport, UserCouponCacheRecord
+from coupon.models import UserCouponRecord, Coupon, UserCouponImport, UserCouponCacheRecord, CouponBasic
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, AddAndViewAdmin
 from django.contrib import messages
 from dj_ext import AdminException
+
+
+class CouponBasicAdmin(RemoveDeleteModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        obj = CouponBasic.get()
+        if obj:
+            return self.change_view(request, str(obj.id))
+        return self.add_view(request, extra_context={'show_save_and_add_another': False})
 
 
 def set_on(modeladmin, request, queryset):
@@ -83,11 +91,13 @@ class UserCouponCacheRecordAdmin(admin.ModelAdmin):
     readonly_fields = ['record']
 
 
+admin.site.register(CouponBasic, CouponBasicAdmin)
 admin.site.register(Coupon, CouponAdmin)
 admin.site.register(UserCouponRecord, UserCouponRecordAdmin)
 admin.site.register(UserCouponImport, UserCouponImportAdmin)
 admin.site.register(UserCouponCacheRecord, UserCouponCacheRecordAdmin)
 
+technology_admin.register(CouponBasic, CouponBasicAdmin)
 technology_admin.register(Coupon, CouponAdmin)
 technology_admin.register(UserCouponRecord, UserCouponRecordAdmin)
 technology_admin.register(UserCouponImport, UserCouponImportAdmin)

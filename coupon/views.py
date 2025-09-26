@@ -2,7 +2,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from coupon.models import Coupon, UserCouponRecord
+from coupon.models import Coupon, UserCouponRecord, CouponBasic
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
     UserCouponRecordAvailableSerializer, UserCouponRecordAvailableNewSerializer
 from home.views import ReturnNoDetailViewSet
@@ -52,3 +52,14 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
         s.is_valid(True)
         res = s.create(s.validated_data)
         return Response(self.serializer_class(res, many=True, context={'request': request}).data)
+
+    @action(methods=['get'], detail=False)
+    def pop_up(self, request):
+        has = Coupon.get_pop_up(request.user.id)
+        need_pop = False if has else True
+        data = dict(need_pop=need_pop, img=None)
+        if not has:
+            bc = CouponBasic.get()
+            if bc:
+                data['img'] = request.build_absolute_uri(bc.image.url)
+        return Response(data)
