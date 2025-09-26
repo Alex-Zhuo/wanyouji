@@ -78,6 +78,24 @@ class Coupon(UseNoAbstract):
         # 打折类型
         return [cls.TYPE_NUM_DISCOUNT, cls.TYPE_MONEY_DISCOUNT]
 
+    @classmethod
+    def pop_up_key(cls, user_id: int):
+        key = get_redis_name('cp_pop_up')
+        name = get_redis_name(str(user_id))
+        return key, name
+
+    @classmethod
+    def set_pop_up(cls, user_id: int):
+        key, name = cls.pop_up_key(user_id)
+        with get_pika_redis() as pika:
+            pika.hset(key, name, 1)
+
+    @classmethod
+    def del_pop_up(cls):
+        key = get_redis_name('cp_pop_up')
+        with get_pika_redis() as pika:
+            pika.delete(key)
+
 
 class UserCouponRecord(UseNoAbstract):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', related_name='coupons',
@@ -113,6 +131,10 @@ class UserCouponRecord(UseNoAbstract):
                                  discount=coupon.discount, coupon_type=coupon.coupon_type,
                                  require_amount=coupon.require_amount, require_num=coupon.require_num)
         obj.save_common()
+        try:
+            Coupon.set_pop_up(user_id)
+        except Exception as e:
+            log.error(e)
         return obj
 
     @property

@@ -23,14 +23,28 @@ def set_off(modeladmin, request, queryset):
 set_off.short_description = '批量下架'
 
 
+def clear_pop_up_cache(modeladmin, request, queryset):
+    Coupon.del_pop_up()
+    messages.success(request, '执行成功')
+
+
+clear_pop_up_cache.short_description = '清除弹窗缓存'
+
+
 class CouponAdmin(RemoveDeleteModelAdmin):
     list_display = ['no', 'name', 'amount', 'discount', 'require_amount', 'require_num', 'expire_time', 'status',
                     'user_obtain_limit', 'create_at', 'update_at']
     list_filter = ['expire_time', 'limit_show_types_second', 'status']
     autocomplete_fields = ['shows', 'limit_show_types_second']
     readonly_fields = ['no']
-    actions = [set_on, set_off]
+    actions = [set_on, set_off, clear_pop_up_cache]
     search_fields = ['name', 'no']
+
+    def save_model(self, request, obj, form, change):
+        ret = super(CouponAdmin, self).save_model(request, obj, form, change)
+        if not change:
+            Coupon.del_pop_up()
+        return ret
 
 
 class UserCouponRecordAdmin(OnlyViewAdmin):
