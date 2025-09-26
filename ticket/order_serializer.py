@@ -43,7 +43,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             raise CustomAPIException('手机号格式不对')
         return value
 
-    def handle_coupon(self, show, coupon_no: str, actual_amount):
+    def handle_coupon(self, show, coupon_no: str, actual_amount, multiply: int):
         coupon_record = None
         ticket_order_discount_dict = None
         if coupon_no:
@@ -55,8 +55,12 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             try:
                 # snapshot = json.loads(coupon_record.snapshot)
                 coupon = coupon_record.coupon
-                if actual_amount < coupon_record.require_amount:
-                    raise CustomAPIException(detail=u'未达到优惠券使用条件')
+                if coupon_record.coupon_type in Coupon.amount_type():
+                    if actual_amount < coupon_record.require_amount:
+                        raise CustomAPIException(detail=u'未达到优惠券使用条件, 需满足{}元'.format(coupon_record.require_amount))
+                else:
+                    if multiply < coupon_record.require_num:
+                        raise CustomAPIException(detail=u'未达到优惠券使用条件, 需满足{}张'.format(coupon_record.require_num))
                 if coupon_record.status == UserCouponRecord.STATUS_USE:
                     raise CustomAPIException(detail=u'此优惠券已经被使用')
                 if coupon_record.status == UserCouponRecord.STATUS_EXPIRE or coupon_record.expire_time <= timezone.now():
@@ -422,7 +426,10 @@ class TicketOrderCreateSerializer(TicketOrderCreateCommonSerializer):
             actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=session.show,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
-                                                                                                 actual_amount=actual_amount)
+                                                                                                 actual_amount=actual_amount,
+                                                                                                 multiply=
+                                                                                                 validated_data[
+                                                                                                     'multiply'])
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)
@@ -528,7 +535,10 @@ class TicketOrderOnSeatCreateSerializer(TicketOrderCreateCommonSerializer):
             actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=session.show,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
-                                                                                                 actual_amount=actual_amount)
+                                                                                                 actual_amount=actual_amount,
+                                                                                                 multiply=
+                                                                                                 validated_data[
+                                                                                                     'multiply'])
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)
@@ -717,7 +727,10 @@ class CyTicketOrderOnSeatCreateSerializer(CyTicketOrderCommonSerializer):
             actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=session.show,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
-                                                                                                 actual_amount=actual_amount)
+                                                                                                 actual_amount=actual_amount,
+                                                                                                 multiply=
+                                                                                                 validated_data[
+                                                                                                     'multiply'])
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)
@@ -833,7 +846,10 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
             actual_amount, coupon_record, ticket_order_discount_coupon_dict = self.handle_coupon(show=session.show,
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
-                                                                                                 actual_amount=actual_amount)
+                                                                                                 actual_amount=actual_amount,
+                                                                                                 multiply=
+                                                                                                 validated_data[
+                                                                                                     'multiply'])
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)

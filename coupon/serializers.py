@@ -157,7 +157,7 @@ class UserCouponRecordAvailableNewSerializer(serializers.ModelSerializer):
             coupon = record.coupon
             if not coupon.check_can_use():
                 continue
-            can_use = record.check_can_show_use(show, amount, multiply)
+            can_use = record.coupon_check_can_use(show, amount, multiply)
             if can_use:
                 res.append(record)
         return res
