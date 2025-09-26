@@ -15,6 +15,7 @@ import logging
 from django.db import close_old_connections
 from decimal import Decimal
 from common.utils import quantize
+from django.core.exceptions import ValidationError
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +62,14 @@ class Coupon(UseNoAbstract):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        if self.type == self.TYPE_MONEY_OFF:
+            if self.amount <= 0:
+                raise ValidationError('减免金额必须大于0')
+        elif self.type in [self.TYPE_MONEY_DISCOUNT, self.TYPE_NUM_DISCOUNT]:
+            if self.discount <= 0:
+                raise ValidationError('打折比率必须大于0')
 
     @classmethod
     def auto_off_task(cls):
