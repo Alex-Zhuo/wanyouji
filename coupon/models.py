@@ -14,6 +14,7 @@ import json
 import logging
 from django.db import close_old_connections
 from decimal import Decimal
+from common.utils import quantize
 
 log = logging.getLogger(__name__)
 
@@ -184,6 +185,16 @@ class UserCouponRecord(UseNoAbstract):
             can_use = False
         return can_use
 
+    def check_type_use(self, amount: Decimal = 0, multiply: int = 0):
+        can_use = True
+        if self.coupon_type in Coupon.amount_type():
+            if amount < self.require_amount:
+                can_use = False
+        elif self.coupon_type in Coupon.mul_type():
+            if multiply < self.require_num:
+                can_use = False
+        return can_use
+
     def coupon_check_can_use(self, show: ShowProject, amount: Decimal = 0, multiply: int = 0):
         # snapshot = json.loads(self.snapshot)
         # limit_show_types_second_ids = snapshot['show_types_second_ids']
@@ -193,13 +204,7 @@ class UserCouponRecord(UseNoAbstract):
         #     can_use = True
         # if not can_use and not (limit_shows_nos and show.no not in limit_shows_nos):
         #     can_use = True
-        can_use = True
-        if self.coupon_type in Coupon.amount_type():
-            if amount < self.require_amount:
-                can_use = False
-        elif self.coupon_type in Coupon.mul_type():
-            if multiply < self.require_num:
-                can_use = False
+        can_use = self.check_type_use(amount, multiply)
         if not can_use:
             return can_use
         shows = self.coupon.shows.all()
@@ -221,6 +226,16 @@ class UserCouponRecord(UseNoAbstract):
         self.status = self.STATUS_DEFAULT if self.expire_time > timezone.now() else self.STATUS_EXPIRE
         self.used_time = None
         self.save(update_fields=['used_time', 'order', 'status'])
+
+    def get_promote_amount(self, actual_amount, multiply):
+        can_use = self.check_type_use(actual_amount, multiply)
+        promote_amount = Decimal('0')
+        if can_use:
+            if self.coupon_type in Coupon.discount_type():
+                promote_amount = actual_amount * (100 - self.discount) / 100
+            elif self.coupon_type == Coupon.TYPE_MONEY_OFF:
+                promote_amount = self.amount
+        return quantize(promote_amount, 2) if promote_amount > 0 else promote_amount
 
 
 class UserCouponImport(models.Model):
