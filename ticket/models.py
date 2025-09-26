@@ -2110,7 +2110,7 @@ class TicketFile(models.Model):
     title = models.CharField('节目名称', max_length=100, null=True, blank=True)
     color = models.ForeignKey(TicketColor, verbose_name='票档颜色', on_delete=models.CASCADE, null=True, blank=True)
     color_code = models.CharField('色号', max_length=10, help_text='16进制色号', null=True, blank=True, editable=False)
-    origin_price = models.DecimalField('票档', max_digits=13, decimal_places=2, default=0)
+    origin_price = models.DecimalField('原价', max_digits=13, decimal_places=2, default=0)
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
     stock = models.PositiveIntegerField('库存数量', default=0)
     sales = models.PositiveIntegerField('销量', default=0)
