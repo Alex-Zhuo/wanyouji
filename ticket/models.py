@@ -4799,7 +4799,7 @@ class TicketUserCode(models.Model):
     def new_code_path(self, random_digits):
         dir, rel_url, img_dir = qrcode_dir_tk()
         code = self.code + str(random_digits)
-        name = hash_ids(int(code))
+        name = sha256_str(code)
         filename = '{}.jpg'.format(name)
         file_path = os.path.join(dir, filename)
         if os.path.isfile(file_path):
@@ -4975,7 +4975,8 @@ class TicketUserCode(models.Model):
                     if not inst.session_seat:
                         snapshot['seat'] = '无座'
                     session = SessionInfo.objects.get(id=inst.session_id)
-                    check_at = session.can_check_at or session.start_at.replace(hour=0, minute=0, second=0, microsecond=0)
+                    check_at = session.can_check_at or session.start_at.replace(hour=0, minute=0, second=0,
+                                                                                microsecond=0)
                     now = timezone.now()
                     if now < check_at:
                         status = False
