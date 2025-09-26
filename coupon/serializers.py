@@ -92,9 +92,7 @@ class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
         obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
         if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
             raise CustomAPIException('已达到领取上限')
-        inst = UserCouponRecord.objects.create(user=user, coupon=coupon, expire_time=coupon.expire_time,
-                                               require_amount=coupon.require_amount, amount=coupon.amount)
-        inst.save_common()
+        inst = UserCouponRecord.create_record(user.id, coupon)
         return inst
 
 

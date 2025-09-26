@@ -74,7 +74,9 @@ class UserCouponRecord(UseNoAbstract):
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
     expire_time = models.DateTimeField('使用截止时间')
     amount = models.DecimalField(u'减免金额', max_digits=13, decimal_places=2, default=0)
-    require_amount = models.DecimalField(u'使用满足金额', max_digits=13, decimal_places=2, default=0)
+    discount = models.PositiveSmallIntegerField('打折比率', default=0, help_text='80为打8折')
+    require_amount = models.DecimalField('使用满足金额', max_digits=13, decimal_places=2, default=0, help_text='满减券、满额打折券必填')
+    require_num = models.PositiveSmallIntegerField('使用满足张数', default=0, help_text='满张数打折券必填')
     used_time = models.DateTimeField('使用时间', null=True, blank=True)
     create_at = models.DateTimeField('领取时间', auto_now_add=True)
     order = models.OneToOneField(TicketOrder, verbose_name='使用订单', null=True, blank=True, on_delete=models.SET_NULL,
@@ -86,6 +88,14 @@ class UserCouponRecord(UseNoAbstract):
 
     def __str__(self):
         return '{}:{}'.format(self.user, self.coupon)
+
+    @classmethod
+    def create_record(cls, user_id: int, coupon):
+        obj = cls.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time, amount=coupon.amount,
+                                 discount=coupon.discount,
+                                 require_amount=coupon.require_amount, require_num=coupon.require_num)
+        obj.save_common()
+        return obj
 
     @property
     def can_use(self):
@@ -254,11 +264,7 @@ class UserCouponImport(models.Model):
                         update_list.append(obj)
                     else:
                         for i in list(range(0, num)):
-                            inst = UserCouponRecord.objects.create(user=user, coupon=coupon,
-                                                                   expire_time=coupon.expire_time,
-                                                                   require_amount=coupon.require_amount,
-                                                                   amount=coupon.amount)
-                            inst.save_common()
+                            UserCouponRecord.create_record(user.id, coupon)
                     success_num += 1
                 except Exception as e:
                     fail_num += 1
@@ -297,7 +303,5 @@ class UserCouponCacheRecord(models.Model):
         for obj in qs:
             coupon = obj.coupon
             for i in list(range(0, obj.num)):
-                inst = UserCouponRecord.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time,
-                                                       require_amount=coupon.require_amount, amount=coupon.amount)
-                inst.save_common()
+                UserCouponRecord.create_record(user_id, coupon)
         qs.delete()

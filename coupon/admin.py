@@ -24,8 +24,8 @@ set_off.short_description = '批量下架'
 
 
 class CouponAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'name', 'amount', 'expire_time', 'status', 'user_obtain_limit', 'require_amount',
-                    'create_at', 'update_at']
+    list_display = ['no', 'name', 'amount', 'discount', 'require_amount', 'require_num', 'expire_time', 'status',
+                    'user_obtain_limit', 'create_at', 'update_at']
     list_filter = ['expire_time', 'limit_show_types_second', 'status']
     autocomplete_fields = ['shows', 'limit_show_types_second']
     readonly_fields = ['no']
