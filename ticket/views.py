@@ -1095,10 +1095,17 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
         log.debug(deadline_at)
         if not can_share:
             raise CustomAPIException('请刷新二维码后再尝试分享')
-        url, code = obj.get_code_img_new()
+        if obj.is_cy_code:
+            cy_code = obj.cy_code
+            code = cy_code.ticket_no
+            if not cy_code.check_in_code_img:
+                raise CustomAPIException('生成失败，找不到核销码')
+            code_path = cy_code.check_in_code_img.path
+        else:
+            url, code = obj.get_code_img_new()
+            code_path = obj.code_img.path
         if not obj.code_img.path:
             raise CustomAPIException('找不到二维码')
-        code_path = obj.code_img.path
         user = request.user
         from caches import get_redis
         key = 'code_img_{}_{}'.format(user.id, code_id)
@@ -1109,9 +1116,10 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
             from ticket.utils import qrcode_dir_order_codes
             dir, rel_url = qrcode_dir_order_codes()
             from common.utils import get_timestamp
-            start_at = obj.order.session.start_at
+            session = obj.order.session
+            start_at = session.start_at
             timestamp = get_timestamp(start_at)
-            filename = '{}.png'.format(sha256_str('ordcode{}{}_v{}'.format(code, timestamp, 3)))
+            filename = '{}.png'.format(sha256_str('ordcode{}{}{}_v{}'.format(code, session.id, timestamp, 1)))
             filepath = os.path.join(dir, filename)
             if not os.path.isfile(filepath):
                 # log.error(filepath)
