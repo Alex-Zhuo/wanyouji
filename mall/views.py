@@ -801,7 +801,8 @@ class MembershipCardViewSet(viewsets.ModelViewSet):
     http_method_names = ['get']
 
     def list(self, request, *args, **kwargs):
-        qs = self.queryset.none()
+        return Response()
+        qs = self.queryset.first()
         return Response(self.serializer_class(qs, context={'request': request}).data)
 
 
