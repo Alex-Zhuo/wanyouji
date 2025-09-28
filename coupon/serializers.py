@@ -29,6 +29,7 @@ class CouponShowsSerializer(serializers.ModelSerializer):
 
 class CouponSerializer(serializers.ModelSerializer):
     is_upper_limit = serializers.SerializerMethodField()
+    type_display = serializers.ReadOnlyField(source='get_type_display')
 
     def get_is_upper_limit(self, obj):
         st = False
@@ -41,8 +42,8 @@ class CouponSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Coupon
-        fields = ['name', 'no', 'amount', 'expire_time', 'user_tips', 'user_obtain_limit', 'require_amount',
-                  'is_upper_limit']
+        fields = ['name', 'no', 'amount', 'discount', 'expire_time', 'user_tips', 'user_obtain_limit', 'require_amount',
+                  'require_num', 'is_upper_limit', 'type', 'type_display']
 
 
 class CouponDetailSerializer(CouponSerializer):
@@ -70,7 +71,7 @@ class UserCouponRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCouponRecord
         fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'order_no', 'amount', 'discount',
-                  'require_amount', 'require_num','coupon_type']
+                  'require_amount', 'require_num', 'coupon_type']
 
 
 class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
