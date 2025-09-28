@@ -155,7 +155,7 @@ class UserCouponRecord(UseNoAbstract):
     @classmethod
     def create_record(cls, user_id: int, coupon):
         obj = cls.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time, amount=coupon.amount,
-                                 discount=coupon.discount, coupon_type=coupon.coupon_type,
+                                 discount=coupon.discount, coupon_type=coupon.type,
                                  require_amount=coupon.require_amount, require_num=coupon.require_num)
         obj.save_common()
         try:
