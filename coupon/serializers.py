@@ -70,7 +70,7 @@ class UserCouponRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCouponRecord
         fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'order_no', 'amount', 'discount',
-                  'require_amount', 'require_num']
+                  'require_amount', 'require_num','coupon_type']
 
 
 class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
