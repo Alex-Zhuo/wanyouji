@@ -809,12 +809,16 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
             raise CustomAPIException('下单失败，biz_id参数错误')
         cy_amount = 0  # 原总价
         real_multiply = 0  # 实际数量
+        t_multiply = 0  # 套票+常规
         total_discount_amount = 0
         for t_info in seat_info['price_infos']:
             # cy_actual_amount += t_info['price']
-            real_multiply += t_info['count']
+            t_multiply += t_info['count']
             for seat in t_info['seat_infos']:
                 cy_amount += seat['seat_price']
+                real_multiply += 1
+        if real_multiply != validated_data['multiply']:
+            raise CustomAPIException('选座数量错误')
         promotion_list = seat_info.get('promotion_list')
         if promotion_list:
             is_cy_promotion = True
@@ -849,9 +853,7 @@ class CyTicketOrderCreateSerializer(CyTicketOrderCommonSerializer):
                                                                                                  coupon_no=validated_data.pop(
                                                                                                      'coupon_no'),
                                                                                                  actual_amount=actual_amount,
-                                                                                                 multiply=
-                                                                                                 validated_data[
-                                                                                                     'multiply'])
+                                                                                                 multiply=t_multiply)
             if ticket_order_discount_coupon_dict:
                 ticket_order_discount_list.append(ticket_order_discount_coupon_dict)
         self.validate_amounts(amount, actual_amount, validated_data)
