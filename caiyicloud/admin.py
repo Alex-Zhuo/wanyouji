@@ -204,6 +204,7 @@ class CyOrderAdmin(AllOnlyViewAdmin):
                     'auto_cancel_order_time', 'exchange_code',
                     'exchange_qr_code', 'code_type', 'delivery_method', 'created_at', 'updated_at']
     inlines = [CyTicketCodeInline]
+    search_fields = ['cy_order_no']
 
 
 class CyOrderRefundAdmin(AllOnlyViewAdmin):
