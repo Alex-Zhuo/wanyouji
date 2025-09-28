@@ -17,6 +17,7 @@ from caches import redis_ticket_level_cache, get_pika_redis, get_redis_name
 from django.core.cache import cache
 from caches import cache_order_seat_key
 from common.utils import quantize
+import pysnooper
 
 log = logging.getLogger(__name__)
 USER_FLAG_AMOUNT = Decimal(0.01)
@@ -43,6 +44,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             raise CustomAPIException('手机号格式不对')
         return value
 
+    @pysnooper.snoop(log.debug)
     def handle_coupon(self, show, coupon_no: str, actual_amount, multiply: int):
         coupon_record = None
         ticket_order_discount_dict = None
