@@ -42,7 +42,7 @@ class Coupon(UseNoAbstract):
     amount = models.DecimalField('减免金额', max_digits=13, decimal_places=2, default=0)
     discount = models.PositiveSmallIntegerField('打折比率', default=0, help_text='80为打8折')
     require_amount = models.DecimalField('使用满足金额', max_digits=13, decimal_places=2, default=0, help_text='满减券、满额打折券必填')
-    require_num = models.PositiveSmallIntegerField('使用满足张数', default=0, help_text='满张数打折券必填')
+    require_num = models.PositiveSmallIntegerField('使用满足张(套)数', default=0, help_text='满张(套)数打折券必填')
     expire_time = models.DateTimeField('使用截止时间')
     user_tips = models.TextField('使用提示', help_text='提示使用范围等')
     STATUS_ON = 2
