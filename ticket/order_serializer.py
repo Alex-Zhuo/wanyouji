@@ -44,7 +44,7 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
             raise CustomAPIException('手机号格式不对')
         return value
 
-    @pysnooper.snoop(log.debug)
+    # @pysnooper.snoop(log.debug)
     def handle_coupon(self, show, coupon_no: str, actual_amount, multiply: int):
         coupon_record = None
         ticket_order_discount_dict = None
