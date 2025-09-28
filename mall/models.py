@@ -177,6 +177,7 @@ class User(AbstractUser):
             MpTemplateClient.user_notice(self.openid, mp.user_head, mp.user_end, name, create_time, url)
 
     def get_cards(self):
+        return dict(theater_card_amount=0, card_deadline=None)
         tc_card = TheaterCardUserRecord.objects.filter(user_id=self.id).first()
         theater_card_amount = tc_card.amount if tc_card else 0
         inst = CardRecord.objects.filter(user_id=self.id).first()
