@@ -36,7 +36,7 @@ class Coupon(UseNoAbstract):
     TYPE_MONEY_OFF = 1
     TYPE_MONEY_DISCOUNT = 2
     TYPE_NUM_DISCOUNT = 3
-    COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满额减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张数打折券'))
+    COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满额减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张(套)数打折券'))
     name = models.CharField('名称', max_length=128)
     type = models.PositiveSmallIntegerField('类型', choices=COUPON_TYPE_CHOICES, default=TYPE_MONEY_OFF)
     amount = models.DecimalField('减免金额', max_digits=13, decimal_places=2, default=0)
