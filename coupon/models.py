@@ -284,7 +284,7 @@ class UserCouponRecord(UseNoAbstract):
                 promote_amount = actual_amount * (100 - self.discount) / 100
             elif self.coupon_type == Coupon.TYPE_MONEY_OFF:
                 promote_amount = self.amount
-        return quantize(promote_amount, 2) if promote_amount > 0 else promote_amount
+        return quantize(Decimal(promote_amount), 2) if promote_amount > 0 else promote_amount
 
 
 class UserCouponImport(models.Model):
