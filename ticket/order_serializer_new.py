@@ -41,32 +41,32 @@ class TicketOrderCreateNoCommonSerializer(serializers.ModelSerializer):
             try:
                 coupon_record = UserCouponRecord.objects.get(no=coupon_no, user=user)
             except UserCouponRecord.DoesNotExist:
-                raise CustomAPIException(detail=u'优惠券信息有误')
+                raise CustomAPIException(detail=u'消费卷信息有误')
             try:
                 # snapshot = orjson.loads(coupon_record.snapshot)
                 coupon = coupon_record.coupon
                 if coupon_record.coupon_type in Coupon.amount_type():
                     if actual_amount < coupon_record.require_amount:
-                        raise CustomAPIException(detail=u'未达到优惠券使用条件, 需满足{}元'.format(coupon_record.require_amount))
+                        raise CustomAPIException(detail=u'未达到消费卷使用条件, 需满足{}元'.format(coupon_record.require_amount))
                 else:
                     if multiply < coupon_record.require_num:
-                        raise CustomAPIException(detail=u'未达到优惠券使用条件, 需满足{}张'.format(coupon_record.require_num))
+                        raise CustomAPIException(detail=u'未达到消费卷使用条件, 需满足{}张'.format(coupon_record.require_num))
                 if coupon_record.status == UserCouponRecord.STATUS_USE:
-                    raise CustomAPIException(detail=u'此优惠券已经被使用')
+                    raise CustomAPIException(detail=u'此消费卷已经被使用')
                 if coupon_record.status == UserCouponRecord.STATUS_EXPIRE or coupon_record.expire_time <= timezone.now():
-                    raise CustomAPIException(detail=u'此优惠券已过期')
+                    raise CustomAPIException(detail=u'此消费卷已过期')
                 if not coupon.check_can_use():
-                    raise CustomAPIException(detail=u'此优惠券暂不能使用')
+                    raise CustomAPIException(detail=u'此消费卷暂不能使用')
                 # if coupon.start_time > timezone.now().date():
-                #     raise CustomAPIException(detail=u'此优惠券还不能使用')
+                #     raise CustomAPIException(detail=u'此消费卷还不能使用')
                 can_use = coupon_record.check_can_show_use(show)
                 if not can_use:
-                    raise CustomAPIException(detail=u'当前演出不能使用此优惠券')
+                    raise CustomAPIException(detail=u'当前演出不能使用此消费卷')
             except Coupon.DoesNotExist:
-                raise CustomAPIException(detail=u'优惠券信息有误')
+                raise CustomAPIException(detail=u'消费卷信息有误')
             coupon_amount = coupon_record.get_promote_amount(actual_amount, multiply)
             if coupon_amount <= 0:
-                raise CustomAPIException(detail=u'优惠券不满足使用条件')
+                raise CustomAPIException(detail=u'消费卷不满足使用条件')
             actual_amount = 0 if actual_amount <= coupon_amount else actual_amount - coupon_amount
             ticket_order_discount_dict = dict(discount_type=TicketOrderDiscount.DISCOUNT_COUPON, title='消费卷优惠',
                                               amount=coupon_amount)
