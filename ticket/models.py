@@ -4320,16 +4320,20 @@ class TicketOrder(models.Model):
         queryset = cls.objects.filter(id__in=ids)
         if not queryset:
             return None
-        import xlwt
+        # import xlwt
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.append(TicketOrder.export_fields())
         from ticket.utils import excel_dir, _write_row_by_xlwt
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('演出订单')
-        row_index = 1
-        _write_row_by_xlwt(ws, cls.export_fields(), row_index)
-        row_index += 1
+        # wb = xlwt.Workbook(encoding='utf-8')
+        # ws = wb.add_sheet('演出订单')
+        # row_index = 1
+        # _write_row_by_xlwt(ws, cls.export_fields(), row_index)
+        # row_index += 1
         log.warning('演出订单导出开始')
         dir, rel_url, xlsx_dir = excel_dir()
-        filename = '{}{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S'), random_str(10))
+        filename = '{}{}.xlsx'.format(timezone.now().strftime('%Y%m%d%H%M%S'), random_str(10))
         filepath = os.path.join(dir, filename)
         for record in queryset:
             create_at = record.create_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -4367,9 +4371,8 @@ class TicketOrder(models.Model):
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
                     str(record.venue), record.get_channel_type_display(), discount_coupon,discount_promotion,
                     discount_pack]
-            _write_row_by_xlwt(ws, data, row_index)
-            row_index += 1
-        _write_row_by_xlwt(ws, ['END'], row_index)
+            ws.append(data)
+        # _write_row_by_xlwt(ws, ['END'], row_index)
         wb.save(filepath)
         return '{}/{}'.format(xlsx_dir, filename)
 
