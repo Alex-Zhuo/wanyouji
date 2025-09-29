@@ -4365,8 +4365,8 @@ class TicketOrder(models.Model):
                     record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply,
                     record.amount, record.actual_amount, record.express_fee,
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
-                    str(record.venue), record.get_channel_type_display(), discount_coupon,
-                    discount_pack, discount_promotion]
+                    str(record.venue), record.get_channel_type_display(), discount_coupon,discount_promotion,
+                    discount_pack]
             _write_row_by_xlwt(ws, data, row_index)
             row_index += 1
         _write_row_by_xlwt(ws, ['END'], row_index)
