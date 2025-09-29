@@ -4356,7 +4356,7 @@ class TicketOrder(models.Model):
                     elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PROMOTION:
                         discount_promotion = discount.amount
             for tu in tu_qs:
-                seat_desc_t, level_desc_t = tu.get_export_data()
+                seat_desc_t, level_desc_t = tu.get_export_data(record.venue)
                 seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
                 level_desc = level_desc + level_desc_t if level_desc else level_desc_t
             data = [str(record.user), record.mobile, record.show_express_address,

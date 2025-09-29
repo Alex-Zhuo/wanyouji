@@ -1345,7 +1345,7 @@ def export_ticket_order_old(modeladmin, request, queryset):
         level_desc = ''
         tu_qs = TicketUserCode.objects.filter(order=record)
         for tu in tu_qs:
-            seat_desc_t, level_desc_t = tu.get_export_data()
+            seat_desc_t, level_desc_t = tu.get_export_data(record.venue)
             seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
             level_desc = level_desc + level_desc_t if level_desc else level_desc_t
         pay_desc = ''
@@ -1488,7 +1488,7 @@ def export_ticket_express(modeladmin, request, queryset, filter_unsent=False):
         level_desc = ''
         tu_qs = TicketUserCode.objects.filter(order=record)
         for tu in tu_qs:
-            seat_desc_t, level_desc_t = tu.get_export_data()
+            seat_desc_t, level_desc_t = tu.get_export_data(record.venue)
             seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
             level_desc = level_desc + level_desc_t if level_desc else level_desc_t
         data = [str(record.user), record.mobile, record.show_express_address, seat_desc, level_desc, record.order_no,
