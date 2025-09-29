@@ -3164,13 +3164,13 @@ class TicketOrder(models.Model):
 
     @classmethod
     def export_fields(cls):
-        return [u'下单用户', '联系电话', '详细地址', '推荐人', '付款类型', '微信/抖音商户', '演出场次座位', '票档描述', '订单号',
-                '商户订单号', '微信(抖音)支付单号', '数量', '订单总价', '剧场会员卡支付数额', '实际支付金额', '邮费', '状态', '演出名称',
-                '下单时间', '支付时间', '开演时间', '带货场景', '达人抖音昵称', '达人抖音号', '计划ID', '计划类型', '演出场馆']
+        return ['下单用户', '联系电话', '详细地址', '推荐人', '付款类型', '微信商户', '演出场次座位', '票档描述', '订单号',
+                '商户订单号', '微信支付单号', '数量', '订单总价', '实际支付金额', '邮费', '状态', '演出名称',
+                '下单时间', '支付时间', '开演时间', '演出场馆', '渠道类型', '消费卷优惠', '营销活动优惠', '套票优惠']
 
     @classmethod
     def export_express_fields(cls):
-        return ['下单用户', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价', '剧场会员卡支付数额',
+        return ['下单用户', '联系电话', '详细地址', '演出场次座位', '票档描述', '订单号', '商户订单号', '数量', '订单总价',
                 '实际支付金额', '状态', '演出名称', '下单时间', '支付时间', '开演时间', '演出场馆', '快递公司', '快递单号', '快递公司编码']
 
     @property
@@ -4343,6 +4343,18 @@ class TicketOrder(models.Model):
             if record.dy_pay_config:
                 pay_desc = record.dy_pay_config.title
             tu_qs = TicketUserCode.objects.filter(order=record)
+            discount_coupon = ''
+            discount_pack = ''
+            discount_promotion = ''
+            discount_orders = record.discount_order.all()
+            if discount_orders:
+                for discount in discount_orders:
+                    if discount.discount_type == TicketOrderDiscount.DISCOUNT_COUPON:
+                        discount_coupon = discount.amount
+                    elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PACK:
+                        discount_pack = discount.amount
+                    elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PROMOTION:
+                        discount_promotion = discount.amount
             for tu in tu_qs:
                 seat_desc_t, level_desc_t = tu.get_export_data()
                 seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
@@ -4351,10 +4363,10 @@ class TicketOrder(models.Model):
                     str(record.agent) if record.agent else None,
                     record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
                     record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply,
-                    record.amount, record.card_jc_amount, record.actual_amount, record.express_fee,
+                    record.amount, record.actual_amount, record.express_fee,
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
-                    record.get_source_type_display(), record.tiktok_nickname, record.tiktok_douyinid, record.plan_id,
-                    record.get_plan_name(), str(record.venue)]
+                    str(record.venue), record.get_channel_type_display(), discount_coupon,
+                    discount_pack, discount_promotion]
             _write_row_by_xlwt(ws, data, row_index)
             row_index += 1
         _write_row_by_xlwt(ws, ['END'], row_index)

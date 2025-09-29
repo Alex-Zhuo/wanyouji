@@ -1353,14 +1353,25 @@ def export_ticket_order_old(modeladmin, request, queryset):
             pay_desc = record.wx_pay_config.title
         if record.dy_pay_config:
             pay_desc = record.dy_pay_config.title
+        discount_coupon = ''
+        discount_pack = ''
+        discount_promotion = ''
+        discount_orders = record.discount_order.all()
+        if discount_orders:
+            for discount in discount_orders:
+                if discount.discount_type == TicketOrderDiscount.DISCOUNT_COUPON:
+                    discount_coupon = discount.amount
+                elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PACK:
+                    discount_pack = discount.amount
+                elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PROMOTION:
+                    discount_promotion = discount.amount
         data = [str(record.user), record.mobile, record.show_express_address,
                 str(record.agent) if record.agent else None,
                 record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
                 record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply, record.amount,
-                record.card_jc_amount, record.actual_amount, record.express_fee,
-                record.get_status_display(), record.title, create_at, pay_at, start_at,
-                record.get_source_type_display(), record.tiktok_nickname, record.tiktok_douyinid, record.plan_id,
-                record.get_plan_name(), str(record.venue)]
+                record.actual_amount, record.express_fee,
+                record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
+                record.get_channel_type_display(), discount_coupon, discount_pack, discount_promotion]
         _write_row_by_xlwt(ws, data, row_index)
         row_index += 1
     _write_row_by_xlwt(ws, ['END'], row_index)
@@ -1481,7 +1492,7 @@ def export_ticket_express(modeladmin, request, queryset, filter_unsent=False):
             seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
             level_desc = level_desc + level_desc_t if level_desc else level_desc_t
         data = [str(record.user), record.mobile, record.show_express_address, seat_desc, level_desc, record.order_no,
-                record.receipt.payno, record.multiply, record.amount, record.card_jc_amount, record.actual_amount,
+                record.receipt.payno, record.multiply, record.amount, record.actual_amount,
                 record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
                 record.express_name, record.express_no, record.express_comp_no]
         ws.append(data)
