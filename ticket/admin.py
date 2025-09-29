@@ -34,7 +34,7 @@ import random
 # from kuaishou_wxa.models import KsGoodsConfig, KsGoodsImage, KsOrderSettleRecord
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
 import os
-
+from openpyxl import Workbook
 logger = logging.getLogger(__name__)
 
 
@@ -1328,15 +1328,13 @@ export_ticket_order.short_description = u'导出订单(大量)'
 
 
 def export_ticket_order_old(modeladmin, request, queryset):
-    response = HttpResponse(content_type='application/vnd.ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="{}.{}.xls"'.format('订单数据',
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="{}.{}.xlsx"'.format('订单数据',
                                                                                 timezone.now().strftime(
                                                                                     '%Y%m%d%H%M%S'))
-    wb = xlwt.Workbook(encoding='utf-8')
-    ws = wb.add_sheet('订单数据')
-    row_index = 1
-    _write_row_by_xlwt(ws, TicketOrder.export_fields(), row_index)
-    row_index += 1
+    wb = Workbook()
+    ws = wb.active
+    ws.append(TicketOrder.export_fields())
     for record in queryset:
         create_at = record.create_at.strftime('%Y-%m-%d %H:%M:%S')
         pay_at = record.pay_at.strftime('%Y-%m-%d %H:%M:%S') if record.pay_at else None
@@ -1372,9 +1370,7 @@ def export_ticket_order_old(modeladmin, request, queryset):
                 record.actual_amount, record.express_fee,
                 record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
                 record.get_channel_type_display(), discount_coupon, discount_promotion, discount_pack]
-        _write_row_by_xlwt(ws, data, row_index)
-        row_index += 1
-    _write_row_by_xlwt(ws, ['END'], row_index)
+        ws.append(data)
     wb.save(response)
     return response
 
