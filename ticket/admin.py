@@ -1329,9 +1329,7 @@ export_ticket_order.short_description = u'导出订单(大量)'
 
 def export_ticket_order_old(modeladmin, request, queryset):
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}.{}.xlsx"'.format('订单数据',
-                                                                                timezone.now().strftime(
-                                                                                    '%Y%m%d%H%M%S'))
+    response['Content-Disposition'] = 'attachment; filename="order{}.xlsx"'.format(timezone.now().strftime('%Y%m%d%H%M'))
     wb = Workbook()
     ws = wb.active
     ws.append(TicketOrder.export_fields())
