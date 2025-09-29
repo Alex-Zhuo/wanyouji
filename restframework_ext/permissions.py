@@ -175,7 +175,7 @@ class WeiXinLPAuthentication(SessionAuthenticationExt):
             from mall.user_cache import token_to_cache_user
             user = token_to_cache_user(actoken)
             # log.warning(actoken)
-            log.warning(user)
+            # log.warning(user)
             # if not user:
             #     from django.contrib.auth import get_user_model
             #     user = get_user_model().verify_by_token(actoken)

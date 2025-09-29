@@ -760,6 +760,7 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
     lookup_url_kwarg = 'pk'
 
     def list(self, request, *args, **kwargs):
+        log.warning(request.user.id)
         kw = request.GET.get('kw')
         status = request.GET.get('status') or None
         qs = self.queryset.filter(user=request.user)
