@@ -736,11 +736,11 @@ class ShowSessionInfoSerializer(PKtoNoSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = PKtoNoSerializer.Meta.fields + ['show', 'start_at', 'end_at', 'tiktok_store', 'valid_start_time',
-                                                 'desc', 'order_limit_num',
-                                                 'status', 'create_at', 'is_price', 'push_status', 'ticket_level',
-                                                 'has_seat', 'is_sale_off',
-                                                 'is_theater_discount']
+        fields = PKtoNoSerializer.Meta.fields + ['start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
+                                                 'status', 'create_at', 'is_price', 'push_status', 'has_seat',
+                                                 'is_sale_off', 'one_id_one_ticket',
+                                                 'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
+                                                 'name_buy_num', 'source_type', 'cy_discount_overlay']
 
 
 # 测试场次才使用这里
