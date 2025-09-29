@@ -62,4 +62,6 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
             bc = CouponBasic.get()
             if bc:
                 data['img'] = request.build_absolute_uri(bc.image.url)
+            else:
+                data['need_pop'] = False
         return Response(data)
