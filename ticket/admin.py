@@ -35,6 +35,7 @@ import random
 # from xiaohongshu.models import XhsShow, XhsGoodsConfig, XhsOrder
 import os
 from openpyxl import Workbook
+
 logger = logging.getLogger(__name__)
 
 
@@ -1329,7 +1330,8 @@ export_ticket_order.short_description = u'导出订单(大量)'
 
 def export_ticket_order_old(modeladmin, request, queryset):
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="order{}.xlsx"'.format(timezone.now().strftime('%Y%m%d%H%M'))
+    response['Content-Disposition'] = 'attachment; filename="order{}.xlsx"'.format(
+        timezone.now().strftime('%Y%m%d%H%M'))
     wb = Workbook()
     ws = wb.active
     ws.append(TicketOrder.export_fields())
@@ -1566,7 +1568,7 @@ class TicketOrderAdmin(AjaxAdmin, ChangeAndViewAdmin):
         'status', 'is_cancel_pay', 'create_at', 'pay_at', SessionFilter, 'venue',
         'order_type', 'channel_type', 'wx_pay_config', AgentFilter, 'is_paper', 'express_status',
         'deliver_at')
-    actions = [export_ticket_order, export_ticket_order_old, export_ticket_express, cancel_lock_seats, 'set_wx_refund',
+    actions = [export_ticket_order_old, export_ticket_order, export_ticket_express, cancel_lock_seats, 'set_wx_refund',
                'set_cy_refund']
     search_fields = ['=order_no', '=mobile', '=transaction_id']
     autocomplete_fields = ['user']
