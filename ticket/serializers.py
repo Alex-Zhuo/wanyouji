@@ -722,7 +722,7 @@ class ShowSessionCacheSerializer(PKtoNoSerializer):
                                                  'name_buy_num', 'source_type', 'cy_discount_overlay']
 
 
-class ShowSessionInfoSerializer(PKtoNoSerializer):
+class ShowSessionInfoSerializer(ShowSessionCacheSerializer):
     ticket_level = serializers.SerializerMethodField()
 
     def get_ticket_level(self, obj):
@@ -736,11 +736,7 @@ class ShowSessionInfoSerializer(PKtoNoSerializer):
 
     class Meta:
         model = SessionInfo
-        fields = PKtoNoSerializer.Meta.fields + ['start_at', 'end_at', 'valid_start_time', 'desc', 'order_limit_num',
-                                                 'status', 'create_at', 'is_price', 'push_status', 'has_seat',
-                                                 'is_sale_off', 'one_id_one_ticket',
-                                                 'is_theater_discount', 'is_paper', 'express_end_at', 'is_name_buy',
-                                                 'name_buy_num', 'source_type', 'cy_discount_overlay', 'ticket_level']
+        fields = ShowSessionCacheSerializer.Meta.fields + ['ticket_level']
 
 
 # 测试场次才使用这里
