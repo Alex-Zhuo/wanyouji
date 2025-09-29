@@ -142,6 +142,8 @@ class UserCouponRecordAvailableNewSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         res = []
+        if validated_data['amount'] <= 0:
+            return res
         request = self.context.get('request')
         now_date = timezone.now().date()
         show_no = validated_data['show_no']
