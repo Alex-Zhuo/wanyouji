@@ -219,6 +219,28 @@ class TicketColorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class TicketFileTestSerializer(serializers.ModelSerializer):
+    color = TicketColorSerializer()
+    cy = serializers.SerializerMethodField()
+
+    def get_cy(self, obj):
+        data = None
+        if obj.is_cy:
+            tp_qs = obj.cy_tf.ticket_pack_list.all()
+            ticket_pack_list = []
+            if tp_qs:
+                from caiyicloud.serializers import CyTicketPackSerializer
+                ticket_pack_list = CyTicketPackSerializer(tp_qs, many=True).data
+            data = dict(no=obj.cy_tf.cy_no, category=obj.cy_tf.category,
+                        ticket_pack_list=ticket_pack_list)
+        return data
+
+    class Meta:
+        model = TicketFile
+        fields = ['id', 'title', 'color', 'origin_price', 'price', 'stock', 'sales', 'desc', 'is_tiktok', 'is_ks',
+                  'is_xhs', 'push_xhs', 'status', 'cy']
+
+
 class TicketFileSerializer(serializers.ModelSerializer):
     color = TicketColorSerializer()
 
@@ -722,7 +744,7 @@ class ShowSessionCacheSerializer(PKtoNoSerializer):
                                                  'name_buy_num', 'source_type', 'cy_discount_overlay']
 
 
-class ShowSessionInfoSerializer(ShowSessionCacheSerializer):
+class ShowSessionInfoTestSerializer(ShowSessionCacheSerializer):
     ticket_level = serializers.SerializerMethodField()
 
     def get_ticket_level(self, obj):
@@ -732,7 +754,7 @@ class ShowSessionInfoSerializer(ShowSessionCacheSerializer):
         #     qs = qs.filter(stock__gt=0)
         if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok':
             qs = qs.filter(push_status=TicketFile.PUSH_SUCCESS, is_tiktok=True, product_id__isnull=False)
-        return TicketFileSerializer(qs, many=True, context=self.context).data
+        return TicketFileTestSerializer(qs, many=True, context=self.context).data
 
     class Meta:
         model = SessionInfo
@@ -784,7 +806,7 @@ class ShowProjectDetailSerializer(ShowProjectSerializer):
         if request.META.get('HTTP_AUTH_ORIGIN') == 'tiktok':
             qs = qs.filter(dy_status=SessionInfo.STATUS_ON)
         qs = qs.order_by('start_at')
-        return ShowSessionInfoSerializer(qs, many=True, context=self.context).data
+        return ShowSessionInfoTestSerializer(qs, many=True, context=self.context).data
 
     class Meta:
         model = ShowProject
