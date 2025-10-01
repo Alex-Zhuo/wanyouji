@@ -4764,6 +4764,8 @@ class TicketUserCode(models.Model):
         t_code_key = cls.pika_t_code_key(t_code)
         with get_pika_redis() as redis:
             code = redis.get(t_code_key)
+        if code and type(code) == bytes:
+            code = code.decode('utf-8')
         return code
 
     @classmethod
