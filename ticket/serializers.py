@@ -1691,9 +1691,11 @@ class TicketOrderGiveDetailSerializer(serializers.ModelSerializer):
     def get_basic_info(self, obj):
         data = dict()
         from common.utils import s_name, s_mobile, show_content
-        data['name'] = s_name(obj.name)
+        # data['name'] = s_name(obj.name)
+        data['name'] = None
         data['mobile'] = s_mobile(obj.mobile)
-        data['id_card'] = show_content(obj.id_card) if obj.id_card else None
+        # data['id_card'] = show_content(obj.id_card) if obj.id_card else None
+        data['id_card'] = None
         data['order_no'] = show_content(obj.order_no)
         data['status_display'] = obj.get_status_display()
         data['status'] = obj.status
