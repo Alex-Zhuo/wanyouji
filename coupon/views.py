@@ -55,13 +55,16 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
 
     @action(methods=['get'], detail=False)
     def pop_up(self, request):
-        has = Coupon.get_pop_up(request.user.id)
-        need_pop = False if has else True
-        data = dict(need_pop=need_pop, img=None)
-        if not has:
-            bc = CouponBasic.get()
-            if bc:
-                data['img'] = request.build_absolute_uri(bc.image.url)
-            else:
-                data['need_pop'] = False
+        has_coupon = Coupon.objects.filter(status=Coupon.STATUS_ON).exists()
+        data = dict(need_pop=False, img=None)
+        if has_coupon:
+            has = Coupon.get_pop_up(request.user.id)
+            need_pop = False if has else True
+            if not has:
+                bc = CouponBasic.get()
+                if bc:
+                    data['img'] = request.build_absolute_uri(bc.image.url)
+                else:
+                    need_pop = False
+            data['need_pop'] = need_pop
         return Response(data)
