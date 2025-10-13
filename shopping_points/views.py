@@ -185,35 +185,35 @@ class UserCommissionChangeRecordViewSet(ReadOnlyModelViewSet, ReturnNoDetailView
     filter_fields = ('status', 'source_type')
     pagination_class = DefaultNoPagePagination
 
-    # @action(methods=['get'], detail=False)
-    # def user_type_list(self, request):
-    #     type = request.GET.get('type') or 0
-    #     type = int(type)
-    #     qs = UserCommissionChangeRecord.objects.filter(account=request.user.account, source_type=type)
-    #     total = qs.aggregate(total=Sum('amount'))['total']
-    #     ret = dict(total=total)
-    #     if not request.GET.get('page_size'):
-    #         ret['data'] = self.get_serializer(qs, many=True).data
-    #         return Response(ret)
-    #     else:
-    #         page = self.paginate_queryset(qs)
-    #         ret['data'] = self.serializer_class(page, many=True, context={'request': request}).data
-    #         return self.get_paginated_response(ret)
+    @action(methods=['get'], detail=False)
+    def user_type_list(self, request):
+        type = request.GET.get('type') or 0
+        type = int(type)
+        qs = UserCommissionChangeRecord.objects.filter(account=request.user.account, source_type=type)
+        total = qs.aggregate(total=Sum('amount'))['total']
+        ret = dict(total=total)
+        if not request.GET.get('page_size'):
+            ret['data'] = self.get_serializer(qs, many=True).data
+            return Response(ret)
+        else:
+            page = self.paginate_queryset(qs)
+            ret['data'] = self.serializer_class(page, many=True, context={'request': request}).data
+            return self.get_paginated_response(ret)
 
     @action(methods=['get'], detail=False)
     def usercommission_type(self, request):
         source_type_choices = dict(UserCommissionChangeRecord.SOURCE_TYPE_CHOICES)
         return Response(source_type_choices)
 
-    # @action(methods=['get'], detail=False)
-    # def get_share_record(self, request):
-    #     queryset = self.queryset.filter(account=request.user.account,
-    #                                     source_type=UserCommissionChangeRecord.SOURCE_TYPE_SHARE_AWARD)
-    #     if not request.GET.get('page_size'):
-    #         data = self.serializer_class(queryset, many=True, context={'request': request}).data
-    #         return Response(data)
-    #     page = self.paginate_queryset(queryset)
-    #     return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+    @action(methods=['get'], detail=False)
+    def get_share_record(self, request):
+        queryset = self.queryset.filter(account=request.user.account,
+                                        source_type=UserCommissionChangeRecord.SOURCE_TYPE_SHARE_AWARD)
+        if not request.GET.get('page_size'):
+            data = self.serializer_class(queryset, many=True, context={'request': request}).data
+            return Response(data)
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
 
     # @action(methods=['get'], detail=False)
     # def get_approve_record(self, request):
