@@ -199,12 +199,12 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
                                       dy_pay_config=dy_pay_config)
 
     def validate_amounts(self, amount, actual_amount, validated_data):
-        if Decimal(amount) != Decimal(validated_data['amount']) or Decimal(float(
-                actual_amount)) != Decimal(float(validated_data['actual_amount'])):
-            log.debug('{}'.format(Decimal(amount) == Decimal(validated_data['amount'])))
-            log.debug('{}'.format(Decimal(actual_amount) == Decimal(validated_data['actual_amount'])))
-            log.debug('{},{}'.format(Decimal(float(actual_amount)), Decimal(float(validated_data['actual_amount']))))
-            log.debug('b,{},{}'.format(Decimal(amount), Decimal(validated_data['amount'])))
+        if float(amount) != float(validated_data['amount']) or float(actual_amount) != float(
+                validated_data['actual_amount']):
+            log.debug('{}'.format(float(amount) == float(validated_data['amount'])))
+            log.debug('{}'.format(float(actual_amount) == float(validated_data['actual_amount'])))
+            log.debug('{},{}'.format(float(actual_amount), float(validated_data['actual_amount'])))
+            log.debug('b,{},{}'.format(float(amount), float(validated_data['amount'])))
             raise CustomAPIException('金额错误')
 
     def check_can_use_theater_card(self, multiply, pay_type, show_type, user, is_coupon=False):
