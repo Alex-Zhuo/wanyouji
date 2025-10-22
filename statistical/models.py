@@ -392,7 +392,7 @@ class SessionSum(models.Model):
     commission_amount = models.DecimalField('场次总佣金', max_digits=13, decimal_places=2, default=0)
 
     class Meta:
-        verbose_name_plural = verbose_name = '场次销售统计'
+        verbose_name_plural = verbose_name = '场次佣金统计'
 
     def __str__(self):
         return str(self.session)
