@@ -38,8 +38,13 @@ class Coupon(UseNoAbstract):
     TYPE_NUM_DISCOUNT = 3
     COUPON_TYPE_CHOICES = ((TYPE_MONEY_OFF, '满额减券'), (TYPE_MONEY_DISCOUNT, '满额打折券'), (TYPE_NUM_DISCOUNT, '满张(套)数打折券'))
     name = models.CharField('名称', max_length=128)
-    type = models.PositiveSmallIntegerField('类型', choices=COUPON_TYPE_CHOICES, default=TYPE_MONEY_OFF)
+    type = models.PositiveSmallIntegerField('优惠类型', choices=COUPON_TYPE_CHOICES, default=TYPE_MONEY_OFF)
+    SR_FREE = 1
+    SR_PAY = 2
+    SOURCE_TYPE_CHOICES = ((SR_FREE, '免费领取'), (SR_PAY, '付费购买'))
+    source_type = models.PositiveSmallIntegerField('消费券类型', choices=SOURCE_TYPE_CHOICES, default=SR_FREE)
     amount = models.DecimalField('减免金额', max_digits=13, decimal_places=2, default=0)
+    pay_amount = models.DecimalField('消费券价格', max_digits=13, decimal_places=2, default=0)
     discount = models.PositiveSmallIntegerField('打折比率', default=0, help_text='80为打8折')
     require_amount = models.DecimalField('使用满足金额', max_digits=13, decimal_places=2, default=0, help_text='满减券、满额打折券必填')
     require_num = models.PositiveSmallIntegerField('使用满足张(套)数', default=0, help_text='满张(套)数打折券必填')
@@ -50,6 +55,8 @@ class Coupon(UseNoAbstract):
     STATUS_CHOICES = ((STATUS_ON, '上架'), (STATUS_OFF, '下架'))
     status = models.IntegerField('状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     off_use = models.BooleanField('下架后是否可继续使用', default=True)
+    stock = models.IntegerField('库存数量', default=0)
+    user_buy_limit = models.IntegerField('限买数量', default=0, help_text='0为不限次数')
     user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
     limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
@@ -123,6 +130,16 @@ class Coupon(UseNoAbstract):
         with get_pika_redis() as pika:
             pika.delete(key)
 
+    def coupon_change_stock(self, mul):
+        levels_upd = []
+        levels_upd.append((self.pk, mul, 0))
+        from ticket.stock_updater import tfc
+        succ1, tfc_result = tfc.batch_incr(levels_upd)
+        if succ1:
+            tfc.batch_record_update_ts(tfc.resolve_ids(tfc_result))
+        else:
+            log.warning(f"ticket_levels incr failed")
+            raise CustomAPIException('抢购失败,库存不足')
 
 class UserCouponRecord(UseNoAbstract):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', related_name='coupons',
