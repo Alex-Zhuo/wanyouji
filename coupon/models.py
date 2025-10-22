@@ -454,20 +454,34 @@ class UserCouponCacheRecord(models.Model):
 
 class CouponActivity(models.Model):
     no = models.CharField('编号', max_length=64, unique=True, db_index=True, null=True, default=get_short_no)
-    title = models.CharField('专属活动名称', max_length=50)
+    title = models.CharField('活动名称', max_length=50)
     coupons = models.ManyToManyField(Coupon, verbose_name='关联消费券')
     url_link = models.CharField('领取链接', max_length=100, null=True, blank=True, editable=False, help_text='小程序加密URLLink')
     share_img = models.ImageField('分享图片', upload_to=f'{IMAGE_FIELD_PREFIX}/coupon/act',
                                   validators=[validate_image_file_extension])
     ST_ON = 1
     ST_OFF = 2
-    status = models.PositiveIntegerField('活动状态', default=1, choices=[(ST_ON, '上架'), (ST_OFF, '下架')])
+    status = models.PositiveIntegerField('活动状态', default=ST_ON, choices=[(ST_ON, '上架'), (ST_OFF, '下架')])
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     update_at = models.DateTimeField('更新时间', null=True, blank=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '用户消费券记录'
+        verbose_name_plural = verbose_name = '专属活动'
         ordering = ['-pk']
 
     def coupons_desc(self):
         return ','.join(list(self.coupons.all().values_list('name', flat=True)))
+
+    def get_url_link(self, is_refresh=False):
+        if is_refresh or not self.url_link:
+            try:
+                from mp.wechat_client import get_wxa_client
+                wxa = get_wxa_client()
+                data = wxa.generate_urllink('pages/pagesKageB/couponActivity/couponActivity', f'no={self.no}')
+                if data['errcode'] == 0:
+                    url = data['url_link']
+                    self.url_link = url
+                    self.save(update_fields=['url_link'])
+            except Exception as e:
+                log.error(e)
+        return self.url_link

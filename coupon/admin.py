@@ -109,11 +109,20 @@ def act_set_off(modeladmin, request, queryset):
 act_set_off.short_description = '批量下架'
 
 
+def refresh_url_link(modeladmin, request, queryset):
+    for obj in queryset:
+        obj.get_url_link(True)
+    messages.success(request, '执行成功')
+
+
+refresh_url_link.short_description = '刷新领取链接'
+
+
 class CouponActivityAdmin(admin.ModelAdmin):
     list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link']
     autocomplete_fields = ['coupons']
-    actions = [set_on, set_off]
-    readonly_fields = ['no']
+    actions = [set_on, set_off, refresh_url_link]
+    readonly_fields = ['no', 'url_link']
 
     def save_model(self, request, obj, form, change):
         obj.update_at = timezone.now()
@@ -123,6 +132,12 @@ class CouponActivityAdmin(admin.ModelAdmin):
         return obj.coupons_desc()
 
     coupons_desc.short_description = '消费券'
+
+    def url_link(self, obj):
+        return None
+        return obj.get_url_link()
+
+    coupons_desc.short_description = '领取链接'
 
 
 admin.site.register(CouponBasic, CouponBasicAdmin)
