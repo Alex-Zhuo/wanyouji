@@ -14,7 +14,7 @@ import json
 import logging
 from django.db import close_old_connections
 from decimal import Decimal
-from common.utils import quantize
+from common.utils import quantize, get_short_no
 from django.core.exceptions import ValidationError
 
 log = logging.getLogger(__name__)
@@ -450,3 +450,24 @@ class UserCouponCacheRecord(models.Model):
             for i in list(range(0, obj.num)):
                 UserCouponRecord.create_record(user_id, coupon)
         qs.delete()
+
+
+class CouponActivity(models.Model):
+    no = models.CharField('编号', max_length=64, unique=True, db_index=True, null=True, default=get_short_no)
+    title = models.CharField('专属活动名称', max_length=50)
+    coupons = models.ManyToManyField(Coupon, verbose_name='关联消费券')
+    url_link = models.CharField('领取链接', max_length=100, null=True, blank=True, editable=False, help_text='小程序加密URLLink')
+    share_img = models.ImageField('分享图片', upload_to=f'{IMAGE_FIELD_PREFIX}/coupon/act',
+                                  validators=[validate_image_file_extension])
+    ST_ON = 1
+    ST_OFF = 2
+    status = models.PositiveIntegerField('活动状态', default=1, choices=[(ST_ON, '上架'), (ST_OFF, '下架')])
+    create_at = models.DateTimeField('创建时间', auto_now_add=True)
+    update_at = models.DateTimeField('更新时间', null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '用户消费券记录'
+        ordering = ['-pk']
+
+    def coupons_desc(self):
+        return ','.join(list(self.coupons.all().values_list('name', flat=True)))

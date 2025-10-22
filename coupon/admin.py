@@ -1,10 +1,11 @@
 # coding=utf-8
 from django.contrib import admin
 from dj import technology_admin
-from coupon.models import UserCouponRecord, Coupon, UserCouponImport, UserCouponCacheRecord, CouponBasic
+from coupon.models import UserCouponRecord, Coupon, UserCouponImport, UserCouponCacheRecord, CouponBasic, CouponActivity
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, AddAndViewAdmin
 from django.contrib import messages
 from dj_ext import AdminException
+from django.utils import timezone
 
 
 class CouponBasicAdmin(RemoveDeleteModelAdmin):
@@ -91,14 +92,48 @@ class UserCouponCacheRecordAdmin(admin.ModelAdmin):
     readonly_fields = ['record']
 
 
+def act_set_on(modeladmin, request, queryset):
+    queryset.update(status=CouponActivity.ST_ON, update_at=timezone.now())
+    messages.success(request, '执行成功')
+
+
+act_set_on.short_description = '批量上架'
+
+
+def act_set_off(modeladmin, request, queryset):
+    queryset.update(status=CouponActivity.ST_OFF, update_at=timezone.now())
+    messages.success(request, '执行成功')
+
+
+act_set_off.short_description = '批量下架'
+
+
+class CouponActivityAdmin(admin.ModelAdmin):
+    list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link']
+    autocomplete_fields = ['coupons']
+    actions = [set_on, set_off]
+    readonly_fields = ['no']
+
+    def save_model(self, request, obj, form, change):
+        obj.update_at = timezone.now()
+        super(CouponActivityAdmin, self).save_model(request, obj, form, change)
+
+    def coupons_desc(self, obj):
+        return obj.coupons_desc()
+
+    coupons_desc.short_description = '消费券'
+
+
 admin.site.register(CouponBasic, CouponBasicAdmin)
 admin.site.register(Coupon, CouponAdmin)
 admin.site.register(UserCouponRecord, UserCouponRecordAdmin)
 admin.site.register(UserCouponImport, UserCouponImportAdmin)
 admin.site.register(UserCouponCacheRecord, UserCouponCacheRecordAdmin)
+admin.site.register(CouponActivity, CouponActivityAdmin)
 
 technology_admin.register(CouponBasic, CouponBasicAdmin)
 technology_admin.register(Coupon, CouponAdmin)
 technology_admin.register(UserCouponRecord, UserCouponRecordAdmin)
 technology_admin.register(UserCouponImport, UserCouponImportAdmin)
 technology_admin.register(UserCouponCacheRecord, UserCouponCacheRecordAdmin)
+technology_admin.register(CouponActivity, CouponActivityAdmin)

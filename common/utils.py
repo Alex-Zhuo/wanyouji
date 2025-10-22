@@ -563,6 +563,12 @@ def get_no():
     return uuid.uuid4().hex
 
 
+def get_short_no():
+    import secrets
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(16))
+
+
 def save_url_img(img_url: str, logo_mobile_dir: str):
     from common.qrutils import open_image_by_url
     logo_mobile = open_image_by_url(img_url)
