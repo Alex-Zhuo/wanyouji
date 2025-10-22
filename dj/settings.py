@@ -454,6 +454,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'coupon.tasks.coupon_expire_task',
         'schedule': timedelta(seconds=61),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
+    'coupon_update_stock_from_redis': {
+        'task': 'coupon.tasks.coupon_update_stock_from_redis',
+        'schedule': timedelta(seconds=37),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    },
     # 彩艺任务
     'confirm_order_task': {
         'task': 'caiyicloud.tasks.confirm_order_task',

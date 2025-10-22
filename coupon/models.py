@@ -130,16 +130,37 @@ class Coupon(UseNoAbstract):
         with get_pika_redis() as pika:
             pika.delete(key)
 
+    @classmethod
+    def coupon_update_stock_from_redis(cls):
+        close_old_connections()
+        from coupon.stock_updater import csc
+        csc.persist()
+
     def coupon_change_stock(self, mul):
-        levels_upd = []
-        levels_upd.append((self.pk, mul, 0))
-        from ticket.stock_updater import tfc
-        succ1, tfc_result = tfc.batch_incr(levels_upd)
+        ret = True
+        coupon_upd = []
+        coupon_upd.append((self.pk, mul, 0))
+        from coupon.stock_updater import csc
+        succ1, tfc_result = csc.batch_incr(coupon_upd)
         if succ1:
-            tfc.batch_record_update_ts(tfc.resolve_ids(tfc_result))
+            csc.batch_record_update_ts(csc.resolve_ids(tfc_result))
         else:
             log.warning(f"ticket_levels incr failed")
-            raise CustomAPIException('抢购失败,库存不足')
+            # 库存不足
+            ret = False
+        return ret
+
+    def coupon_redis_stock(self, stock=None):
+        # 初始化库存
+        from coupon.stock_updater import csc, StockModel
+        if stock == None:
+            stock = self.stock
+        csc.append_cache(StockModel(_id=self.id, stock=stock))
+
+    def coupon_del_redis_stock(self):
+        from coupon.stock_updater import csc
+        csc.remove(self.id)
+
 
 class UserCouponRecord(UseNoAbstract):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', related_name='coupons',
