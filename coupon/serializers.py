@@ -231,4 +231,5 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
                 continue
             success += 1
         # 有一条领取成功则算成功
-        return success > 0
+        if success <= 0:
+            raise CustomAPIException('已抢光！')
