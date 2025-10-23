@@ -53,7 +53,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
         """
         s = UserCouponRecordActCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
-        ret = s.create(s.validated_data)
+        s.create(s.validated_data)
         return Response()
 
 
