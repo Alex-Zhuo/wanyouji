@@ -46,7 +46,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
         data = CouponActivitySerializer(c_act, context={'request': request}).data
         return Response(data)
 
-    @action(methods=['post', 'get'], detail=False, http_method_names=['post', 'get'])
+    @action(methods=['post'], detail=False, http_method_names=['post'])
     def act_receive(self, request):
         """
         活动领取批量消费卷
