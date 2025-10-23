@@ -6,4 +6,4 @@ router = DefaultRouter()
 
 router.register(r'record', CouponViewSet)
 router.register(r'user', UserCouponRecordViewSet)
-router.register(r'receipt', CouponViewSet)
+# router.register(r'receipt', CouponViewSet)
