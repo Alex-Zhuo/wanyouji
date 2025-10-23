@@ -222,13 +222,14 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
                 continue
             if not coupon.coupon_change_stock(-1):
                 continue
-            try:
-                UserCouponRecord.create_record(user.id, coupon)
-            except Exception as e:
-                log.error(e)
-                # 领取出错加回去数量
-                coupon.coupon_change_stock(1)
-                continue
+            UserCouponRecord.create_record(user.id, coupon)
+            # try:
+            #     UserCouponRecord.create_record(user.id, coupon)
+            # except Exception as e:
+            #     log.error(e)
+            #     # 领取出错加回去数量
+            #     coupon.coupon_change_stock(1)
+            #     continue
             success += 1
         # 有一条领取成功则算成功
         return success > 0
