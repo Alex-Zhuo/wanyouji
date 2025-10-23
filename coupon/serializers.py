@@ -210,7 +210,7 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
             act = CouponActivity.objects.get(no=validated_data['act_no'])
         except CouponActivity.DoesNotExist:
             raise CustomAPIException('活动不存在')
-        if act.status == CouponActivity.ST_ON:
+        if act.status == CouponActivity.ST_OFF:
             raise CustomAPIException('活动已结束')
         coupon_list = act.coupons.all()
         success = 0
