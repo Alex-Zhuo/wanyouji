@@ -51,10 +51,12 @@ class CouponAdmin(RemoveDeleteModelAdmin):
     search_fields = ['name', 'no']
 
     def save_model(self, request, obj, form, change):
-        ret = super(CouponAdmin, self).save_model(request, obj, form, change)
+        if not change:
+            obj.save()
+        else:
+            obj.save(update_fields=form.changed_data)
         if not change:
             Coupon.del_pop_up()
-        return ret
 
 
 class UserCouponRecordAdmin(OnlyViewAdmin):
