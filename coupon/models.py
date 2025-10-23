@@ -203,6 +203,7 @@ class UserCouponRecord(UseNoAbstract):
             Coupon.set_pop_up(user_id)
         except Exception as e:
             log.error(e)
+        obj.set_user_obtain_cache()
         return obj
 
     @property
@@ -228,18 +229,16 @@ class UserCouponRecord(UseNoAbstract):
         return key, name
 
     @classmethod
-    def user_obtain_cache(cls, coupon_no: str, user_id: int) -> int:
+    def get_user_obtain_cache(cls, coupon_no: str, user_id: int) -> int:
         key, name = cls.user_obtain_key(coupon_no, user_id)
         with get_pika_redis() as redis:
             num = redis.hget(key, name) or 0
         return int(num)
 
-    @classmethod
-    def user_obtain_cache(cls, coupon_no: str, user_id: int) -> int:
-        key, name = cls.user_obtain_key(coupon_no, user_id)
+    def set_user_obtain_cache(self):
+        key, name = self.user_obtain_key(self.coupon.no, self.user.id)
         with get_pika_redis() as redis:
-            num = redis.hget(key, name) or 0
-        return int(num)
+            redis.incrby(key, name)
 
     def get_snapshot(self):
         import json

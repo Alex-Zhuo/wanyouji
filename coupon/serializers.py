@@ -46,8 +46,8 @@ class CouponSerializer(CouponBasicSerializer):
         if not obj.need_buy:
             user = self.context.get('request').user
             if obj.user_obtain_limit > 0:
-                obtain_num = user.coupons.filter(coupon_id=obj.id).count()
-                # obtain_num = UserCouponRecord.user_obtain_cache(obj.no, user.id)
+                # obtain_num = user.coupons.filter(coupon_id=obj.id).count()
+                obtain_num = UserCouponRecord.get_user_obtain_cache(obj.no, user.id)
                 st = obtain_num >= obj.user_obtain_limit
         return st
 
@@ -56,7 +56,8 @@ class CouponSerializer(CouponBasicSerializer):
 
     class Meta:
         model = Coupon
-        fields = CouponBasicSerializer.Meta.fields + ['is_upper_limit', 'user_obtain_limit','source_type', 'source_type_display',
+        fields = CouponBasicSerializer.Meta.fields + ['is_upper_limit', 'user_obtain_limit', 'source_type',
+                                                      'source_type_display',
                                                       'pay_amount', 'need_buy']
 
 
@@ -99,50 +100,56 @@ class UserCouponRecordCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context.get('request').user
         validated_data['user'] = user
-        coupon = Coupon.objects.get(no=validated_data['no'])
-        # if coupon.stock <= 0:
-        #     raise CustomAPIException('数量不足')
+        try:
+            coupon = Coupon.objects.get(no=validated_data['no'])
+        except Coupon.DoesNotExist:
+            raise CustomAPIException('消费卷不存在')
+        if coupon.stock <= 0:
+            raise CustomAPIException('消费券库存不足')
         if coupon.status == Coupon.STATUS_OFF:
             raise CustomAPIException('消费券已下架')
-        # obtain_num = UserCouponRecord.user_obtain_cache(coupon.no, user.id)
-        obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
+        obtain_num = UserCouponRecord.get_user_obtain_cache(coupon.no, user.id)
+        # obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
         if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
             raise CustomAPIException('已达到领取上限')
         inst = UserCouponRecord.create_record(user.id, coupon)
+        st = coupon.coupon_change_stock(-1)
+        if not st:
+            raise CustomAPIException('消费券库存不足')
         return inst
 
 
-class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
-    show_no = serializers.CharField(required=True)
-    amount = serializers.DecimalField(required=True, max_digits=9, decimal_places=2)
-
-    class Meta:
-        model = UserCouponRecord
-        fields = ['show_no', 'amount']
-
-    def create(self, validated_data):
-        res = []
-        request = self.context.get('request')
-        now_date = timezone.now().date()
-        show_no = validated_data['show_no']
-        amount = validated_data['amount']
-        # log.error(validated_data)
-        # log.error(request.user.id)
-        records = UserCouponRecord.objects.filter(user=request.user, status=UserCouponRecord.STATUS_DEFAULT,
-                                                  expire_time__gte=now_date, require_amount__lte=amount)
-        for record in records:
-            coupon = record.coupon
-            if not coupon.check_can_use():
-                continue
-            from ticket.models import ShowProject
-            try:
-                show = ShowProject.objects.get(no=show_no)
-            except ShowProject.DoesNotExist:
-                raise CustomAPIException('找不到演出')
-            can_use = record.check_can_show_use(show)
-            if can_use:
-                res.append(record)
-        return res
+# class UserCouponRecordAvailableSerializer(serializers.ModelSerializer):
+#     show_no = serializers.CharField(required=True)
+#     amount = serializers.DecimalField(required=True, max_digits=9, decimal_places=2)
+#
+#     class Meta:
+#         model = UserCouponRecord
+#         fields = ['show_no', 'amount']
+#
+#     def create(self, validated_data):
+#         res = []
+#         request = self.context.get('request')
+#         now_date = timezone.now().date()
+#         show_no = validated_data['show_no']
+#         amount = validated_data['amount']
+#         # log.error(validated_data)
+#         # log.error(request.user.id)
+#         records = UserCouponRecord.objects.filter(user=request.user, status=UserCouponRecord.STATUS_DEFAULT,
+#                                                   expire_time__gte=now_date, require_amount__lte=amount)
+#         for record in records:
+#             coupon = record.coupon
+#             if not coupon.check_can_use():
+#                 continue
+#             from ticket.models import ShowProject
+#             try:
+#                 show = ShowProject.objects.get(no=show_no)
+#             except ShowProject.DoesNotExist:
+#                 raise CustomAPIException('找不到演出')
+#             can_use = record.check_can_show_use(show)
+#             if can_use:
+#                 res.append(record)
+#         return res
 
 
 class UserCouponRecordAvailableNewSerializer(serializers.ModelSerializer):
@@ -186,3 +193,42 @@ class CouponActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = CouponActivity
         fields = ['no', 'title', 'coupons', 'share_img', 'status']
+
+
+class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
+    act_no = serializers.CharField(required=True)
+
+    class Meta:
+        model = UserCouponRecord
+        fields = ['act_no']
+
+    @atomic
+    def create(self, validated_data):
+        user = self.context.get('request').user
+        validated_data['user'] = user
+        try:
+            act = CouponActivity.objects.get(no=validated_data['act_no'])
+        except CouponActivity.DoesNotExist:
+            raise CustomAPIException('活动不存在')
+        if act.status == Coupon.STATUS_OFF:
+            raise CustomAPIException('活动已结束')
+        coupon_list = act.coupons.all()
+        success = 0
+        for coupon in coupon_list:
+            if coupon.stock <= 0:
+                continue
+            obtain_num = UserCouponRecord.get_user_obtain_cache(coupon.no, user.id)
+            if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
+                continue
+            if not coupon.coupon_change_stock(-1):
+                continue
+            try:
+                UserCouponRecord.create_record(user.id, coupon)
+            except Exception as e:
+                log.error(e)
+                # 领取出错加回去数量
+                coupon.coupon_change_stock(1)
+                continue
+            success += 1
+        # 有一条领取成功则算成功
+        return success > 0
