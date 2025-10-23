@@ -39,7 +39,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
             c_act = CouponActivity.objects.get(no=act_no, status=CouponActivity.ST_ON)
         except CouponActivity.DoesNotExist:
             raise CustomAPIException('活动已结束')
-        data = CouponActivitySerializer(c_act, context={'request': request})
+        data = CouponActivitySerializer(c_act, context={'request': request}).data
         return Response(data)
 
 
