@@ -129,7 +129,12 @@ class CouponActivityAdmin(admin.ModelAdmin):
         super(CouponActivityAdmin, self).save_model(request, obj, form, change)
 
     def coupons_desc(self, obj):
-        return obj.coupons_desc()
+        data_list = list(obj.coupons.all().values_list('name', flat=True))
+        if len(data_list) > 5:
+            ret = ','.join(data_list[:5]) + '...'
+        else:
+            ret = ','.join(data_list[:5])
+        return ret
 
     coupons_desc.short_description = '消费券'
 
