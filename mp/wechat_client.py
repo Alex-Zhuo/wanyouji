@@ -564,7 +564,7 @@ class WeChatWxaClient(WeChatWxa):
             # "is_expire":true,
             "expire_type": 1,
             "expire_interval": 30,
-            "env_version": "trial",
+            # "env_version": "release",
             # "cloud_base":
             # {
             #     "env": "xxx",
