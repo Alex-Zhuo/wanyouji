@@ -481,7 +481,9 @@ class CouponActivity(models.Model):
             try:
                 from mp.wechat_client import get_wxa_client
                 wxa = get_wxa_client()
-                data = wxa.generate_urllink('pages/pagesKageB/couponActivity/couponActivity', f'no={self.no}')
+                url = 'pages/index/index'
+                # url = 'pages/pagesKageB/couponActivity/couponActivity'
+                data = wxa.generate_urllink(url, f'no={self.no}')
                 if data['errcode'] == 0:
                     url = data['url_link']
                     self.url_link = url
