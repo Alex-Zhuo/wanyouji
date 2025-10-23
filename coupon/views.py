@@ -49,7 +49,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def act_receive(self, request):
         """
-        活动领取批量消费卷
+        活动领取批量消费卷,一件领取
         """
         s = UserCouponRecordActCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
