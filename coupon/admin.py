@@ -119,7 +119,7 @@ refresh_url_link.short_description = '刷新领取链接'
 
 
 class CouponActivityAdmin(admin.ModelAdmin):
-    list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link']
+    list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link_s']
     autocomplete_fields = ['coupons']
     actions = [set_on, set_off, refresh_url_link]
     readonly_fields = ['no', 'url_link']
@@ -138,10 +138,10 @@ class CouponActivityAdmin(admin.ModelAdmin):
 
     coupons_desc.short_description = '消费券'
 
-    def url_link(self, obj):
+    def url_link_s(self, obj):
         return obj.get_url_link()
 
-    coupons_desc.short_description = '领取链接'
+    url_link_s.short_description = '领取链接'
 
 
 admin.site.register(CouponBasic, CouponBasicAdmin)
