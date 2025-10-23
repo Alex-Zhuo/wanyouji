@@ -98,3 +98,26 @@ class UserCouponRecordViewSet(ReturnNoDetailViewSet):
                     need_pop = False
             data['need_pop'] = need_pop
         return Response(data)
+
+
+# class ActReceiptViewSet(BaseReceiptViewset):
+#     permission_classes = []
+#     receipt_class = ActivityReceipt
+#     refund_class = GroupParticipantRefund
+#
+#     def before_pay(self, request, pk):
+#         receipt = get_object_or_404(self.receipt_class, pk=pk)
+#         now = timezone.now()
+#         bc = ActivityConfig.get()
+#         auto_cancel_minutes = bc.auto_cancel_minutes if bc else 5
+#         expire_at = now + timedelta(minutes=-auto_cancel_minutes)
+#         order = receipt.act_receipt
+#         receipt.query_status(order.order_no)
+#         if receipt.paid:
+#             raise CustomAPIException('该订单已经付款，请尝试刷新订单页面')
+#         if order.status != order.STATUS_UNPAID:
+#             raise CustomAPIException('订单状态错误')
+#         if order.create_at < expire_at:
+#             order.cancel()
+#             raise CustomAPIException('该订单支付过期，请重新下单')
+#         receipt.act_receipt.activity.check_can_payment()
