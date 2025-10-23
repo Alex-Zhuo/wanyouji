@@ -240,7 +240,7 @@ class UserCouponRecord(UseNoAbstract):
     def set_user_obtain_cache(self):
         key, name = self.user_obtain_key(self.coupon.no, self.user.id)
         with get_pika_redis() as redis:
-            redis.incrby(key, name, 1)
+            redis.hincrby(key, name, 1)
 
     def get_snapshot(self):
         import json
