@@ -54,10 +54,9 @@ class CouponViewSet(ReturnNoDetailViewSet):
         s = UserCouponRecordActCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         ret = s.create(s.validated_data)
-        msg = '领取成功！'
         if not ret:
-            msg = '已抢光！'
-        return Response(dict(msg=msg))
+            raise CustomAPIException('已抢光！')
+        return Response()
 
 
 class UserCouponRecordViewSet(ReturnNoDetailViewSet):
