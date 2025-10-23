@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=Coupon)
 def coupon_change(sender, **kwargs):
     created, instance, update_fields = map(kwargs.get, ('created', 'instance', 'update_fields'))
-    logger.error(update_fields)
     if created or (update_fields and 'stock' in update_fields):
         instance.coupon_redis_stock()
 

@@ -157,7 +157,6 @@ class Coupon(UseNoAbstract):
 
     def coupon_redis_stock(self, stock=None):
         # 初始化库存
-        log.error('coupon_redis_stock')
         from coupon.stock_updater import csc, StockModel
         if stock == None:
             stock = self.stock
