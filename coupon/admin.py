@@ -139,7 +139,8 @@ class CouponActivityAdmin(admin.ModelAdmin):
     coupons_desc.short_description = '消费券'
 
     def url_link_s(self, obj):
-        return obj.get_url_link()
+        return None
+        # return obj.get_url_link()
 
     url_link_s.short_description = '领取链接'
 
