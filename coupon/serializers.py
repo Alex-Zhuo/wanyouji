@@ -56,8 +56,7 @@ class CouponSerializer(CouponBasicSerializer):
 
     class Meta:
         model = Coupon
-        fields = CouponBasicSerializer.Meta.fields + ['is_upper_limit', 'user_obtain_limit', 'user_buy_limit',
-                                                      'source_type', 'source_type_display',
+        fields = CouponBasicSerializer.Meta.fields + ['is_upper_limit', 'user_obtain_limit','source_type', 'source_type_display',
                                                       'pay_amount', 'need_buy']
 
 

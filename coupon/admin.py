@@ -43,7 +43,7 @@ clear_pop_up_cache.short_description = '清除弹窗缓存'
 class CouponAdmin(RemoveDeleteModelAdmin):
     list_display = ['no', 'name', 'amount', 'pay_amount', 'stock', 'discount', 'require_amount', 'require_num',
                     'expire_time', 'status',
-                    'user_obtain_limit', 'user_buy_limit', 'create_at', 'update_at']
+                    'user_obtain_limit', 'create_at', 'update_at']
     list_filter = ['expire_time', 'limit_show_types_second', 'status']
     autocomplete_fields = ['shows', 'limit_show_types_second']
     readonly_fields = ['no']

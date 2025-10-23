@@ -56,8 +56,7 @@ class Coupon(UseNoAbstract):
     status = models.IntegerField('状态', choices=STATUS_CHOICES, default=STATUS_OFF)
     off_use = models.BooleanField('下架后是否可继续使用', default=True)
     stock = models.IntegerField('库存数量', default=0)
-    user_buy_limit = models.IntegerField('限买数量', default=0, help_text='0为不限次数')
-    user_obtain_limit = models.IntegerField('用户限领次数', default=0, help_text='0为不限次数')
+    user_obtain_limit = models.IntegerField('用户限领(购)次数', default=0, help_text='0为不限次数')
     shows = models.ManyToManyField(ShowProject, verbose_name='可使用的节目', related_name='shows', blank=True)
     limit_show_types_second = models.ManyToManyField(ShowContentCategorySecond, verbose_name='可使用节目分类',
                                                      related_name='show_types_second', blank=True, editable=False)
@@ -227,6 +226,13 @@ class UserCouponRecord(UseNoAbstract):
         key = get_redis_name('coupon{}'.format(coupon_no))
         name = get_redis_name('user{}'.format(user_id))
         return key, name
+
+    @classmethod
+    def user_obtain_cache(cls, coupon_no: str, user_id: int) -> int:
+        key, name = cls.user_obtain_key(coupon_no, user_id)
+        with get_pika_redis() as redis:
+            num = redis.hget(key, name) or 0
+        return int(num)
 
     @classmethod
     def user_obtain_cache(cls, coupon_no: str, user_id: int) -> int:
@@ -481,8 +487,8 @@ class CouponActivity(models.Model):
             try:
                 from mp.wechat_client import get_wxa_client
                 wxa = get_wxa_client()
-                url = 'pages/index/index'
-                # url = 'pages/pagesKageB/couponActivity/couponActivity'
+                # url = 'pages/index/index'
+                url = 'pages/pagesKageB/couponActivity/couponActivity'
                 data = wxa.generate_urllink(url, f'no={self.no}')
                 if data['errcode'] == 0:
                     url = data['url_link']
