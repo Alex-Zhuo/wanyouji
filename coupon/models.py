@@ -203,9 +203,9 @@ class UserCouponRecord(UseNoAbstract):
         obj.save_common()
         try:
             Coupon.set_pop_up(user_id)
+            obj.set_user_obtain_cache()
         except Exception as e:
             log.error(e)
-        obj.set_user_obtain_cache()
         return obj
 
     @property
@@ -240,7 +240,7 @@ class UserCouponRecord(UseNoAbstract):
     def set_user_obtain_cache(self):
         key, name = self.user_obtain_key(self.coupon.no, self.user.id)
         with get_pika_redis() as redis:
-            redis.incrby(key, name)
+            redis.incrby(key, name, 1)
 
     def get_snapshot(self):
         import json
@@ -498,7 +498,6 @@ class CouponActivity(models.Model):
             except Exception as e:
                 log.error(e)
         return self.url_link
-
 
 # class CouponReceipt(ReceiptAbstract):
 #     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=u'用户', related_name='act_receipts', null=True,
