@@ -2,10 +2,10 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from coupon.models import Coupon, UserCouponRecord, CouponBasic
+from coupon.models import Coupon, UserCouponRecord, CouponBasic, CouponActivity
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
-    UserCouponRecordAvailableSerializer, UserCouponRecordAvailableNewSerializer
-from home.views import ReturnNoDetailViewSet
+    UserCouponRecordAvailableSerializer, UserCouponRecordAvailableNewSerializer, CouponActivitySerializer
+from home.views import ReturnNoDetailViewSet, ReturnNoneViewSet
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.mixins import SerializerSelector
 from restframework_ext.pagination import StandardResultsSetPagination
@@ -29,6 +29,18 @@ class CouponViewSet(ReturnNoDetailViewSet):
         s.is_valid(True)
         s.create(s.validated_data)
         return Response()
+
+    @action(methods=['get'], detail=False)
+    def activity(self, request):
+        act_no = request.GET.get('act_no')
+        if not act_no:
+            raise CustomAPIException('活动不存在')
+        try:
+            c_act = CouponActivity.objects.get(no=act_no, status=CouponActivity.ST_ON)
+        except CouponActivity.DoesNotExist:
+            raise CustomAPIException('活动已结束')
+        data = CouponActivitySerializer(c_act, context={'request': request})
+        return Response(data)
 
 
 class UserCouponRecordViewSet(ReturnNoDetailViewSet):

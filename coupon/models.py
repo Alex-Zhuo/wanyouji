@@ -78,6 +78,10 @@ class Coupon(UseNoAbstract):
             if self.discount <= 0:
                 raise ValidationError('打折比率必须大于0')
 
+    @property
+    def need_buy(self):
+        return self.pay_amount > 0 and self.source_type == self.SR_PAY
+
     @classmethod
     def auto_off_task(cls):
         """

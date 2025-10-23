@@ -6,7 +6,7 @@ from django.db.transaction import atomic
 from rest_framework import serializers
 from django.utils import timezone
 import json
-from coupon.models import Coupon, UserCouponRecord
+from coupon.models import Coupon, UserCouponRecord, CouponActivity
 from restframework_ext.exceptions import CustomAPIException
 from ticket.models import ShowType, ShowProject
 
@@ -27,23 +27,38 @@ class CouponShowsSerializer(serializers.ModelSerializer):
         fields = ['title']
 
 
-class CouponSerializer(serializers.ModelSerializer):
-    is_upper_limit = serializers.SerializerMethodField()
+class CouponBasicSerializer(serializers.ModelSerializer):
     type_display = serializers.ReadOnlyField(source='get_type_display')
-
-    def get_is_upper_limit(self, obj):
-        st = False
-        user = self.context.get('request').user
-        if obj.user_obtain_limit > 0:
-            obtain_num = user.coupons.filter(coupon_id=obj.id).count()
-            # obtain_num = UserCouponRecord.user_obtain_cache(obj.no, user.id)
-            st = obtain_num >= obj.user_obtain_limit
-        return st
 
     class Meta:
         model = Coupon
-        fields = ['name', 'no', 'amount', 'discount', 'expire_time', 'user_tips', 'user_obtain_limit', 'require_amount',
-                  'require_num', 'is_upper_limit', 'type', 'type_display']
+        fields = ['name', 'no', 'amount', 'discount', 'expire_time', 'user_tips', 'require_amount',
+                  'require_num', 'type', 'type_display']
+
+
+class CouponSerializer(CouponBasicSerializer):
+    is_upper_limit = serializers.SerializerMethodField()
+    source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
+    need_buy = serializers.SerializerMethodField()
+
+    def get_is_upper_limit(self, obj):
+        st = False
+        if not obj.need_buy:
+            user = self.context.get('request').user
+            if obj.user_obtain_limit > 0:
+                obtain_num = user.coupons.filter(coupon_id=obj.id).count()
+                # obtain_num = UserCouponRecord.user_obtain_cache(obj.no, user.id)
+                st = obtain_num >= obj.user_obtain_limit
+        return st
+
+    def get_need_buy(self, obj):
+        return obj.need_buy
+
+    class Meta:
+        model = Coupon
+        fields = CouponBasicSerializer.Meta.fields + ['is_upper_limit', 'user_obtain_limit', 'user_buy_limit',
+                                                      'source_type', 'source_type_display',
+                                                      'pay_amount', 'need_buy']
 
 
 class CouponDetailSerializer(CouponSerializer):
@@ -164,3 +179,11 @@ class UserCouponRecordAvailableNewSerializer(serializers.ModelSerializer):
             if can_use:
                 res.append(record)
         return res
+
+
+class CouponActivitySerializer(serializers.ModelSerializer):
+    coupons = CouponBasicSerializer(many=True)
+
+    class Meta:
+        model = CouponActivity
+        fields = ['no', 'title', 'coupons', 'share_img', 'status']
