@@ -59,7 +59,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
         """
         活动领取批量消费卷,一键领取
         """
-        log.error(request.data)
+        # log.error(request.data)
         s = UserCouponRecordActCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         s.create(s.validated_data)
