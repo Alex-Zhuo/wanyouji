@@ -206,6 +206,7 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context.get('request').user
         validated_data['user'] = user
+        log.debug(validated_data['act_no'])
         try:
             act = CouponActivity.objects.get(no=validated_data['act_no'])
         except CouponActivity.DoesNotExist:
