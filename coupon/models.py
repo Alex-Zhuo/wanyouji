@@ -520,7 +520,7 @@ class CouponActivity(models.Model):
                 wxa = get_wxa_client()
                 # url = 'pages/index/index'
                 url = 'pages/pagesKageB/couponActivity/couponActivity'
-                data = wxa.generate_urllink(url, f'no={self.no}')
+                data = wxa.generate_urllink(url, f'act_no={self.no}')
                 if data['errcode'] == 0:
                     url = data['url_link']
                     self.url_link = url
