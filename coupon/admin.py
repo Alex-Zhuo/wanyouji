@@ -124,7 +124,7 @@ refresh_url_link.short_description = '刷新领取链接'
 class CouponActivityAdmin(admin.ModelAdmin):
     list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link_s']
     autocomplete_fields = ['coupons']
-    actions = [set_on, set_off, refresh_url_link]
+    actions = [act_set_on, act_set_off, refresh_url_link]
     readonly_fields = ['no', 'url_link']
 
     def save_model(self, request, obj, form, change):
