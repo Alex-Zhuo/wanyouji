@@ -179,7 +179,7 @@ class Coupon(UseNoAbstract):
         if succ1:
             csc.batch_record_update_ts(csc.resolve_ids(tfc_result))
         else:
-            log.warning(f"ticket_levels incr failed")
+            log.warning(f"coupon incr failed,{self.pk}")
             # 库存不足
             ret = False
         return ret
