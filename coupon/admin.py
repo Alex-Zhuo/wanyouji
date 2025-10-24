@@ -61,7 +61,8 @@ class CouponAdmin(RemoveDeleteModelAdmin):
 
 class UserCouponRecordAdmin(OnlyViewAdmin):
     list_display = ['no', 'user', 'coupon', 'status', 'expire_time', 'used_time', 'create_at', 'order']
-    list_filter = ['status', 'expire_time']
+    list_filter = ['status', 'expire_time', 'coupon']
+    search_fields = ['=user__mobile']
 
 
 def do_performance_import(modeladmin, request, queryset):
