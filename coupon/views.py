@@ -13,7 +13,11 @@ from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.views import BaseReceiptViewset
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import  timedelta
+from datetime import timedelta
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class CouponViewSet(ReturnNoDetailViewSet):
     """
@@ -55,6 +59,7 @@ class CouponViewSet(ReturnNoDetailViewSet):
         """
         活动领取批量消费卷,一键领取
         """
+        log.error(request.data)
         s = UserCouponRecordActCreateSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
         s.create(s.validated_data)
