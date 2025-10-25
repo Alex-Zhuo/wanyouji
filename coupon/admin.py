@@ -125,7 +125,7 @@ class CouponActivityAdmin(admin.ModelAdmin):
     list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link']
     autocomplete_fields = ['coupons']
     actions = [act_set_on, act_set_off, refresh_url_link]
-    readonly_fields = ['no', 'url_link']
+    readonly_fields = ['no', 'url_link', 'update_at']
 
     def save_model(self, request, obj, form, change):
         obj.update_at = timezone.now()
