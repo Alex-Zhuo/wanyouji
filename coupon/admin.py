@@ -122,14 +122,17 @@ refresh_url_link.short_description = '刷新领取链接'
 
 
 class CouponActivityAdmin(admin.ModelAdmin):
-    list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link_s']
+    list_display = ['no', 'title', 'coupons_desc', 'status', 'create_at', 'update_at', 'url_link']
     autocomplete_fields = ['coupons']
     actions = [act_set_on, act_set_off, refresh_url_link]
     readonly_fields = ['no', 'url_link']
 
     def save_model(self, request, obj, form, change):
         obj.update_at = timezone.now()
-        super(CouponActivityAdmin, self).save_model(request, obj, form, change)
+        ret = super(CouponActivityAdmin, self).save_model(request, obj, form, change)
+        if not obj.url_link:
+            obj.get_url_link()
+        return ret
 
     def coupons_desc(self, obj):
         data_list = list(obj.coupons.all().values_list('name', flat=True))
@@ -141,10 +144,10 @@ class CouponActivityAdmin(admin.ModelAdmin):
 
     coupons_desc.short_description = '消费券'
 
-    def url_link_s(self, obj):
-        return obj.get_url_link()
-
-    url_link_s.short_description = '领取链接'
+    # def url_link_s(self, obj):
+    #     return obj.url_link
+    #
+    # url_link_s.short_description = '领取链接'
 
 
 admin.site.register(CouponBasic, CouponBasicAdmin)
