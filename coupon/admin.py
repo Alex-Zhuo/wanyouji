@@ -54,6 +54,8 @@ class CouponAdmin(RemoveDeleteModelAdmin):
         if not change:
             obj.save()
         else:
+            if 'shows' in form.changed_data:
+                form.changed_data.remove('shows')
             obj.save(update_fields=form.changed_data)
         if not change:
             Coupon.del_pop_up()
