@@ -249,7 +249,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             queryset = queryset.filter(city_id=int(city))
         if cate_id:
             """
-            兼容前端
+            兼容前端,cate_id取了show_type_id
             """
             # queryset = queryset.filter(cate_id=int(cate_id))
             queryset = queryset.filter(show_type_id=int(cate_id))
