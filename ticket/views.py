@@ -228,7 +228,11 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
         type_id = request.GET.get('type_id') or None
         is_schedule = request.GET.get('is_schedule') or None
         if type_id:
-            queryset = queryset.filter(show_type_id=int(type_id))
+            """
+            兼容前端,show_type_id取了second_cate_id
+            """
+            # queryset = queryset.filter(show_type_id=int(type_id))
+            queryset = queryset.filter(cate_second_id=int(type_id))
         if title:
             queryset = queryset.filter(title__contains=title)
         if show_at:
@@ -249,10 +253,10 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             queryset = queryset.filter(city_id=int(city))
         if cate_id:
             """
-            兼容前端,cate_id取了show_type_id
+            兼容前端,cate_id取了second_cate_id
             """
             # queryset = queryset.filter(cate_id=int(cate_id))
-            queryset = queryset.filter(show_type_id=int(cate_id))
+            queryset = queryset.filter(second_cate_id=int(cate_id))
         if second_cate_id:
             queryset = queryset.filter(cate_second_id=int(second_cate_id))
         order_desc = None
