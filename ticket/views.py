@@ -248,7 +248,11 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             # if ct:
             queryset = queryset.filter(city_id=int(city))
         if cate_id:
-            queryset = queryset.filter(cate_id=int(cate_id))
+            """
+            兼容前端
+            """
+            # queryset = queryset.filter(cate_id=int(cate_id))
+            queryset = queryset.filter(show_type_id=int(cate_id))
         if second_cate_id:
             queryset = queryset.filter(cate_second_id=int(second_cate_id))
         order_desc = None
