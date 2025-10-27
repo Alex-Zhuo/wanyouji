@@ -256,7 +256,7 @@ class ShowProjectViewSet(SerializerSelector, DetailPKtoNoViewSet):
             兼容前端,cate_id取了second_cate_id
             """
             # queryset = queryset.filter(cate_id=int(cate_id))
-            queryset = queryset.filter(second_cate_id=int(cate_id))
+            queryset = queryset.filter(cate_second_id=int(cate_id))
         if second_cate_id:
             queryset = queryset.filter(cate_second_id=int(second_cate_id))
         order_desc = None
