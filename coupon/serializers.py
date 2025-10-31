@@ -6,9 +6,10 @@ from django.db.transaction import atomic
 from rest_framework import serializers
 from django.utils import timezone
 import json
-from coupon.models import Coupon, UserCouponRecord, CouponActivity
+from coupon.models import Coupon, UserCouponRecord, CouponActivity, CouponOrder, CouponReceipt
 from restframework_ext.exceptions import CustomAPIException
 from ticket.models import ShowType, ShowProject
+from caches import get_redis_name, run_with_lock
 
 log = logging.getLogger(__name__)
 
@@ -234,3 +235,76 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
         # 有一条领取成功则算成功
         if success <= 0:
             raise CustomAPIException('已抢光！')
+
+
+class CouponOrderSerializer(serializers.ModelSerializer):
+    status_display = serializers.ReadOnlyField(source='get_status_display')
+    snapshot = serializers.SerializerMethodField()
+
+    def get_snapshot(self, obj):
+        return json.loads(obj.snapshot)
+
+    class Meta:
+        model = CouponOrder
+        fields = ['order_no', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display', 'snapshot']
+
+
+class CouponOrderDetailSerializer(CouponOrderSerializer):
+    class Meta:
+        model = CouponOrder
+        fields = CouponOrderSerializer.Meta.fields
+
+
+class CouponOrderCreateSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=9, decimal_places=2, required=True)
+    coupon_no = serializers.CharField(required=True, help_text='消费卷号')
+    pay_type = serializers.IntegerField(required=True)
+    multiply = serializers.IntegerField(required=True)
+
+    @atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        if not user.mobile:
+            raise CustomAPIException('请先绑定手机')
+        key = get_redis_name('cnpod_{}'.format(user.id))
+        coupon_no = validated_data.pop('coupon_no')
+        with run_with_lock(key, 5) as got:
+            if got:
+                try:
+                    coupon = Coupon.objects.get(coupon_no=coupon_no, status=Coupon.STATUS_ON, source_type=Coupon.SR_PAY)
+                except Coupon.DoesNotExist:
+                    raise CustomAPIException('消费卷已下架')
+                obtain_num = UserCouponRecord.get_user_obtain_cache(coupon.no, user.id)
+                # obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
+                if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
+                    raise CustomAPIException('消费券已达到购买上限')
+                if coupon.pay_amount == 0:
+                    raise CustomAPIException('消费券可免费领取')
+                if coupon.stock <= 0:
+                    raise CustomAPIException('消费券库存不足')
+                real_amount = coupon.pay_amount * validated_data['multiply']
+                if real_amount != validated_data['amount']:
+                    log.error('{},{}'.format(validated_data['amount'], real_amount))
+                    raise CustomAPIException('下单失败，金额错误')
+                validated_data['coupon'] = coupon
+                validated_data['user'] = user
+                validated_data['mobile'] = user.mobile
+                validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
+                from mp.models import WeiXinPayConfig
+                wx_pay_config = WeiXinPayConfig.get_default()
+                receipt = CouponReceipt.create_record(amount=real_amount, user=user,
+                                                      pay_type=validated_data['pay_type'], biz=CouponReceipt.BIZ_ACT,
+                                                      wx_pay_config=wx_pay_config)
+                validated_data['receipt'] = receipt
+                validated_data['wx_pay_config'] = wx_pay_config
+                order = CouponOrder.objects.create(**validated_data)
+                if not coupon.coupon_change_stock(-validated_data['multiply']):
+                    raise CustomAPIException('消费券库存不足')
+                return order
+            else:
+                raise CustomAPIException('请不要太快下单，稍后再试')
+
+    class Meta:
+        model = CouponOrder
+        fields = ['amount', 'pay_type', 'coupon_no', 'multiply']

@@ -230,6 +230,7 @@ class UserCouponRecord(UseNoAbstract):
                                  discount=coupon.discount, coupon_type=coupon.type,
                                  require_amount=coupon.require_amount, require_num=coupon.require_num)
         obj.save_common()
+        # 增加购买数量
         cls.set_user_obtain_cache(coupon.no, user_id, 1)
         try:
             Coupon.set_pop_up(user_id)
@@ -547,8 +548,8 @@ class CouponReceipt(ReceiptAbstract):
         return f"{str(self.user)} - {self.amount}元"
 
     @classmethod
-    def create_record(cls, amount, user, pay_type, wx_pay_config=None):
-        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, wx_pay_config=wx_pay_config)
+    def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None):
+        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config)
 
     def get_pay_order_info(self):
         return notify_url
@@ -605,7 +606,7 @@ class CouponReceipt(ReceiptAbstract):
 
 class CouponConfig(models.Model):
     auto_cancel_minutes = models.PositiveSmallIntegerField('自动关闭订单分钟数', default=5,
-                                                           help_text='订单创建时间开始多少分钟后未支付自动取消订单，解锁位置',
+                                                           help_text='订单创建时间开始多少分钟后未支付自动取消订单',
                                                            validators=[coupon_cancel_minutes_limit])
 
     class Meta:
@@ -639,6 +640,8 @@ class CouponOrder(models.Model):
     refund_amount = models.DecimalField('已退款金额', max_digits=10, decimal_places=2, default=0)
     receipt = models.OneToOneField(CouponReceipt, verbose_name='支付记录', on_delete=models.CASCADE,
                                    related_name='coupon_receipt')
+    wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
+                                      on_delete=models.SET_NULL)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
     transaction_id = models.CharField('交易号', max_length=100, null=True, blank=True)
@@ -677,6 +680,7 @@ class CouponOrder(models.Model):
         try:
             UserCouponRecord.create_record(self.user.id, self.coupon)
         except Exception as e:
+            log.error('购买消费券，获取失败')
             log.error(e)
 
     def set_cancel(self):
