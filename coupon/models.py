@@ -205,7 +205,8 @@ class UserCouponRecord(UseNoAbstract):
     STATUS_DEFAULT = 1
     STATUS_USE = 2
     STATUS_EXPIRE = 3
-    STATUS_CHOICES = ((STATUS_DEFAULT, u'未使用'), (STATUS_USE, u'已使用'), (STATUS_EXPIRE, u'已过期'))
+    STATUS_INVALID = 4
+    STATUS_CHOICES = ((STATUS_DEFAULT, u'未使用'), (STATUS_USE, u'已使用'), (STATUS_EXPIRE, u'已过期'), (STATUS_INVALID, u'已作废'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
     expire_time = models.DateTimeField('使用截止时间')
     amount = models.DecimalField(u'减免金额', max_digits=13, decimal_places=2, default=0)
@@ -214,6 +215,9 @@ class UserCouponRecord(UseNoAbstract):
     require_num = models.PositiveSmallIntegerField('使用满足张数', default=0, help_text='满张数打折券必填')
     used_time = models.DateTimeField('使用时间', null=True, blank=True)
     create_at = models.DateTimeField('领取时间', auto_now_add=True)
+    buy_order = models.OneToOneField('CouponOrder', verbose_name='购买订单', null=True, blank=True,
+                                     on_delete=models.SET_NULL,
+                                     related_name='buy_order')
     order = models.OneToOneField(TicketOrder, verbose_name='使用订单', null=True, blank=True, on_delete=models.SET_NULL,
                                  related_name='coupon_order')
     snapshot = models.TextField('优惠券快照', null=True, blank=True, help_text='领取时保存的快照', editable=False)
@@ -225,10 +229,11 @@ class UserCouponRecord(UseNoAbstract):
         return '{}:{}'.format(self.user, self.coupon)
 
     @classmethod
-    def create_record(cls, user_id: int, coupon):
+    def create_record(cls, user_id: int, coupon, buy_order: 'CouponOrder' = None):
         obj = cls.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time, amount=coupon.amount,
                                  discount=coupon.discount, coupon_type=coupon.type,
-                                 require_amount=coupon.require_amount, require_num=coupon.require_num)
+                                 require_amount=coupon.require_amount, require_num=coupon.require_num,
+                                 buy_order=buy_order)
         obj.save_common()
         # 增加购买数量
         cls.set_user_obtain_cache(coupon.no, user_id, 1)
@@ -667,6 +672,7 @@ class CouponOrder(models.Model):
         self.refund_amount += amount
         self.status = self.ST_REFUNDING
         self.save(update_fields=['refund_amount', 'status'])
+        UserCouponRecord.objects.filter(buy_order=self).update(status=UserCouponRecord.STATUS_INVALID)
 
     def set_refunded(self):
         self.refund_at = timezone.now()
@@ -682,7 +688,7 @@ class CouponOrder(models.Model):
 
     def send_coupon(self):
         try:
-            UserCouponRecord.create_record(self.user.id, self.coupon)
+            UserCouponRecord.create_record(self.user.id, self.coupon, self)
         except Exception as e:
             log.error('购买消费券，获取失败')
             log.error(e)
@@ -768,6 +774,10 @@ class CommonRefundAbstract(models.Model):
             log.error(e)
             raise CustomAPIException('退款失败，联系管理员')
 
+    @classmethod
+    def can_confirm_status(cls):
+        return [cls.STATUS_DEFAULT, cls.STATUS_PAY_FAILED]
+
 
 class CouponOrderRefund(CommonRefundAbstract):
     order = models.ForeignKey(CouponOrder, related_name='coupon_refund', verbose_name='退款订单', on_delete=models.CASCADE)
@@ -809,6 +819,7 @@ class CouponOrderRefund(CommonRefundAbstract):
         self.op_user = op_user
         self.save(update_fields=['status', 'confirm_at', 'op_user'])
         self.return_order_status()
+        UserCouponRecord.objects.filter(buy_order=self).update(status=UserCouponRecord.STATUS_DEFAULT)
 
     def return_order_status(self):
         if self.order.refund_amount > 0:
@@ -821,7 +832,7 @@ class CouponOrderRefund(CommonRefundAbstract):
         self.finish_at = timezone.now()
         self.error_msg = msg
         self.save(update_fields=['status', 'error_msg', 'finish_at'])
-        self.return_order_status()
+        # self.return_order_status()
 
     def set_finished(self, amount):
         """

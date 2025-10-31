@@ -283,7 +283,7 @@ cancel_refund.short_description = u'取消退款'
 
 
 def confirm_refund(modeladmin, request, queryset):
-    inst = queryset.filter(status=CouponOrderRefund.STATUS_DEFAULT).first()
+    inst = queryset.filter(status__in=CouponOrderRefund.can_confirm_status()).first()
     if inst:
         from caches import run_with_lock
         key = get_redis_name('cprd_{}'.format(inst.id))
@@ -326,7 +326,7 @@ class CouponOrderRefundAdmin(ChangeAndViewAdmin):
 
     def op(self, obj):
         html = ''
-        if obj.status == CouponOrderRefund.STATUS_DEFAULT:
+        if obj.status in CouponOrderRefund.can_confirm_status():
             html = '<button type="button" class="el-button el-button--success el-button--small item_confirm_refund" ' \
                    'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
             html += '<button type="button" class="el-button el-button--warning el-button--small item_cancel_refund" ' \
