@@ -2203,6 +2203,7 @@ class TicketFile(models.Model):
 
     def redis_stock(self, stock=None):
         # 初始化库存
+        log.info('初始化库存,{}'.format(self.id))
         if self.session.has_seat == SessionInfo.SEAT_NO:
             from ticket.stock_updater import tfc, StockModel
             if stock == None:
@@ -4369,7 +4370,7 @@ class TicketOrder(models.Model):
                     record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply,
                     record.amount, record.actual_amount, record.express_fee,
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
-                    str(record.venue), record.get_channel_type_display(), discount_coupon,discount_promotion,
+                    str(record.venue), record.get_channel_type_display(), discount_coupon, discount_promotion,
                     discount_pack]
             ws.append(data)
         # _write_row_by_xlwt(ws, ['END'], row_index)

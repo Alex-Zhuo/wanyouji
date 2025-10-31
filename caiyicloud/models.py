@@ -1223,6 +1223,10 @@ class CyTicketType(models.Model):
                     inst.cy_tf.set_off()
                 inst.set_status(False)
             # 不在循环里做，防止出错回滚
+            from concu import set_redis_provider
+            from caches import get_redis_with_db
+            from functools import partial
+            set_redis_provider(partial(get_redis_with_db, db=3))
             for tt in tf_list:
                 # 改库存
                 tt.redis_stock()
