@@ -307,13 +307,13 @@ confirm_refund.short_description = '确认退款'
 
 class CouponOrderRefundAdmin(ChangeAndViewAdmin):
     list_display = ['order', 'out_refund_no', 'user', 'status', 'refund_amount', 'amount',
-                    'return_reason', 'error_msg', 'transaction_id', 'time_at', 'op']
+                    'refund_reason', 'error_msg', 'transaction_id', 'time_at', 'op']
     search_fields = ['=order_no', '=out_refund_no', '=transaction_id', '=user__mobile']
     list_filter = ['status', 'create_at']
     autocomplete_fields = ['user', 'order', 'op_user']
     actions = [confirm_refund, cancel_refund]
     readonly_fields = [f.name for f in CouponOrderRefund._meta.fields if
-                       f.name not in ['refund_amount', 'return_reason']]
+                       f.name not in ['refund_amount', 'refund_reason']]
 
     def time_at(self, obj):
         html = '<div style="width:300px"><p>创建时间：{}</p>'.format(
