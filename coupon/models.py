@@ -688,7 +688,7 @@ class CouponOrder(models.Model):
 
     def send_coupon(self):
         try:
-            UserCouponRecord.create_record(self.user.id, self.coupon, self)
+            UserCouponRecord.create_record(self.user.id, self.coupon, buy_order=self)
         except Exception as e:
             log.error('购买消费券，获取失败')
             log.error(e)
