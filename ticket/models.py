@@ -2114,7 +2114,7 @@ class TicketFile(models.Model):
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
     stock = models.PositiveIntegerField('库存数量', default=0)
     sales = models.PositiveIntegerField('销量', default=0)
-    desc = models.CharField('票档描述', max_length=20, null=True, blank=True)
+    desc = models.CharField('票档描述', max_length=100, null=True, blank=True)
     status = models.BooleanField(u'是否上架', default=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
