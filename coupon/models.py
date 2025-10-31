@@ -54,6 +54,9 @@ def coupon_refund_no(tail_length=3):
 class CouponBasic(models.Model):
     image = models.ImageField('弹窗图片', upload_to=f'{IMAGE_FIELD_PREFIX}/coupon/basic',
                               validators=[validate_image_file_extension])
+    auto_cancel_minutes = models.PositiveSmallIntegerField('自动关闭订单分钟数', default=5,
+                                                           help_text='订单创建时间开始多少分钟后未支付自动取消订单',
+                                                           validators=[coupon_cancel_minutes_limit], editable=False)
 
     class Meta:
         verbose_name_plural = verbose_name = '消费券配置'
@@ -607,20 +610,6 @@ class CouponReceipt(ReceiptAbstract):
         self.transaction_id = transaction_id if transaction_id else self.transaction_id
         self.save(update_fields=['status', 'transaction_id'])
         self.biz_paid()
-
-
-class CouponConfig(models.Model):
-    auto_cancel_minutes = models.PositiveSmallIntegerField('自动关闭订单分钟数', default=5,
-                                                           help_text='订单创建时间开始多少分钟后未支付自动取消订单',
-                                                           validators=[coupon_cancel_minutes_limit])
-
-    class Meta:
-        verbose_name_plural = verbose_name = '基本配置'
-
-    @classmethod
-    def get(cls):
-        return cls.objects.first()
-
 
 class CouponOrder(models.Model):
     ST_DEFAULT = 1

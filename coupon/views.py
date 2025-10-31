@@ -1,7 +1,6 @@
 # coding:utf-8
 from rest_framework.response import Response
-from coupon.models import Coupon, UserCouponRecord, CouponBasic, CouponActivity, CouponReceipt, CouponOrderRefund, \
-    CouponConfig, CouponOrder
+from coupon.models import Coupon, UserCouponRecord, CouponBasic, CouponActivity, CouponReceipt, CouponOrderRefund,  CouponOrder
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
     UserCouponRecordAvailableNewSerializer, CouponActivitySerializer, UserCouponRecordActCreateSerializer, \
     CouponOrderSerializer, CouponOrderDetailSerializer, CouponOrderCreateSerializer
