@@ -267,6 +267,8 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
         user = request.user
         if not user.mobile:
             raise CustomAPIException('请先绑定手机')
+        if validated_data['multiply'] != 1:
+            raise CustomAPIException('每次最多购买一张')
         key = get_redis_name('cnpod_{}'.format(user.id))
         coupon_no = validated_data.pop('coupon_no')
         with run_with_lock(key, 5) as got:
