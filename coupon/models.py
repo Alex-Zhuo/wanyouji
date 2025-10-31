@@ -655,6 +655,10 @@ class CouponOrder(models.Model):
         return self.order_no
 
     @classmethod
+    def can_refund_status(cls):
+        return [cls.ST_PAID]
+
+    @classmethod
     def get_snapshot(cls, coupon: Coupon):
         data = dict(coupon=dict(name=coupon.name, amount=coupon.pay_amount))
         return json.dumps(data)
@@ -771,7 +775,7 @@ class CouponOrderRefund(CommonRefundAbstract):
     out_refund_no = models.CharField(u'退款单号', max_length=64, default=coupon_refund_no, unique=True, db_index=True)
 
     class Meta:
-        verbose_name_plural = verbose_name = '活动退款记录'
+        verbose_name_plural = verbose_name = '消费卷退款记录'
         ordering = ['-pk']
 
     @classmethod
