@@ -1210,7 +1210,7 @@ class CyTicketType(models.Model):
                         cy_ticket.save(update_fields=['origin_price'])
                 color_index += 1
                 tf_ids.append(tf.id)
-                tf_list.append(tf)
+                # tf_list.append(tf)
             show = cy_session.event.show
             if show.price <= 0 or show.price > show_price:
                 show.price = show_price
@@ -1223,15 +1223,15 @@ class CyTicketType(models.Model):
                     inst.cy_tf.set_off()
                 inst.set_status(False)
             # 不在循环里做，防止出错回滚
-            from concu import set_redis_provider
-            from caches import get_redis_with_db
-            from functools import partial
-            set_redis_provider(partial(get_redis_with_db, db=3))
-            for tt in tf_list:
-                # 改库存
-                tt.redis_stock()
-                # 改缓存
-                tt.redis_ticket_level_cache()
+            # from concu import set_redis_provider
+            # from caches import get_redis_with_db
+            # from functools import partial
+            # set_redis_provider(partial(get_redis_with_db, db=3))
+            # for tt in tf_list:
+            #     # 改库存
+            #     tt.redis_stock()
+            #     # 改缓存
+            #     tt.redis_ticket_level_cache()
 
     def set_off(self):
         self.enabled = 0
