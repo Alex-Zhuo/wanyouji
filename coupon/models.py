@@ -611,6 +611,7 @@ class CouponReceipt(ReceiptAbstract):
         self.save(update_fields=['status', 'transaction_id'])
         self.biz_paid()
 
+
 class CouponOrder(models.Model):
     ST_DEFAULT = 1
     ST_PAID = 2
@@ -628,6 +629,7 @@ class CouponOrder(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='用户', null=True)
     mobile = models.CharField('手机号', max_length=20)
     coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='cp_order', verbose_name='消费卷')
+    coupon_name = models.CharField('消费卷名称', max_length=128)
     status = models.PositiveSmallIntegerField('状态', choices=PAYMENT_STATUS, default=ST_DEFAULT)
     multiply = models.PositiveSmallIntegerField('数量')
     amount = models.DecimalField('实付金额', max_digits=10, decimal_places=2)
@@ -654,7 +656,7 @@ class CouponOrder(models.Model):
 
     @classmethod
     def get_snapshot(cls, coupon: Coupon):
-        data = dict(coupon=dict(name=coupon.name, amount=coupon.pay_amount))
+        data = dict(coupon=dict(amount=coupon.pay_amount))
         return json.dumps(data)
 
     def push_refund(self, amount):

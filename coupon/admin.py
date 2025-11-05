@@ -192,7 +192,7 @@ coupon_set_paid.short_description = u'后台付款'
 class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
     list_display = ['order_no', 'user', 'mobile', 'coupon', 'amount', 'multiply', 'status', 'create_at', 'pay_at',
                     'transaction_id']
-    search_fields = ['=transaction_id', '=mobile', '=order_no']
+    search_fields = ['=transaction_id', '=mobile', '=order_no', 'coupon_name']
     list_filter = ['status', 'pay_at']
     readonly_fields = ['user', 'receipt']
     actions = ['coupon_refund', export_coupon_order, coupon_set_paid]
@@ -226,7 +226,9 @@ class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
                 'status': 'error',
                 'msg': '退款金额错误'
             })
-        st, msg = CouponOrderRefund.create_record(coupon_order, amount=refund_amount, refund_reason=refund_reason)
+        st, msg, obj = CouponOrderRefund.create_record(coupon_order, amount=refund_amount, refund_reason=refund_reason)
+        if obj:
+            st, msg = obj.set_confirm(request.user)
         if not st:
             return JsonResponse(data={
                 'status': 'error',
@@ -244,9 +246,9 @@ class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
     coupon_refund.layer = {
         # 弹出层中的输入框配置
         # 这里指定对话框的标题
-        'title': '申请退款',
+        'title': '消费券申请退款',
         # 提示信息
-        'tips': '消费卷订单申请退款',
+        'tips': '消费券退款后，实付金额将原路返回给用户，确认执行退款吗',
         # 确认按钮显示文本
         'confirm_button': '确认提交',
         # 取消按钮显示文本

@@ -39,11 +39,11 @@ def send_show_start_notice():
     from ticket.models import TicketOrder
     TicketOrder.send_show_start_notice()
 
-
-@shared_task
-def update_ticket_file_stock_from_redis():
-    from ticket.models import TicketFile
-    TicketFile.update_stock_from_redis()
+#
+# @shared_task
+# def update_ticket_file_stock_from_redis():
+#     from ticket.models import TicketFile
+#     TicketFile.update_stock_from_redis()
 
 
 @shared_task

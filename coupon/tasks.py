@@ -16,7 +16,7 @@ def coupon_bind_user_task(mobile: str, user_id: int):
     # 绑定消费券
     UserCouponCacheRecord.do_bind_user_task(mobile, user_id)
 
-
-@shared_task
-def coupon_update_stock_from_redis():
-    Coupon.coupon_update_stock_from_redis()
+#
+# @shared_task
+# def coupon_update_stock_from_redis():
+#     Coupon.coupon_update_stock_from_redis()

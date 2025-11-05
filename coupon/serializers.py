@@ -246,7 +246,8 @@ class CouponOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CouponOrder
-        fields = ['order_no', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display', 'snapshot']
+        fields = ['order_no', 'coupon_name', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display',
+                  'snapshot']
 
 
 class CouponOrderDetailSerializer(CouponOrderSerializer):
@@ -300,6 +301,7 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
                                                       wx_pay_config=wx_pay_config)
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
+                validated_data['coupon_name'] = coupon.name
                 order = CouponOrder.objects.create(**validated_data)
                 if not coupon.coupon_change_stock(-validated_data['multiply']):
                     raise CustomAPIException('消费券库存不足')
