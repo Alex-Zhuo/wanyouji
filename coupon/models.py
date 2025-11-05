@@ -260,7 +260,12 @@ class UserCouponRecord(UseNoAbstract):
         """
         自动过期任务
         """
-        cls.objects.filter(status=cls.STATUS_DEFAULT, expire_time__lte=timezone.now()).update(status=cls.STATUS_EXPIRE)
+        qs = cls.objects.filter(status=cls.STATUS_DEFAULT, expire_time__lte=timezone.now())
+        for obj in qs:
+            obj.status = cls.STATUS_EXPIRE
+            obj.save(update_fields=['status'])
+            if obj.buy_order:
+                obj.buy_order.do_refund(op_user=None, refund_reason='过期自动退款')
 
     @classmethod
     def user_obtain_key(cls, coupon_no: str, user_id: int):
@@ -702,6 +707,13 @@ class CouponOrder(models.Model):
             UserCouponRecord.set_user_obtain_cache(coupon.no, self.user.id, -1)
         return True, ''
 
+    def do_refund(self, op_user=None, refund_reason=None):
+        refund_amount = self.amount - self.refund_amount
+        st, msg, obj = CouponOrderRefund.create_record(self, amount=refund_amount, refund_reason=refund_reason)
+        if obj:
+            st, msg = obj.set_confirm(op_user)
+        return st, msg
+
 
 class CommonRefundAbstract(models.Model):
     STATUS_DEFAULT = 1
@@ -738,7 +750,7 @@ class CommonRefundAbstract(models.Model):
         return refund_notify_url
 
     @classmethod
-    def create_record(cls, order, amount=0, refund_reason=None):
+    def create_record(cls, order, amount=Decimal('0'), refund_reason=None):
         receipt = order.receipt
         refund_amount = amount if amount > 0 else order.amount
         if receipt.status == CouponReceipt.STATUS_FINISHED and receipt.transaction_id:
@@ -762,8 +774,13 @@ class CommonRefundAbstract(models.Model):
                 self.save(update_fields=['status', 'confirm_at', 'op_user'])
             return st, msg
         except Exception as e:
+            self.status = self.STATUS_PAY_FAILED
+            self.confirm_at = timezone.now()
+            self.error_msg = str(e)
+            self.op_user = op_user
+            self.save(update_fields=['status', 'confirm_at', 'op_user'])
             log.error(e)
-            raise CustomAPIException('退款失败，联系管理员')
+            return False, str(e)
 
     @classmethod
     def can_confirm_status(cls):

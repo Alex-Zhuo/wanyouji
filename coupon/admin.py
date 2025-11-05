@@ -226,9 +226,7 @@ class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
                 'status': 'error',
                 'msg': '退款金额错误'
             })
-        st, msg, obj = CouponOrderRefund.create_record(coupon_order, amount=refund_amount, refund_reason=refund_reason)
-        if obj:
-            st, msg = obj.set_confirm(request.user)
+        st, msg = coupon_order.do_refund(request.user, refund_reason)
         if not st:
             return JsonResponse(data={
                 'status': 'error',
