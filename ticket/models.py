@@ -740,14 +740,20 @@ class ShowProject(UseNoAbstract):
                         name = redis_ticket_level_cache.format(session['no'])
                     ticket_level_keys_list = pika.hkeys(name)
                     # log.debug(ticket_level_keys_list)
+                    pack_list = []
                     for key in ticket_level_keys_list:
                         level = pika.hget(name, key)
                         if level:
                             level = json.loads(level)
                             level['stock'] = tfc.get_stock(level['id'])
-                            session['ticket_level'].append(level)
+                            if level.get('cy') and level['cy'].get('ticket_pack_list'):
+                                pack_list.append(level)
+                            else:
+                                session['ticket_level'].append(level)
                     if session.get('ticket_level'):
                         session['ticket_level'] = sorted(session['ticket_level'], key=lambda x: x['price'])
+                    if pack_list:
+                        session['ticket_level'] += sorted(pack_list, key=lambda x: x['price'])
         return data
 
     @classmethod
