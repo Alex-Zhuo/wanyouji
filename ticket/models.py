@@ -746,6 +746,8 @@ class ShowProject(UseNoAbstract):
                             level = json.loads(level)
                             level['stock'] = tfc.get_stock(level['id'])
                             session['ticket_level'].append(level)
+                    if session.get('ticket_level'):
+                        session['ticket_level'] = sorted(session['ticket_level'], key=lambda x: x['price'])
         return data
 
     @classmethod
