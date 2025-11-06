@@ -746,6 +746,8 @@ class ShowProject(UseNoAbstract):
                             level = json.loads(level)
                             level['stock'] = tfc.get_stock(level['id'])
                             session['ticket_level'].append(level)
+                    if session.get('ticket_level'):
+                        session['ticket_level'] = sorted(session['ticket_level'], key=lambda x: x['price'])
         return data
 
     @classmethod
@@ -2114,7 +2116,7 @@ class TicketFile(models.Model):
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
     stock = models.PositiveIntegerField('库存数量', default=0)
     sales = models.PositiveIntegerField('销量', default=0)
-    desc = models.CharField('票档描述', max_length=20, null=True, blank=True)
+    desc = models.CharField('票档描述', max_length=100, null=True, blank=True)
     status = models.BooleanField(u'是否上架', default=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
@@ -2203,6 +2205,7 @@ class TicketFile(models.Model):
 
     def redis_stock(self, stock=None):
         # 初始化库存
+        log.info('初始化库存,{}'.format(self.id))
         if self.session.has_seat == SessionInfo.SEAT_NO:
             from ticket.stock_updater import tfc, StockModel
             if stock == None:
@@ -4369,7 +4372,7 @@ class TicketOrder(models.Model):
                     record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply,
                     record.amount, record.actual_amount, record.express_fee,
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
-                    str(record.venue), record.get_channel_type_display(), discount_coupon,discount_promotion,
+                    str(record.venue), record.get_channel_type_display(), discount_coupon, discount_promotion,
                     discount_pack]
             ws.append(data)
         # _write_row_by_xlwt(ws, ['END'], row_index)

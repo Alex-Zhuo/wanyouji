@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.apps import AppConfig
-from functools import partial
 
 
 class TicketConfig(AppConfig):

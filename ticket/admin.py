@@ -561,6 +561,13 @@ def set_on_session(modeladmin, request, queryset):
         raise AdminException('商品已上架')
     try:
         st, msg = inst.set_status(SessionInfo.STATUS_ON)
+        if inst.is_cy_session and inst.has_seat == inst.SEAT_NO:
+            tf_list = TicketFile.objects.filter(session=inst, status=True)
+            for tt in tf_list:
+                # 改库存
+                tt.redis_stock()
+                # 改缓存
+                tt.redis_ticket_level_cache()
     except Exception as e:
         raise AdminException('{}'.format(e))
     if not st:
