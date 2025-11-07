@@ -161,7 +161,7 @@ class CouponOrderViewSet(ReturnNoneViewSet):
         return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=None))
 
     @action(methods=['get'], detail=False)
-    def get_detail(self, request):
+    def details(self, request):
         order_no = request.GET.get('order_no')
         try:
             order = CouponOrder.objects.get(order_no=order_no, user_id=request.user.id)
