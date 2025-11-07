@@ -123,7 +123,7 @@ class CouponReceiptViewSet(BaseReceiptViewset):
     refund_class = CouponOrderRefund
 
     def before_pay(self, request, pk):
-        receipt = get_object_or_404(self.receipt_class, pk=pk)
+        receipt = get_object_or_404(self.receipt_class, payno=pk)
         now = timezone.now()
         # bc = CouponConfig.get()
         # auto_cancel_minutes = bc.auto_cancel_minutes if bc else 5
