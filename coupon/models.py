@@ -110,6 +110,8 @@ class Coupon(UseNoAbstract):
         elif self.type in [self.TYPE_MONEY_DISCOUNT, self.TYPE_NUM_DISCOUNT]:
             if self.discount <= 0:
                 raise ValidationError('打折比率必须大于0')
+        if self.source_type == self.SR_PAY and self.pay_amount <= 0:
+            raise ValidationError('付费购买消费券，价格必须大于0')
 
     @property
     def need_buy(self):
