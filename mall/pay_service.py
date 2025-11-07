@@ -179,7 +179,8 @@ class MpPayClient(PayClient):
         notify_url = request.build_absolute_uri(receipt.get_notify_url())
         logger.debug('notify url is {}'.format(notify_url))
         time_expire = None
-        if receipt.biz == receipt.BIZ_TICKET:
+        from mall.models import Receipt
+        if receipt.__class__ == Receipt and receipt.biz == receipt.BIZ_TICKET:
             if hasattr(receipt, 'ticket_order'):
                 from ticket.models import TicketOrder
                 t_order = receipt.ticket_order
