@@ -4,7 +4,7 @@ from simpleui.admin import AjaxAdmin
 
 from dj import technology_admin
 from coupon.models import UserCouponRecord, Coupon, UserCouponImport, UserCouponCacheRecord, CouponBasic, \
-    CouponActivity, CouponOrder, CouponOrderRefund
+    CouponActivity, CouponOrder, CouponOrderRefund, CouponReceipt
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, AddAndViewAdmin, ChangeAndViewAdmin
 from django.contrib import messages
 from dj_ext import AdminException
@@ -336,6 +336,19 @@ class CouponOrderRefundAdmin(ChangeAndViewAdmin):
     op.short_description = '操作'
 
 
+class CouponReceiptAdmin(OnlyViewAdmin):
+    list_display = ['payno', 'transaction_id', 'user', 'amount', 'status', 'pay_type', 'prepay_id']
+    search_fields = ['payno', 'transaction_id']
+    list_filter = ['status']
+    readonly_fields = ['biz', 'user']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(CouponBasic, CouponBasicAdmin)
 admin.site.register(Coupon, CouponAdmin)
 admin.site.register(UserCouponRecord, UserCouponRecordAdmin)
@@ -344,6 +357,7 @@ admin.site.register(UserCouponCacheRecord, UserCouponCacheRecordAdmin)
 admin.site.register(CouponActivity, CouponActivityAdmin)
 admin.site.register(CouponOrder, CouponOrderAdmin)
 admin.site.register(CouponOrderRefund, CouponOrderRefundAdmin)
+admin.site.register(CouponReceipt, CouponReceiptAdmin)
 
 technology_admin.register(CouponBasic, CouponBasicAdmin)
 technology_admin.register(Coupon, CouponAdmin)
@@ -353,3 +367,4 @@ technology_admin.register(UserCouponCacheRecord, UserCouponCacheRecordAdmin)
 technology_admin.register(CouponActivity, CouponActivityAdmin)
 technology_admin.register(CouponOrder, CouponOrderAdmin)
 technology_admin.register(CouponOrderRefund, CouponOrderRefundAdmin)
+technology_admin.register(CouponReceipt, CouponReceiptAdmin)
