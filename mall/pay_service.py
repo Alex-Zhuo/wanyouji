@@ -181,6 +181,7 @@ class MpPayClient(PayClient):
         time_expire = None
         from mall.models import Receipt
         if receipt.__class__ == Receipt and receipt.biz == receipt.BIZ_TICKET:
+            # 票务订单要加过期时间
             if hasattr(receipt, 'ticket_order'):
                 from ticket.models import TicketOrder
                 t_order = receipt.ticket_order
