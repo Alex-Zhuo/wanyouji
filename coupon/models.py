@@ -570,6 +570,11 @@ class CouponReceipt(ReceiptAbstract):
         return notify_url
 
     @property
+    def pay_client(self):
+        from mall.pay_service import get_mp_pay_client
+        return get_mp_pay_client(self.pay_type, self.wx_pay_config)
+
+    @property
     def paid(self):
         return self.status == self.STATUS_FINISHED
 
