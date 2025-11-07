@@ -275,7 +275,7 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
         with run_with_lock(key, 5) as got:
             if got:
                 try:
-                    coupon = Coupon.objects.get(coupon_no=coupon_no, status=Coupon.STATUS_ON, source_type=Coupon.SR_PAY)
+                    coupon = Coupon.objects.get(no=coupon_no, status=Coupon.STATUS_ON, source_type=Coupon.SR_PAY)
                 except Coupon.DoesNotExist:
                     raise CustomAPIException('消费卷已下架')
                 obtain_num = UserCouponRecord.get_user_obtain_cache(coupon.no, user.id)
