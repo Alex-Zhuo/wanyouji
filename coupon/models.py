@@ -636,7 +636,7 @@ class CouponOrder(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='用户', null=True)
     mobile = models.CharField('手机号', max_length=20)
     coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='cp_order', verbose_name='消费卷')
-    coupon_name = models.CharField('消费卷名称', max_length=128)
+    coupon_name = models.CharField('消费卷名称', max_length=128, null=True)
     status = models.PositiveSmallIntegerField('状态', choices=PAYMENT_STATUS, default=ST_DEFAULT)
     multiply = models.PositiveSmallIntegerField('数量')
     amount = models.DecimalField('实付金额', max_digits=10, decimal_places=2)
@@ -645,6 +645,7 @@ class CouponOrder(models.Model):
                                    related_name='coupon_receipt')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
+    pay_type = models.SmallIntegerField('付款类型', choices=CouponReceipt.PAY_CHOICES, default=CouponReceipt.PAY_NOT_SET)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
     transaction_id = models.CharField('交易号', max_length=100, null=True, blank=True)
