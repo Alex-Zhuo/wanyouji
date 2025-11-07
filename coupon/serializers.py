@@ -293,7 +293,7 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
                 validated_data['coupon'] = coupon
                 validated_data['user'] = user
                 validated_data['mobile'] = user.mobile
-                validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
+                # validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
                 from mp.models import WeiXinPayConfig
                 wx_pay_config = WeiXinPayConfig.get_default()
                 receipt = CouponReceipt.create_record(amount=real_amount, user=user,

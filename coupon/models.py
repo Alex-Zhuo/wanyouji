@@ -663,7 +663,8 @@ class CouponOrder(models.Model):
 
     @classmethod
     def get_snapshot(cls, coupon: Coupon):
-        data = dict(coupon=dict(amount=coupon.pay_amount))
+        return None
+        data = dict(coupon=dict(amount=float(coupon.pay_amount)))
         return json.dumps(data)
 
     def push_refund(self, amount):
