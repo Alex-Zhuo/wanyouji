@@ -566,7 +566,7 @@ class CouponReceipt(ReceiptAbstract):
     def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None):
         return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config)
 
-    def get_pay_order_info(self):
+    def get_notify_url(self):
         return notify_url
 
     @property
@@ -578,7 +578,7 @@ class CouponReceipt(ReceiptAbstract):
     def paid(self):
         return self.status == self.STATUS_FINISHED
 
-    def get_notify_url(self):
+    def get_pay_order_info(self):
         return dict(body='消费卷支付记录订单', user_id=self.get_user_id())
 
     def get_user_id(self):
