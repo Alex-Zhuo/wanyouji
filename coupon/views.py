@@ -1,6 +1,7 @@
 # coding:utf-8
 from rest_framework.response import Response
-from coupon.models import Coupon, UserCouponRecord, CouponBasic, CouponActivity, CouponReceipt, CouponOrderRefund,  CouponOrder
+from coupon.models import Coupon, UserCouponRecord, CouponBasic, CouponActivity, CouponReceipt, CouponOrderRefund, \
+    CouponOrder
 from coupon.serializers import CouponSerializer, UserCouponRecordSerializer, UserCouponRecordCreateSerializer, \
     UserCouponRecordAvailableNewSerializer, CouponActivitySerializer, UserCouponRecordActCreateSerializer, \
     CouponOrderSerializer, CouponOrderDetailSerializer, CouponOrderCreateSerializer
@@ -29,6 +30,14 @@ class CouponViewSet(ReturnNoDetailViewSet):
     serializer_class = CouponSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
+
+    def list(self, request, *args, **kwargs):
+        source_type = request.GET.get('source_type')
+        source_type = Coupon.SR_FREE if not source_type else int(source_type)
+        queryset = self.queryset.filter(source_type=source_type)
+        page = self.paginate_queryset(queryset)
+        ret = self.get_paginated_response(self.serializer_class(page, many=True, context={'request': request}).data)
+        return ret
 
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def receive(self, request):
