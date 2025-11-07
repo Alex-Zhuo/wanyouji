@@ -132,7 +132,7 @@ class CouponReceiptViewSet(BaseReceiptViewset):
         # receipt.query_status(order.order_no)
         # if receipt.paid:
         #     raise CustomAPIException('该订单已经付款，请尝试刷新订单页面')
-        if order.status != order.STATUS_UNPAID:
+        if order.status != order.ST_DEFAULT:
             raise CustomAPIException('订单状态错误')
         # if order.create_at < expire_at:
         #     order.cancel()
