@@ -161,12 +161,12 @@ class CouponOrderViewSet(ReturnNoDetailViewSet):
                 raise CustomAPIException('手慢了，当前抢票人数较多，请稍后重试')
         return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=None))
 
-    @action(methods=['get'], detail=False)
-    def details(self, request):
-        order_no = request.GET.get('order_no')
-        try:
-            order = CouponOrder.objects.get(order_no=order_no, user_id=request.user.id)
-            data = CouponOrderDetailSerializer(order, context={'request': request}).data
-        except CouponOrder.DoesNotExist:
-            raise Http404
-        return Response(data)
+    # @action(methods=['get'], detail=False)
+    # def details(self, request):
+    #     order_no = request.GET.get('order_no')
+    #     try:
+    #         order = CouponOrder.objects.get(order_no=order_no, user_id=request.user.id)
+    #         data = CouponOrderDetailSerializer(order, context={'request': request}).data
+    #     except CouponOrder.DoesNotExist:
+    #         raise Http404
+    #     return Response(data)
