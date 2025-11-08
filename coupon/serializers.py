@@ -239,15 +239,14 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
 
 class CouponOrderSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
-    snapshot = serializers.SerializerMethodField()
-
-    def get_snapshot(self, obj):
-        return json.loads(obj.snapshot)
+    # snapshot = serializers.SerializerMethodField()
+    #
+    # def get_snapshot(self, obj):
+    #     return json.loads(obj.snapshot)
 
     class Meta:
         model = CouponOrder
-        fields = ['order_no', 'coupon_name', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display',
-                  'snapshot']
+        fields = ['order_no', 'coupon_name', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display']
 
 
 class CouponOrderDetailSerializer(CouponOrderSerializer):
