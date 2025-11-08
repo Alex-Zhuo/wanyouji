@@ -20,6 +20,7 @@ from restframework_ext.exceptions import CustomAPIException
 from random import sample
 import json
 from django.db.transaction import atomic
+from datetime import timedelta
 
 log = logging.getLogger(__name__)
 notify_url = '/api/coupon/receipt/notify/'
@@ -666,6 +667,14 @@ class CouponOrder(models.Model):
     @classmethod
     def can_refund_status(cls):
         return [cls.ST_PAID]
+
+    @classmethod
+    def auto_cancel_task(cls):
+        close_old_connections()
+        pay_end_at = timezone.now() - timedelta(minutes=5)
+        qs = cls.objects.filter(status=cls.ST_DEFAULT, create_at__lt=pay_end_at)
+        for obj in qs:
+            obj.set_cancel()
 
     @classmethod
     def get_snapshot(cls, coupon: Coupon):
