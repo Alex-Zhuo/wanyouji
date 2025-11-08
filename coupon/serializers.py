@@ -73,10 +73,6 @@ class CouponDetailSerializer(CouponSerializer):
 
 class UserCouponRecordSerializer(serializers.ModelSerializer):
     snapshot = serializers.SerializerMethodField()
-    order_no = serializers.SerializerMethodField()
-
-    def get_order_no(self, obj):
-        return obj.order.order_no if obj.order else None
 
     def get_snapshot(self, obj):
         snapshot = json.loads(obj.snapshot)
@@ -86,7 +82,7 @@ class UserCouponRecordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserCouponRecord
-        fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'order_no', 'amount', 'discount',
+        fields = ['no', 'snapshot', 'status', 'expire_time', 'used_time', 'create_at', 'amount', 'discount',
                   'require_amount', 'require_num', 'coupon_type']
 
 
@@ -239,14 +235,17 @@ class UserCouponRecordActCreateSerializer(serializers.ModelSerializer):
 
 class CouponOrderSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
-    # snapshot = serializers.SerializerMethodField()
-    #
-    # def get_snapshot(self, obj):
-    #     return json.loads(obj.snapshot)
+    coupon_data = serializers.SerializerMethodField()
+
+    def get_coupon_data(self, obj):
+        data = None
+        if hasattr(obj, 'buy_order'):
+            data = UserCouponRecordSerializer(obj.buy_order, context=self.context).data
+        return data
 
     class Meta:
         model = CouponOrder
-        fields = ['order_no', 'coupon_name', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display']
+        fields = ['order_no', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display', 'coupon_data']
 
 
 class CouponOrderDetailSerializer(CouponOrderSerializer):
