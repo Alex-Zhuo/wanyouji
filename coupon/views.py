@@ -139,13 +139,14 @@ class CouponReceiptViewSet(BaseReceiptViewset):
         #     raise CustomAPIException('该订单支付过期，请重新下单')
 
 
-class CouponOrderViewSet(ReturnNoneViewSet):
+class CouponOrderViewSet(ReturnNoDetailViewSet):
     queryset = CouponOrder.objects.all()
     serializer_class = CouponOrderSerializer
     permission_classes = [IsPermittedUser]
     http_method_names = ['get']
     pagination_class = StandardResultsSetPagination
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+    filter_fields = ['status']
 
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def create_order(self, request):
