@@ -561,10 +561,10 @@ class TikTokQualRecord(models.Model):
 
 class ShowProject(UseNoAbstract):
     title = models.CharField('节目名称', max_length=100, help_text='100个字内')
-    cate_second = models.ForeignKey(ShowContentCategorySecond, verbose_name='分类', on_delete=models.CASCADE, null=True)
+    cate_second = models.ForeignKey(ShowContentCategorySecond, verbose_name='分类', on_delete=models.SET_NULL, null=True)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True)
-    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.CASCADE, null=True)
-    venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, help_text='提交后不可修改')
+    show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.SET_NULL, null=True)
+    venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True, help_text='提交后不可修改')
     lat = models.FloatField('纬度', default=0, help_text='场馆纬度')
     lng = models.FloatField('经度', default=0, help_text='场馆经度')
     city_id = models.IntegerField('城市ID', editable=False, default=0)
@@ -1083,7 +1083,7 @@ class ContractInfo(models.Model):
 
 
 class SessionInfo(UseNoAbstract):
-    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.CASCADE, related_name='session_info')
+    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.SET_NULL,  null=True, related_name='session_info')
     venue_id = models.IntegerField('场馆ID', editable=False, default=0)
     title = models.CharField('场次名称', max_length=60, help_text='60个字内,不填则默认项目名称，其他平台使用', null=True,
                              blank=True)
@@ -3059,8 +3059,8 @@ class TicketOrder(models.Model):
     u_user_id = models.IntegerField('用户id', default=0)
     u_agent_id = models.IntegerField('代理id', default=0)
     title = models.CharField('节目名称', max_length=60)
-    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.CASCADE)
-    venue = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.CASCADE, null=True)
+    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.SET_NULL)
+    venue = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True)
     mobile = models.CharField('手机号', max_length=20, null=True)
     express_address = models.CharField('送货地址', max_length=200, null=True, blank=True)
     order_no = models.CharField(u'订单号', max_length=128, unique=True, default=randomstrwithdatetime, db_index=True)
@@ -4584,7 +4584,7 @@ class TicketUserCode(models.Model):
     product_id = models.CharField('抖音商品ID', null=True, blank=True, max_length=50, editable=False)
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
     session_seat = models.ForeignKey(SessionSeat, verbose_name='演出场次座位', null=True, blank=True,
-                                     on_delete=models.CASCADE)
+                                     on_delete=models.SET_NULL)
     session_id = models.IntegerField('场次ID', default=0, editable=False, db_index=True)
     STATUS_DEFAULT = 1
     STATUS_CHECK = 2
