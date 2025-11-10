@@ -220,7 +220,7 @@ class CyCategory(ChoicesCommon):
 
 
 class CyVenue(models.Model):
-    venue = models.OneToOneField(Venues, verbose_name='场馆', on_delete=models.CASCADE, related_name='cy_venue')
+    venue = models.OneToOneField(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True, related_name='cy_venue')
     province_name = models.CharField("省", max_length=32)
     city_name = models.CharField("市", max_length=32)
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场馆ID')
@@ -260,7 +260,7 @@ class CyVenue(models.Model):
 
 class CyShowEvent(models.Model):
     # 基本信息
-    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.CASCADE, related_name='cy_show')
+    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.SET_NULL, null=True, related_name='cy_show')
     category = models.PositiveSmallIntegerField(
         choices=[
             (1, '演出'),
@@ -604,10 +604,10 @@ class CySession(models.Model):
         (3, '场次开始后'),
     ]
     # 基本信息
-    c_session = models.OneToOneField(SessionInfo, verbose_name='场次', on_delete=models.CASCADE,
+    c_session = models.OneToOneField(SessionInfo, verbose_name='场次', on_delete=models.SET_NULL, null=True,
                                      related_name='cy_session')
     # 关联信息
-    event = models.ForeignKey(CyShowEvent, on_delete=models.CASCADE, verbose_name='关联节目')
+    event = models.ForeignKey(CyShowEvent, on_delete=models.SET_NULL, null=True, verbose_name='关联节目')
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场次ID')
     std_id = models.CharField(max_length=64, verbose_name='中心场次ID')
     start_time = models.DateTimeField('开始时间', db_index=True)
@@ -1265,9 +1265,9 @@ check_in_code(票码、核销码)-一般来说是直接刷码入场使用，也�
 
 
 class CyOrder(models.Model):
-    ticket_order = models.OneToOneField(TicketOrder, verbose_name='订单', on_delete=models.CASCADE,
+    ticket_order = models.OneToOneField(TicketOrder, verbose_name='订单', on_delete=models.SET_NULL, null=True,
                                         related_name='cy_order')
-    cy_session = models.ForeignKey(CySession, verbose_name=u'彩艺场次', on_delete=models.CASCADE)
+    cy_session = models.ForeignKey(CySession, verbose_name=u'彩艺场次', on_delete=models.SET_NULL, null=True)
     cy_order_no = models.CharField('彩艺云订单号', max_length=100, db_index=True)
     ST_DEFAULT = 1
     ST_PAY = 2
@@ -1630,9 +1630,9 @@ class CyTicketCode(models.Model):
         (1, '已核销'),
         (2, '部分核销'),
     ]
-    ticket_code = models.OneToOneField(TicketUserCode, verbose_name='演出票(座位)信息', on_delete=models.CASCADE,
+    ticket_code = models.OneToOneField(TicketUserCode, verbose_name='演出票(座位)信息', on_delete=models.SET_NULL, null=True,
                                        related_name='cy_code')
-    cy_order = models.ForeignKey(CyOrder, verbose_name='订单', on_delete=models.CASCADE)
+    cy_order = models.ForeignKey(CyOrder, verbose_name='订单', on_delete=models.SET_NULL, null=True)
     ticket_id = models.CharField('票ID', max_length=50, db_index=True, null=True)
     ticket_no = models.CharField('票号', max_length=50, null=True, blank=True)
     check_in_type = models.PositiveSmallIntegerField('二维码类型', choices=CHECK_IN_TYPE_CHOICES, default=1)
