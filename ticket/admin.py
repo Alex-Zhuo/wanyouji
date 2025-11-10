@@ -60,7 +60,7 @@ class CommonAdmin(RemoveDeleteModelAdmin):
         return False
 
 
-class ShowContentCategorySecondInline(admin.TabularInline):
+class ShowContentCategorySecondInline(RemoveDeleteTabularInline):
     model = ShowContentCategorySecond
     extra = 0
     autocomplete_fields = ['show_type']

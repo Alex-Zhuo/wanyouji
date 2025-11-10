@@ -564,7 +564,7 @@ class ShowProject(UseNoAbstract):
     cate_second = models.ForeignKey(ShowContentCategorySecond, verbose_name='分类', on_delete=models.SET_NULL, null=True)
     cate = models.ForeignKey(ShowContentCategory, verbose_name='内容分类', on_delete=models.SET_NULL, null=True)
     show_type = models.ForeignKey(ShowType, verbose_name='节目分类', on_delete=models.SET_NULL, null=True)
-    venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.SET_NULL, help_text='提交后不可修改', null=True)
+    venues = models.ForeignKey(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True, help_text='提交后不可修改')
     lat = models.FloatField('纬度', default=0, help_text='场馆纬度')
     lng = models.FloatField('经度', default=0, help_text='场馆经度')
     city_id = models.IntegerField('城市ID', editable=False, default=0)
@@ -740,14 +740,20 @@ class ShowProject(UseNoAbstract):
                         name = redis_ticket_level_cache.format(session['no'])
                     ticket_level_keys_list = pika.hkeys(name)
                     # log.debug(ticket_level_keys_list)
+                    pack_list = []
                     for key in ticket_level_keys_list:
                         level = pika.hget(name, key)
                         if level:
                             level = json.loads(level)
                             level['stock'] = tfc.get_stock(level['id'])
-                            session['ticket_level'].append(level)
+                            if level.get('cy') and level['cy'].get('ticket_pack_list'):
+                                pack_list.append(level)
+                            else:
+                                session['ticket_level'].append(level)
                     if session.get('ticket_level'):
                         session['ticket_level'] = sorted(session['ticket_level'], key=lambda x: x['price'])
+                    if pack_list:
+                        session['ticket_level'] += sorted(pack_list, key=lambda x: x['price'])
         return data
 
     @classmethod
@@ -1077,8 +1083,7 @@ class ContractInfo(models.Model):
 
 
 class SessionInfo(UseNoAbstract):
-    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.SET_NULL, null=True,
-                             related_name='session_info')
+    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.SET_NULL,  null=True, related_name='session_info')
     venue_id = models.IntegerField('场馆ID', editable=False, default=0)
     title = models.CharField('场次名称', max_length=60, help_text='60个字内,不填则默认项目名称，其他平台使用', null=True,
                              blank=True)
