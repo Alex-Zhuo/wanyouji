@@ -281,7 +281,6 @@ class ShowProjectAdmin(RemoveDeleteModelAdmin):
     # tiktok_code_display.short_description = '抖音分享二维码'
 
     def wxa_code_display(self, obj):
-        return
         if obj and obj.is_cy_show and obj.cy_show.poster_url and (
                 not obj.logo_mobile or obj.logo_mobile and not os.path.isfile(
             obj.logo_mobile.path)):
