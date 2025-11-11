@@ -205,7 +205,7 @@ class Coupon(UseNoAbstract):
 class UserCouponRecord(UseNoAbstract):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', related_name='coupons',
                              on_delete=models.CASCADE)
-    coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.SET_NULL, null=True)
     coupon_type = models.PositiveSmallIntegerField('优惠卷类型', choices=Coupon.COUPON_TYPE_CHOICES,
                                                    default=Coupon.TYPE_MONEY_OFF)
     STATUS_DEFAULT = 1
@@ -396,7 +396,7 @@ class UserCouponImport(models.Model):
                                                   (ST_FAIL, '异常')])
     create_at = models.DateTimeField(u'创建时间', auto_now_add=True)
     exec_at = models.DateTimeField(u'执行发放时间', null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作人员', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作人员', on_delete=models.SET_NULL,null=True)
     total_num = models.IntegerField('总行数', default=0)
     success_num = models.IntegerField('成功行数', default=0)
     fail_num = models.IntegerField('失败行数', default=0)
@@ -488,7 +488,7 @@ class UserCouponImport(models.Model):
 class UserCouponCacheRecord(models.Model):
     record = models.ForeignKey(UserCouponImport, verbose_name='批量发放记录', on_delete=models.SET_NULL, null=True)
     mobile = models.CharField('手机号', max_length=20, db_index=True)
-    coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, verbose_name='优惠券', on_delete=models.SET_NULL, null=True)
     num = models.PositiveSmallIntegerField('发放数量', default=0)
 
     class Meta:
@@ -641,13 +641,13 @@ class CouponOrder(models.Model):
     order_no = models.CharField(u'订单号', max_length=128, unique=True, default=coupon_order_no, db_index=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='用户', null=True)
     mobile = models.CharField('手机号', max_length=20)
-    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='cp_order', verbose_name='消费卷')
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, related_name='cp_order', verbose_name='消费卷')
     coupon_name = models.CharField('消费卷名称', max_length=128, null=True)
     status = models.PositiveSmallIntegerField('状态', choices=PAYMENT_STATUS, default=ST_DEFAULT)
     multiply = models.PositiveSmallIntegerField('数量')
     amount = models.DecimalField('实付金额', max_digits=10, decimal_places=2)
     refund_amount = models.DecimalField('已退款金额', max_digits=10, decimal_places=2, default=0)
-    receipt = models.OneToOneField(CouponReceipt, verbose_name='支付记录', on_delete=models.CASCADE,
+    receipt = models.OneToOneField(CouponReceipt, verbose_name='支付记录', on_delete=models.PROTECT,
                                    related_name='coupon_receipt')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
@@ -743,7 +743,7 @@ class CommonRefundAbstract(models.Model):
         (STATUS_DEFAULT, '待退款'), (STATUS_PAYING, '退款支付中'), (STATUS_PAY_FAILED, '退款支付失败'), (STATUS_FINISHED, '已完成'),
         (STATUS_CANCELED, '已拒绝'))
     status = models.IntegerField('状态', choices=STATUS_CHOICES, default=STATUS_DEFAULT)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
     refund_amount = models.DecimalField(u'退款金额', max_digits=13, decimal_places=2, default=0)
     refund_reason = models.CharField('退款原因', max_length=200, null=True, blank=True)
     amount = models.DecimalField(u'实退金额', max_digits=13, decimal_places=2, default=0)
@@ -755,7 +755,7 @@ class CommonRefundAbstract(models.Model):
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     confirm_at = models.DateTimeField('确认时间', null=True, blank=True)
     finish_at = models.DateTimeField('完成时间', null=True, blank=True)
-    op_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作退款用户', on_delete=models.CASCADE, null=True,
+    op_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作退款用户', on_delete=models.SET_NULL, null=True,
                                 blank=True, related_name='+')
 
     class Meta:
@@ -806,7 +806,7 @@ class CommonRefundAbstract(models.Model):
 
 
 class CouponOrderRefund(CommonRefundAbstract):
-    order = models.ForeignKey(CouponOrder, related_name='coupon_refund', verbose_name='退款订单', on_delete=models.CASCADE)
+    order = models.ForeignKey(CouponOrder, related_name='coupon_refund', verbose_name='退款订单', on_delete=models.SET_NULL, null=True)
     order_no = models.CharField(u'订单号', max_length=128)
     out_refund_no = models.CharField(u'退款单号', max_length=64, default=coupon_refund_no, unique=True, db_index=True)
 
