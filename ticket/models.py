@@ -818,7 +818,7 @@ class ShowProject(UseNoAbstract):
             show_cache['session_end_at'] = datetime.strftime(self.session_end_at,
                                                              '%Y-%m-%dT%H:%M:%S') if self.session_end_at else None
             show_cache['origin_amount'] = float(self.origin_amount)
-            show_cache['logo_mobile'] = '{}/{}'.format(domain, self.logo_mobile.url)
+            show_cache['logo_mobile'] = '{}/{}'.format(domain, self.logo_mobile.url) if self.logo_mobile else None
             # log.debug(show_cache)
             image_data = []
             qs = ShowsDetailImage.objects.filter(show_id=self.id)
