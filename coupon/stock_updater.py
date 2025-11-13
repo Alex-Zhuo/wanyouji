@@ -2,7 +2,6 @@ import logging
 from typing import List, Type, Union
 
 from concu.stock_cache import StockCache, StockModel
-from ticket.models import TicketFile, SessionInfo
 
 """
 实现库存的缓存
@@ -18,7 +17,8 @@ class CouponStockCache(StockCache):
         return l
 
     def key_prefix(self):
-        return 'coupon-stock'
+        from caches import get_redis_name
+        return get_redis_name('coupon-stock')
 
     def save_stock_model(self, id: Union[int, str], qty: int):
         from coupon.models import Coupon
