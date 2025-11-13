@@ -2116,7 +2116,7 @@ class TicketColor(models.Model):
 class TicketFile(models.Model):
     session = models.ForeignKey(SessionInfo, verbose_name='场次', on_delete=models.CASCADE, related_name='session_level')
     title = models.CharField('节目名称', max_length=100, null=True, blank=True)
-    color = models.ForeignKey(TicketColor, verbose_name='票档颜色', on_delete=models.CASCADE, null=True, blank=True)
+    color = models.ForeignKey(TicketColor, verbose_name='票档颜色', on_delete=models.SET_NULL, null=True, blank=True)
     color_code = models.CharField('色号', max_length=10, help_text='16进制色号', null=True, blank=True, editable=False)
     origin_price = models.DecimalField('原价', max_digits=13, decimal_places=2, default=0)
     price = models.DecimalField('售价', max_digits=13, decimal_places=2, default=0)
@@ -2552,8 +2552,8 @@ class TicketReceipt(Receipt):
 
 
 class SessionSeat(models.Model):
-    ticket_level = models.ForeignKey(TicketFile, verbose_name='票档', on_delete=models.CASCADE, null=True)
-    seats = models.ForeignKey(Seat, verbose_name='座位', on_delete=models.CASCADE, null=True)
+    ticket_level = models.ForeignKey(TicketFile, verbose_name='票档', on_delete=models.SET_NULL, null=True)
+    seats = models.ForeignKey(Seat, verbose_name='座位', on_delete=models.SET_NULL, null=True)
     row = models.IntegerField('行数', default=0)
     column = models.IntegerField('列数', default=0)
     layers = models.IntegerField('层数', default=1)
@@ -5213,9 +5213,9 @@ class TicketOrderRefund(models.Model):
     ST_XHS = 5
     ST_CHOICES = ((ST_WX, '微信退款'), (ST_CARD, '剧场卡订单退款'))
     source_type = models.IntegerField('退款类型', choices=ST_CHOICES, default=ST_WX)
-    user = models.ForeignKey(User, verbose_name='用户', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, verbose_name='用户', on_delete=models.SET_NULL, null=True)
     order = models.ForeignKey(TicketOrder, related_name='ticket_refund_apply', verbose_name='退款订单',
-                              on_delete=models.CASCADE)
+                              on_delete=models.SET_NULL, null=True)
     out_refund_no = models.CharField(u'退款单号', max_length=100, default=randomstrwithdatetime_refund, unique=True,
                                      db_index=True)
     refund_amount = models.DecimalField(u'退款金额', max_digits=13, decimal_places=2, default=0)
@@ -6178,7 +6178,7 @@ class TicketGiveRecord(UseNoAbstract):
     user = models.ForeignKey(User, verbose_name='操作用户', on_delete=models.SET_NULL, null=True)
     order = models.ForeignKey(TicketOrder, verbose_name=u'订单', on_delete=models.SET_NULL, null=True,
                               related_name='give_order')
-    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.CASCADE)
+    session = models.ForeignKey(SessionInfo, verbose_name=u'场次', null=True, on_delete=models.SET_NULL)
     mobile = models.CharField('赠送人手机号', max_length=20)
     give_mobile = models.CharField('受赠人手机号', max_length=20)
     STAT_DEFAULT = 1

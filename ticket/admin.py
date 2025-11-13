@@ -874,7 +874,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
     list_filter = ['has_seat', 'status', 'show', 'start_at', 'is_delete', 'is_paper', 'is_name_buy', 'source_type']
     list_per_page = 25
     readonly_fields = ['actual_amount', 'no', 'cy_no']
-    exclude = ['is_price']
+    exclude = ['is_price', 'title']
 
     def get_actions(self, request):
         config = get_config()
