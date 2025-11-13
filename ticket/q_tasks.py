@@ -6,6 +6,6 @@ def down_load_task():
     async_task(DownLoadTask.do_task)
 
 
-def update_ticket_file_stock_from_redis():
-    from ticket.models import TicketFile
-    TicketFile.update_stock_from_redis()
+# def update_ticket_file_stock_from_redis():
+#     from ticket.models import TicketFile
+#     TicketFile.update_stock_from_redis()

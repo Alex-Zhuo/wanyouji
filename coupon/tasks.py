@@ -20,3 +20,9 @@ def coupon_bind_user_task(mobile: str, user_id: int):
 @shared_task
 def coupon_order_auto_cancel():
     CouponOrder.auto_cancel_task()
+
+
+@shared_task
+def coupon_update_stock_from_redis():
+    from coupon.models import Coupon
+    Coupon.coupon_update_stock_from_redis()

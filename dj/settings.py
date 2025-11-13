@@ -401,10 +401,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'mall.tasks.task_add_discount_total',
         'schedule': timedelta(seconds=123),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'update_ticket_file_stock_from_redis': {
-    #     'task': 'ticket.tasks.update_ticket_file_stock_from_redis',
-    #     'schedule': timedelta(seconds=33),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
+    'update_ticket_file_stock_from_redis': {
+        'task': 'ticket.tasks.update_ticket_file_stock_from_redis',
+        'schedule': timedelta(seconds=33),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    },
     'settle_order_award_task': {
         'task': 'ticket.tasks.settle_order_award_task',
         'schedule': timedelta(seconds=73)
@@ -458,6 +458,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'coupon.tasks.coupon_order_auto_cancel',
         'schedule': timedelta(seconds=127),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
+    # 'coupon_update_stock_from_redis': {
+    #     'task': 'coupon.tasks.coupon_update_stock_from_redis',
+    #     'schedule': timedelta(seconds=47),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # },
     # 彩艺任务
     'confirm_order_task': {
         'task': 'caiyicloud.tasks.confirm_order_task',
