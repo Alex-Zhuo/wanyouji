@@ -48,7 +48,7 @@ class ReceiptAbstract(DateDetailAbstract):
         (PAY_NOT_SET, '空'), (PAY_WeiXin_LP, '微信小程序支付'))
     pay_type = models.SmallIntegerField('付款类型', choices=PAY_CHOICES, default=PAY_NOT_SET)
     sign = models.CharField('微信支付签名', max_length=32, null=True, blank=True)
-    transaction_id = models.CharField('微信(抖音)支付单号', max_length=32, null=True, blank=True)
+    transaction_id = models.CharField('微信支付单号', max_length=32, null=True, blank=True)
     prepay_id = models.CharField('微信支付预支付订单号', max_length=100, null=True, blank=True)
 
     def __unicode__(self):

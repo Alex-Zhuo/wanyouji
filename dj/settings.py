@@ -450,6 +450,7 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ticket.tasks.task_add_commission_balance',
         'schedule': timedelta(seconds=75),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
+    # 消费卷
     'coupon_expire_task': {
         'task': 'coupon.tasks.coupon_expire_task',
         'schedule': timedelta(seconds=61),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -458,10 +459,20 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'coupon.tasks.coupon_order_auto_cancel',
         'schedule': timedelta(seconds=127),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
-    # 'coupon_update_stock_from_redis': {
-    #     'task': 'coupon.tasks.coupon_update_stock_from_redis',
-    #     'schedule': timedelta(seconds=47),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
+    'coupon_update_stock_from_redis': {
+        'task': 'coupon.tasks.coupon_update_stock_from_redis',
+        'schedule': timedelta(seconds=47),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    },
+    # 盲盒
+    'prize_update_stock_from_redis_task': {
+        'task': 'blind_box.tasks.prize_update_stock_from_redis_task',
+        'schedule': timedelta(seconds=31),  # 奖品库存
+    },
+    'blind_box_update_stock_from_redis_task': {
+        'task': 'blind_box.tasks.blind_box_update_stock_from_redis_task',
+        'schedule': timedelta(seconds=33),  # 盲盒库存
+    },
+
     # 彩艺任务
     'confirm_order_task': {
         'task': 'caiyicloud.tasks.confirm_order_task',

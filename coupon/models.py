@@ -178,12 +178,14 @@ class Coupon(UseNoAbstract):
 
     def coupon_change_stock(self, mul):
         ret = True
-        coupon_upd = []
-        coupon_upd.append((self.pk, mul, 0))
         from coupon.stock_updater import csc
-        succ1, tfc_result = csc.batch_incr(coupon_upd)
+        # coupon_upd = []
+        # coupon_upd.append((self.pk, mul, 0))
+        # succ1, tfc_result = csc.batch_incr(coupon_upd)
+        succ1, tfc_result = csc.incr(self.pk, mul, ceiling=0)
         if succ1:
-            csc.batch_record_update_ts(csc.resolve_ids(tfc_result))
+            csc.record_update_ts(self.id)
+            # csc.batch_record_update_ts(csc.resolve_ids(tfc_result))
         else:
             log.warning(f"coupon incr failed,{self.pk}")
             # 库存不足
@@ -654,6 +656,7 @@ class CouponOrder(models.Model):
     pay_type = models.SmallIntegerField('付款类型', choices=CouponReceipt.PAY_CHOICES, default=CouponReceipt.PAY_NOT_SET)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
+    refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
     transaction_id = models.CharField('交易号', max_length=100, null=True, blank=True)
     snapshot = models.TextField('消费卷快照', null=True, blank=True, help_text='下单时保存的快照', editable=False, max_length=2048)
 
