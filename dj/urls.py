@@ -39,6 +39,7 @@ from ticket.views import TicketReceiptViewSet
 # from xiaohongshu.views import XhsWxaViewSet
 from renovation.urls import router as RENOVATION_ROUTER
 from ai_agent.urls import router as AIAGENT_ROUTER
+from blind_box.urls import router as BLINDBOX_ROUTER
 
 BASE_CONF = get_config()
 router = routers.DefaultRouter()
@@ -81,5 +82,6 @@ urlpatterns = [
     url(r'^api/coupon/', include(COUPON_ROUTER.urls)),
     url(r'^api/media/', include(RENOVATION_ROUTER.urls)),
     url(r'^api/aiagent/', include(AIAGENT_ROUTER.urls)),
+    url(r'^api/lottery/', include(BLINDBOX_ROUTER.urls)),
     # url(r'^api_sz/forum/', include(forum_router.urls)),
 ]

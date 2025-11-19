@@ -93,9 +93,9 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 
-class WinningRecordViewSet(ReturnNoDetailViewSet):
+class BlindWinningRecordViewSet(ReturnNoDetailViewSet):
     """中奖记录"""
-    queryset = WinningRecord.objects.all()
+    queryset = BlindBoxWinningRecord.objects.all()
     permission_classes = [IsPermittedUser]
     serializer_class = WinningRecordSerializer
     pagination_class = StandardResultsSetPagination

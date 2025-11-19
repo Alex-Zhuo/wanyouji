@@ -10,13 +10,13 @@ from django.utils import timezone
 from django.conf import settings
 
 from blind_box.models import (
-    Prize, WheelActivity, WheelSection, BlindBox, WinningRecord,
+    Prize, WheelActivity, WheelSection, BlindBox, BlindBoxWinningRecord, BlindBoxWinningRecord,
     SR_COUPON, SR_TICKET, SR_CODE, SR_GOOD,
 )
 # 导入中奖记录状态常量
-ST_PENDING_RECEIVE = WinningRecord.ST_PENDING_RECEIVE
-ST_PENDING_SHIP = WinningRecord.ST_PENDING_SHIP
-ST_COMPLETED = WinningRecord.ST_COMPLETED
+ST_PENDING_RECEIVE = BlindBoxWinningRecord.ST_PENDING_RECEIVE
+ST_PENDING_SHIP = BlindBoxWinningRecord.ST_PENDING_SHIP
+ST_COMPLETED = BlindBoxWinningRecord.ST_COMPLETED
 from blind_box.stock_updater import prsc
 
 log = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def weighted_random_choice(items: List[dict]) -> Optional[dict]:
 
 
 @transaction.atomic
-def draw_wheel_prize(wheel_activity: WheelActivity, user) -> Optional[WinningRecord]:
+def draw_wheel_prize(wheel_activity: WheelActivity, user) -> Optional[BlindBoxWinningRecord]:
     """
     转盘抽奖
     转盘片区附表中库存不为0的奖品权重数总和
@@ -113,7 +113,7 @@ def draw_wheel_prize(wheel_activity: WheelActivity, user) -> Optional[WinningRec
 
 
 @transaction.atomic
-def draw_blind_box_prizes(blind_box: BlindBox, user) -> List[WinningRecord]:
+def draw_blind_box_prizes(blind_box: BlindBox, user) -> List[BlindBoxWinningRecord]:
     """
     盲盒抽奖
     每个格抽出的奖品不重复，下一格抽取时需要去掉上一格的奖品

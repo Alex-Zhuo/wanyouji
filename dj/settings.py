@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'home',
     'caiyicloud',
     'ai_agent',
-    # 'group_activity'
+    'blind_box'
 ]
 
 MIDDLEWARE = [
@@ -317,6 +317,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'ai_agent': {
+            'handlers': ['console', 'fatal'],
+            'level': 'DEBUG',
+        },
+        'blind_box': {
             'handlers': ['console', 'fatal'],
             'level': 'DEBUG',
         },

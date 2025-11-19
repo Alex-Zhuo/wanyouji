@@ -8,7 +8,7 @@ from django.utils import timezone
 import simplejson as json
 
 from blind_box.models import (
-    Prize, BlindBox, WinningRecord, WheelActivity, WheelSection,
+    Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage
 )
 from restframework_ext.exceptions import CustomAPIException
@@ -124,7 +124,7 @@ class WinningRecordSerializer(serializers.ModelSerializer):
     prize_title = serializers.SerializerMethodField()
 
     class Meta:
-        model = WinningRecord
+        model = BlindBoxWinningRecord
         fields = [
             'no', 'user', 'mobile', 'prize', 'prize_title', 'source_type', 'source_type_display',
             'instruction', 'status', 'status_display', 'express_no', 'express_company_code',
