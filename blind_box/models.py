@@ -17,6 +17,9 @@ from django.db.transaction import atomic
 from caches import get_redis_name, run_with_lock
 from django.db.models import F
 from datetime import timedelta
+from typing import List, Optional
+from blind_box.stock_updater import prsc, StockModel
+from blind_box.lottery_utils import weighted_random_choice
 
 SR_COUPON = 1
 SR_TICKET = 2
@@ -25,6 +28,7 @@ SR_GOOD = 4
 PRIZE_SOURCE_TYPE_CHOICES = ((SR_COUPON, '消费券'), (SR_TICKET, '纸质票'), (SR_CODE, '券码'), (SR_GOOD, '实物奖品'))
 notify_url = '/api/blind/receipt/notify/'
 refund_notify_url = '/api/blind/receipt/refund_notify/'
+
 log = logging.getLogger(__name__)
 
 
@@ -182,12 +186,10 @@ class Prize(UseNoAbstract):
     @classmethod
     def prize_update_stock_from_redis(cls):
         close_old_connections()
-        from blind_box.stock_updater import prsc
         prsc.persist()
 
     def prize_change_stock(self, mul):
         ret = True
-        from blind_box.stock_updater import prsc
         # prize_upd = []
         # prize_upd.append((self.pk, mul, 0))
         # succ1, tfc_result = prsc.batch_incr(prize_upd)
@@ -203,13 +205,11 @@ class Prize(UseNoAbstract):
 
     def prize_redis_stock(self, stock=None):
         # 初始化库存
-        from blind_box.stock_updater import prsc, StockModel
         if stock == None:
             stock = self.stock
         prsc.append_cache(StockModel(_id=self.id, stock=stock))
 
     def prize_del_redis_stock(self):
-        from blind_box.stock_updater import prsc
         prsc.remove(self.id)
 
 
@@ -288,6 +288,112 @@ class BlindBox(UseNoAbstract):
     def blind_box_del_redis_stock(self):
         from blind_box.stock_updater import bdbc
         bdbc.remove(self.id)
+
+    @atomic
+    def draw_blind_box_prizes(self) -> List[Prize]:
+        """
+        盲盒抽奖
+        每个格抽出的奖品不重复，下一格抽取时需要去掉上一格的奖品
+        奖品权重数×类型倍数/去掉本次开盒已抽出的奖品后，剩余库存不为0的奖品权重数总和
+        并发安全处理：
+        1. 使用事务保证原子性
+        2. 记录所有已扣减的库存，失败时回滚
+        3. 库存扣减失败时循环重试，直到成功或没有候选奖品
+        """
+        blind_box = self
+        grids_num = blind_box.grids_num
+        drawn_prize = []  # 本次开盒已抽出的奖品列表
+        deducted_stocks = []  # 已扣减的库存记录，格式: [(prize_id, 数量), ...]
+        try:
+            # 检查奖品池库存
+            available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+            available_count = available_prizes.count()
+            if available_count < grids_num:
+                raise Exception("奖品库存不足，请稍后再试！")
+            # 可用奖品池
+            candidates = []
+            for prize in available_prizes:
+                # 检查库存（从redis实时获取）
+                stock = prsc.get_stock(prize.id)
+                if not stock or int(stock) <= 0:
+                    continue
+                # 计算权重：奖品权重数 × 类型倍数
+                # 普通款：权重 = 奖品权重数
+                # 稀有款：权重 = 奖品权重数 × 稀有款权重倍数
+                # 隐藏款：权重 = 奖品权重数 × 隐藏款权重倍数
+                base_weight = prize.weight
+                if prize.rare_type == Prize.RA_RARE:
+                    weight = base_weight * blind_box.rare_weight_multiple
+                elif prize.rare_type == Prize.RA_HIDDEN:
+                    weight = base_weight * blind_box.hidden_weight_multiple
+                else:
+                    weight = base_weight
+                # 权重必须大于0才能参与抽奖
+                if weight > 0:
+                    candidates.append({
+                        'item': prize,
+                        'weight': weight
+                    })
+            if len(candidates) < grids_num:
+                log.error(f"奖品不足")
+                raise Exception(f"奖品库存不足，请稍后再试.")
+            for i in list(range(grids_num)):
+                # 获取可抽取的奖品（排除本次开盒已抽出的奖品）
+                # 循环尝试抽取，直到成功或没有候选奖品
+                selected_prize = None
+                success = False
+                max_retries = len(candidates)  # 最多重试次数等于候选奖品数量
+                retry_count = 0
+
+                while not success and retry_count < max_retries:
+                    # 根据权重随机选择
+                    # 概率计算公式：奖品权重数×类型倍数 / 去掉本次开盒已抽出的奖品后，剩余库存不为0的奖品权重数总和
+                    # weighted_random_choice函数内部会计算总权重作为分母
+                    selected_prize, prize_index = weighted_random_choice(candidates)
+                    if not selected_prize:
+                        log.error(f"抽奖失败，无法完成第 {i + 1} 格抽奖")
+                        raise Exception(f"奖品库存不足，请稍后再试..")
+                    # 减少库存（使用incr方法，ceiling=0表示减后必须>=0，原子操作保证并发安全）
+                    success, new_stock = prsc.incr(selected_prize.id, -1, ceiling=0)
+                    # 去掉已经抽奖过的
+                    candidates.pop(prize_index)
+                    # candidates = [c for c in candidates if c['item'].id != selected_prize.id]
+                    if not success:
+                        # 如果减库存失败（可能被其他请求并发减掉了），从候选列表中移除该奖品，继续重试
+                        log.warning(f"奖品 {selected_prize.id} 库存不足，尝试重新抽取（第 {retry_count + 1} 次重试）")
+                        # 删除掉没有库存的奖品
+                        if len(candidates) < grids_num:
+                            log.error(f"奖品不足。")
+                            raise Exception(f"奖品库存不足，请稍后再试！")
+                        retry_count += 1
+                    else:
+                        # 库存扣减成功，记录已扣减的库存
+                        deducted_stocks.append(selected_prize.id)
+                        prsc.record_update_ts(selected_prize.id)
+                if not success:
+                    raise Exception(f"奖品库存不足，请稍后再试！！")
+                # 添加到已抽中列表
+                drawn_prize.append(selected_prize)
+            # 确保抽取的奖品数量等于格子数
+            if len(drawn_prize) != grids_num:
+                log.error(f"盲盒 {blind_box.id} 抽奖异常：期望 {grids_num} 个奖品，实际 {len(drawn_prize)} 个")
+                raise Exception("抽奖失败，请稍后重试。。")
+            return drawn_prize
+
+        except Exception as e:
+            # 如果抽奖过程中出现任何异常，回滚所有已扣减的库存
+            if deducted_stocks:
+                log.warning(f"盲盒 {blind_box.id} 抽奖失败，开始回滚已扣减的库存，共 {len(deducted_stocks)} 个奖品")
+                for prize_id in deducted_stocks:
+                    try:
+                        # 回滚库存（加回库存）
+                        prsc.incr(prize_id, 1, ceiling=Ellipsis)
+                        prsc.record_update_ts(prize_id)
+                        log.info(f"已回滚奖品 {prize_id} 的库存")
+                    except Exception as rollback_error:
+                        log.error(f"回滚奖品 {prize_id} 库存失败: {rollback_error}")
+            # 重新抛出异常
+            raise
 
 
 class BlindBoxCarouselImage(models.Model):
