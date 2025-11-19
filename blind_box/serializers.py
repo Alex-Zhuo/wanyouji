@@ -9,7 +9,7 @@ import simplejson as json
 
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
-    LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage
+    LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -28,67 +28,62 @@ class PrizeSnapshotSerializer(serializers.ModelSerializer):
 class PrizeDetailImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrizeDetailImage
-        fields = ['id', 'image']
+        fields = ['image']
 
 
 class PrizeSerializer(serializers.ModelSerializer):
     source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
     rare_type_display = serializers.ReadOnlyField(source='get_rare_type_display')
-    status_display = serializers.ReadOnlyField(source='get_status_display')
+
+    class Meta:
+        model = Prize
+        fields = ['no', 'title', 'head_image', 'source_type', 'source_type_display', 'rare_type', 'rare_type_display']
+
+
+class PrizeDetailSerializer(PrizeSerializer):
     detail_images = PrizeDetailImageSerializer(many=True, read_only=True)
     head_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Prize
-        fields = [
-            'no', 'title', 'head_image', 'head_image_url', 'source_type', 'source_type_display',
-            'rare_type', 'rare_type_display', 'amount', 'desc', 'instruction', 'stock', 'weight',
-            'status', 'status_display', 'create_at', 'detail_images'
-        ]
-
-    def get_head_image_url(self, obj):
-        if obj.head_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.head_image.url)
-        return None
+        fields = PrizeSerializer.Meta.fields + ['detail_images', 'desc', 'instruction']
 
 
 class BlindBoxCarouselImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlindBoxCarouselImage
-        fields = ['id', 'image']
+        fields = ['image']
 
 
 class BlindBoxDetailImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlindBoxDetailImage
-        fields = ['id', 'image']
+        fields = ['image']
 
 
 class BlindBoxSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
     type_display = serializers.ReadOnlyField(source='get_type_display')
     grids_num_display = serializers.ReadOnlyField(source='get_grids_num_display')
-    carousel_images = BlindBoxCarouselImageSerializer(many=True, read_only=True)
-    detail_images = BlindBoxDetailImageSerializer(many=True, read_only=True)
-    logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = BlindBox
-        fields = [
-            'no', 'title', 'status', 'status_display', 'grids_num', 'grids_num_display',
-            'type', 'type_display', 'price', 'original_price', 'stock', 'desc',
-            'rare_weight_multiple', 'hidden_weight_multiple', 'logo', 'logo_url',
-            'carousel_images', 'detail_images', 'create_at'
-        ]
+        fields = ['no', 'title', 'status_display', 'status', 'grids_num', 'grids_num_display', 'type', 'type_display',
+                  'price', 'original_price', 'logo']
 
-    def get_logo_url(self, obj):
-        if obj.logo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.logo.url)
-        return None
+
+class BlindBoxDetailSerializer(BlindBoxSerializer):
+    carousel_images = BlindBoxCarouselImageSerializer(many=True, read_only=True)
+    detail_images = BlindBoxDetailImageSerializer(many=True, read_only=True)
+    config = serializers.SerializerMethodField()
+
+    def get_config(self, obj):
+        bl = BlindBasic.get()
+        return dict(rule=bl.box_rule)
+
+    class Meta:
+        model = BlindBox
+        fields = BlindBoxSerializer.Meta.fields + ['carousel_images', 'detail_images', 'desc', 'config']
 
 
 class WheelSectionSerializer(serializers.ModelSerializer):
@@ -109,12 +104,16 @@ class WheelActivityBasicSerializer(serializers.ModelSerializer):
 
 
 class WheelActivitySerializer(serializers.ModelSerializer):
-    status_display = serializers.ReadOnlyField(source='get_status_display')
     sections = WheelSectionSerializer(many=True, read_only=True)
+    config = serializers.SerializerMethodField()
+
+    def get_config(self, obj):
+        bl = BlindBasic.get()
+        return dict(price=bl.price_per_lottery, rule=bl.wheel_rule)
 
     class Meta:
         model = WheelActivity
-        fields = ['no', 'name', 'status', 'status_display', 'create_at', 'description', 'price_per_lottery', 'sections']
+        fields = ['no', 'name', 'description', 'sections', 'config']
 
 
 class WinningRecordSerializer(serializers.ModelSerializer):

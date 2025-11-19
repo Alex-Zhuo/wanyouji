@@ -58,6 +58,8 @@ class BlindBasic(models.Model):
     auto_cancel_minutes = models.PositiveSmallIntegerField('自动取消盲盒订单分钟数', default=10,
                                                            help_text='订单创建时间开始多少分钟后未支付自动取消订单',
                                                            validators=[cancel_minutes_limit])
+    box_rule = models.TextField('盲盒规则', max_length=2000, null=True)
+    wheel_rule = models.TextField('转盘规则', max_length=2000, null=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '盲盒转盘配置'

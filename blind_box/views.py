@@ -12,63 +12,58 @@ from blind_box.models import (
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
-    WinningRecordSerializer, LotteryPurchaseRecordSerializer
+    WinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer
 )
 from blind_box.lottery_utils import draw_wheel_prize, draw_blind_box_prizes
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import StandardResultsSetPagination
-from home.views import ReturnNoDetailViewSet
+from home.views import ReturnNoDetailViewSet, DetailPKtoNoViewSet
 from blind_box.stock_updater import prsc
 import logging
 import simplejson as json
+from django.http import Http404
 
 log = logging.getLogger(__name__)
 
 
-class PrizeViewSet(ReturnNoDetailViewSet):
+class PrizeViewSet(DetailPKtoNoViewSet):
     """奖品列表"""
-    queryset = Prize.objects.filter(status=Prize.STATUS_ON)
+    queryset = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
     permission_classes = [IsPermittedUser]
     serializer_class = PrizeSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
 
+    @action(methods=['get'], detail=True)
+    def details(self, request, no):
+        try:
+            obj = Prize.objects.get(no=no)
+            data = PrizeDetailSerializer(obj, context={'request': request}).data
+        except Prize.DoesNotExist:
+            log.error(no)
+            raise Http404
+        return Response(data)
 
-class BlindBoxViewSet(ReturnNoDetailViewSet):
+
+class BlindBoxViewSet(DetailPKtoNoViewSet):
     """盲盒列表"""
-    queryset = BlindBox.objects.filter(status=BlindBox.STATUS_ON)
+    queryset = BlindBox.objects.filter(status=BlindBox.STATUS_ON, stock__gt=0)
     permission_classes = [IsPermittedUser]
     serializer_class = BlindBoxSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
 
-    @action(methods=['post'], detail=False)
-    def check_stock(self, request):
-        """检查盲盒库存和奖品池库存"""
-        blind_box_id = request.data.get('blind_box_id')
+    @action(methods=['get'], detail=True)
+    def details(self, request, no):
         try:
-            blind_box = BlindBox.objects.get(id=blind_box_id, status=BlindBox.STATUS_ON)
+            obj = BlindBox.objects.get(no=no)
+            data = BlindBoxDetailSerializer(obj, context={'request': request}).data
         except BlindBox.DoesNotExist:
-            raise CustomAPIException('盲盒不存在或已下架')
-
-        # 检查盲盒库存
-        if blind_box.stock <= 0:
-            raise CustomAPIException('盲盒库存不足，请稍后再试！')
-
-        # 检查奖品池库存
-        available_prizes = Prize.objects.filter(status=Prize.STATUS_ON)
-        available_count = 0
-        for prize in available_prizes:
-            stock = prsc.get_stock(prize.id)
-            if stock and int(stock) > 0:
-                available_count += 1
-
-        if available_count < blind_box.grids_num:
-            raise CustomAPIException('奖品库存不足，请稍后再试！')
-
-        return Response({'can_purchase': True})
+            log.error(no)
+            raise Http404
+        return Response(data)
 
 
 class WheelActivityViewSet(ReturnNoDetailViewSet):
@@ -76,8 +71,12 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     queryset = WheelActivity.objects.filter(status=WheelActivity.STATUS_ON)
     permission_classes = [IsPermittedUser]
     serializer_class = WheelActivitySerializer
-    pagination_class = StandardResultsSetPagination
     http_method_names = ['get']
+
+    def list(self, request, *args, **kwargs):
+        obj = self.queryset.first()
+        data = self.serializer_class(obj, context={'request': request}).data
+        return Response(data)
 
     @action(methods=['post'], detail=True)
     def draw(self, request, pk=None):

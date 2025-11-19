@@ -7,7 +7,7 @@ from blind_box.views import (
 router = DefaultRouter()
 
 router.register(r'prize', PrizeViewSet, basename='prize')
-router.register(r'blind-box', BlindBoxViewSet, basename='blind-box')
-router.register(r'wheel-activity', WheelActivityViewSet, basename='wheel-activity')
+router.register(r'blind_box', BlindBoxViewSet, basename='blind_box')
+router.register(r'wheel', WheelActivityViewSet, basename='wheel')
 router.register(r'lottery-purchase', LotteryPurchaseRecordViewSet, basename='lottery-purchase')
 
