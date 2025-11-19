@@ -21,6 +21,5 @@ others/*
 generate_*
 config.py
 streets.json
-blind_box
 bl*.txt
 cdb524080_binlog_mysqlbin.000018

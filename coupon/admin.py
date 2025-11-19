@@ -165,12 +165,13 @@ def export_coupon_order(modeladmin, request, queryset):
         timezone.now().strftime('%Y%m%d%H%M'))
     wb = Workbook()
     ws = wb.active
-    ws.append(['单号', '用户', '手机号', '上级', '实付金额', '状态', '会员等级', '创建时间', '付款时间', '微信支付单号', '备注'])
+    ws.append(['订单号', '用户', '手机号', '消费卷', '实付金额', '数量', '状态', '创建时间', '付款时间', '微信支付单号', '已退款金额', '退款时间'])
     for record in queryset:
         create_at = record.create_at.strftime('%Y-%m-%d %H:%M')
         pay_at = record.pay_at.strftime('%Y-%m-%d %H:%M') if record.pay_at else None
-        data = [record.order_no, str(record.user), record.mobile, record.parent_desc, record.amount,
-                record.get_status_display(), record.level_name, create_at, pay_at, record.transaction_id, record.remark]
+        refund_at = record.refund_at.strftime('%Y-%m-%d %H:%M') if record.refund_at else None
+        data = [record.order_no, str(record.user), record.mobile, record.coupon_name, record.amount, record.multiply,
+                record.get_status_display(), create_at, pay_at, record.transaction_id, record.refund_amount, refund_at]
         ws.append(data)
     wb.save(response)
     return response
@@ -194,9 +195,8 @@ class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
                     'transaction_id']
     search_fields = ['=transaction_id', '=mobile', '=order_no', 'coupon_name']
     list_filter = ['status', 'pay_at']
-    readonly_fields = ['user', 'receipt']
+    readonly_fields = ['user', 'receipt', 'order_no', 'coupon']
     actions = ['coupon_refund', export_coupon_order, coupon_set_paid]
-    autocomplete_fields = ['coupon']
 
     def coupon_refund(self, request, queryset):
         qs = queryset.filter(status__in=CouponOrder.can_refund_status())

@@ -6,7 +6,7 @@ from django.db.transaction import atomic
 from rest_framework import serializers
 from django.utils import timezone
 import json
-from coupon.models import Coupon, UserCouponRecord, CouponActivity, CouponOrder, CouponReceipt
+from coupon.models import Coupon, UserCouponRecord, CouponActivity, CouponOrder, CouponReceipt, CouponBasic
 from restframework_ext.exceptions import CustomAPIException
 from ticket.models import ShowType, ShowProject
 from caches import get_redis_name, run_with_lock
@@ -245,7 +245,8 @@ class CouponOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CouponOrder
-        fields = ['order_no', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display', 'coupon_data']
+        fields = ['order_no', 'amount', 'status', 'multiply', 'create_at', 'pay_at', 'status_display', 'coupon_data',
+                  'pay_end_at']
 
 
 class CouponOrderDetailSerializer(CouponOrderSerializer):
@@ -294,12 +295,16 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
                 # validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
                 from mp.models import WeiXinPayConfig
                 wx_pay_config = WeiXinPayConfig.get_default()
+                cb = CouponBasic.get()
+                auto_cancel_minutes = cb.auto_cancel_minutes if cb else 5
+                pay_end_at = timezone.now() + auto_cancel_minutes
                 receipt = CouponReceipt.create_record(amount=real_amount, user=user,
                                                       pay_type=validated_data['pay_type'], biz=CouponReceipt.BIZ_ACT,
-                                                      wx_pay_config=wx_pay_config)
+                                                      wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
                 validated_data['coupon_name'] = coupon.name
+                validated_data['pay_end_at'] = pay_end_at
                 order = CouponOrder.objects.create(**validated_data)
                 if not coupon.coupon_change_stock(-validated_data['multiply']):
                     raise CustomAPIException('消费券库存不足')

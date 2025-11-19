@@ -55,9 +55,9 @@ def coupon_refund_no(tail_length=3):
 class CouponBasic(models.Model):
     image = models.ImageField('弹窗图片', upload_to=f'{IMAGE_FIELD_PREFIX}/coupon/basic',
                               validators=[validate_image_file_extension])
-    auto_cancel_minutes = models.PositiveSmallIntegerField('自动关闭订单分钟数', default=5,
+    auto_cancel_minutes = models.PositiveSmallIntegerField('自动关闭订单分钟数', default=10,
                                                            help_text='订单创建时间开始多少分钟后未支付自动取消订单',
-                                                           validators=[coupon_cancel_minutes_limit], editable=False)
+                                                           validators=[coupon_cancel_minutes_limit])
 
     class Meta:
         verbose_name_plural = verbose_name = '消费券配置'
@@ -398,7 +398,7 @@ class UserCouponImport(models.Model):
                                                   (ST_FAIL, '异常')])
     create_at = models.DateTimeField(u'创建时间', auto_now_add=True)
     exec_at = models.DateTimeField(u'执行发放时间', null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作人员', on_delete=models.SET_NULL,null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='操作人员', on_delete=models.SET_NULL, null=True)
     total_num = models.IntegerField('总行数', default=0)
     success_num = models.IntegerField('成功行数', default=0)
     fail_num = models.IntegerField('失败行数', default=0)
@@ -557,6 +557,7 @@ class CouponReceipt(ReceiptAbstract):
     attachment = models.TextField('附加数据', null=True, blank=True, help_text='请勿修改此字段')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
+    pay_end_at = models.DateTimeField('支付截止时间', null=True)
 
     class Meta:
         ordering = ['-pk']
@@ -566,8 +567,9 @@ class CouponReceipt(ReceiptAbstract):
         return f"{str(self.user)} - {self.amount}元"
 
     @classmethod
-    def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None):
-        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config)
+    def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None, pay_end_at=None):
+        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config,
+                                  pay_end_at=pay_end_at)
 
     def get_notify_url(self):
         return notify_url
@@ -643,7 +645,8 @@ class CouponOrder(models.Model):
     order_no = models.CharField(u'订单号', max_length=128, unique=True, default=coupon_order_no, db_index=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='用户', null=True)
     mobile = models.CharField('手机号', max_length=20)
-    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, related_name='cp_order', verbose_name='消费卷')
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, related_name='cp_order',
+                               verbose_name='消费卷')
     coupon_name = models.CharField('消费卷名称', max_length=128, null=True)
     status = models.PositiveSmallIntegerField('状态', choices=PAYMENT_STATUS, default=ST_DEFAULT)
     multiply = models.PositiveSmallIntegerField('数量')
@@ -659,6 +662,7 @@ class CouponOrder(models.Model):
     refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
     transaction_id = models.CharField('交易号', max_length=100, null=True, blank=True)
     snapshot = models.TextField('消费卷快照', null=True, blank=True, help_text='下单时保存的快照', editable=False, max_length=2048)
+    pay_end_at = models.DateTimeField('支付截止时间', null=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '购买订单'
@@ -674,8 +678,9 @@ class CouponOrder(models.Model):
     @classmethod
     def auto_cancel_task(cls):
         close_old_connections()
-        pay_end_at = timezone.now() - timedelta(minutes=5)
-        qs = cls.objects.filter(status=cls.ST_DEFAULT, create_at__lt=pay_end_at)
+        # 延迟两分钟自动取消
+        pay_end_at = timezone.now() - timedelta(minutes=2)
+        qs = cls.objects.filter(status=cls.ST_DEFAULT, pay_end_at__lt=pay_end_at)
         for obj in qs:
             obj.set_cancel()
 
@@ -809,7 +814,8 @@ class CommonRefundAbstract(models.Model):
 
 
 class CouponOrderRefund(CommonRefundAbstract):
-    order = models.ForeignKey(CouponOrder, related_name='coupon_refund', verbose_name='退款订单', on_delete=models.SET_NULL, null=True)
+    order = models.ForeignKey(CouponOrder, related_name='coupon_refund', verbose_name='退款订单', on_delete=models.SET_NULL,
+                              null=True)
     order_no = models.CharField(u'订单号', max_length=128)
     out_refund_no = models.CharField(u'退款单号', max_length=64, default=coupon_refund_no, unique=True, db_index=True)
 
