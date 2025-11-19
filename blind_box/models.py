@@ -88,8 +88,9 @@ class BlindReceipt(ReceiptAbstract):
         return f"{str(self.user)} - {self.amount}元"
 
     @classmethod
-    def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None):
-        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config)
+    def create_record(cls, amount, user, pay_type, biz, wx_pay_config=None, pay_end_at=None):
+        return cls.objects.create(amount=amount, user=user, pay_type=pay_type, biz=biz, wx_pay_config=wx_pay_config,
+                                  pay_end_at=pay_end_at)
 
     def get_notify_url(self):
         return notify_url

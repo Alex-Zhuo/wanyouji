@@ -159,7 +159,7 @@ class CouponOrderViewSet(ReturnNoDetailViewSet):
             else:
                 log.warning(f" can't the queue")
                 raise CustomAPIException('手慢了，当前抢票人数较多，请稍后重试')
-        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=None))
+        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
 
     # @action(methods=['get'], detail=False)
     # def details(self, request):
