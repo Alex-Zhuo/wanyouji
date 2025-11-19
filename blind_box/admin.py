@@ -279,37 +279,22 @@ set_completed.short_description = '设为已完成'
 
 class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
     list_display = [
-        'no', 'user', 'mobile', 'prize', 'status_display',
+        'no', 'user', 'mobile', 'prize', 'status', 'source_type',
         'express_company_name', 'express_no', 'winning_at', 'receive_at', 'ship_at', 'complete_at']
-    list_filter = ['status', 'source_type', 'winning_at', 'source']
+    list_filter = ['status', 'source_type', 'winning_at']
     search_fields = ['=mobile', '=no']
-    readonly_fields = ['no', 'winning_at', 'receive_at', 'ship_at', 'complete_at', 'blind_box_order', 'lottery']
+    readonly_fields = ['no', 'user', 'prize', 'winning_at', 'receive_at', 'ship_at', 'complete_at']
     actions = [export_shipment_list, 'shipping_good', set_completed]
-    autocomplete_fields = ['user', 'prize', 'wheel_activity', 'blind_box']
-    fieldsets = (
-        ('基本信息', {
-            'fields': (
-                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'source', 'wheel_activity',
-                'blind_box', 'blind_box_order', 'lottery')
-        }),
-        ('状态信息', {
-            'fields': ('status', 'winning_at', 'receive_at', 'ship_at', 'complete_at')
-        }),
-        ('物流信息', {
-            'fields': ('express_user_name', 'express_phone', 'express_address', 'express_no', 'express_company_code',
-                       'express_company_name')
-        }),
-    )
 
-    def source_type_display(self, obj):
-        return obj.get_source_type_display()
-
-    source_type_display.short_description = '奖品类型'
-
-    def status_display(self, obj):
-        return obj.get_status_display()
-
-    status_display.short_description = '状态'
+    # def source_type_display(self, obj):
+    #     return obj.get_source_type_display()
+    #
+    # source_type_display.short_description = '奖品类型'
+    #
+    # def status_display(self, obj):
+    #     return obj.get_status_display()
+    #
+    # status_display.short_description = '状态'
 
     def shipping_good(self, request, queryset):
         qs = queryset.filter(status=WinningRecordAbstract.ST_PENDING_SHIP)
@@ -401,21 +386,14 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
 
 
 class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
-    list_display = [
-        'no', 'user', 'mobile', 'prize', 'source_type_display', 'status_display',
-        'express_company_name', 'express_no', 'winning_at', 'receive_at', 'ship_at', 'complete_at', 'blind_box_order',
-        'lottery',
-    ]
-    list_filter = ['status', 'source_type', 'winning_at', 'source']
-    search_fields = ['=mobile', '=no']
-    readonly_fields = ['no', 'winning_at', 'receive_at', 'ship_at', 'complete_at', 'blind_box_order', 'lottery']
-    actions = [export_shipment_list, 'shipping_good', set_completed]
-    autocomplete_fields = ['user', 'prize', 'wheel_activity', 'blind_box']
+    list_display = WinningRecordAbstractAdmin.list_display + ['blind_box_order', 'blind_box_title']
+    readonly_fields = WinningRecordAbstractAdmin.readonly_fields + ['blind_box_order', 'blind_box_title']
+    list_filter = WinningRecordAbstractAdmin.list_filter + ['blind_box_order']
+    exclude = ['blind_box']
     fieldsets = (
         ('基本信息', {
             'fields': (
-                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'source', 'wheel_activity',
-                'blind_box', 'blind_box_order', 'lottery')
+                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'blind_box_title', 'blind_box_order')
         }),
         ('状态信息', {
             'fields': ('status', 'winning_at', 'receive_at', 'ship_at', 'complete_at')
@@ -428,21 +406,14 @@ class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
 
 
 class WheelWinningRecordAdmin(WinningRecordAbstractAdmin):
-    list_display = [
-        'no', 'user', 'mobile', 'prize', 'source_type_display', 'status_display',
-        'express_company_name', 'express_no', 'winning_at', 'receive_at', 'ship_at', 'complete_at', 'blind_box_order',
-        'lottery',
-    ]
-    list_filter = ['status', 'source_type', 'winning_at', 'source']
-    search_fields = ['=mobile', '=no']
-    readonly_fields = ['no', 'winning_at', 'receive_at', 'ship_at', 'complete_at', 'blind_box_order', 'lottery']
-    actions = [export_shipment_list, 'shipping_good', set_completed]
-    autocomplete_fields = ['user', 'prize', 'wheel_activity', 'blind_box']
+    list_display = WinningRecordAbstractAdmin.list_display + ['lottery_record', 'wheel_name']
+    readonly_fields = WinningRecordAbstractAdmin.readonly_fields + ['lottery_record', 'wheel_name']
+    list_filter = WinningRecordAbstractAdmin.list_filter + ['lottery_record']
+    exclude = ['wheel_activity']
     fieldsets = (
         ('基本信息', {
             'fields': (
-                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'source', 'wheel_activity',
-                'blind_box', 'blind_box_order', 'lottery')
+                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'wheel_name', 'lottery_record')
         }),
         ('状态信息', {
             'fields': ('status', 'winning_at', 'receive_at', 'ship_at', 'complete_at')
@@ -452,6 +423,7 @@ class WheelWinningRecordAdmin(WinningRecordAbstractAdmin):
                        'express_company_name')
         }),
     )
+
 
 class WinningRecordShipmentReceiptAdmin(OnlyViewAdmin):
     list_display = ['create_at', 'operator', 'receipt_file', 'remark']

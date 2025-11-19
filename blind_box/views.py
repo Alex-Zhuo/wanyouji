@@ -8,7 +8,7 @@ from django.db import transaction
 from datetime import timedelta
 
 from blind_box.models import (
-    Prize, BlindBox, WinningRecord, WheelActivity, LotteryPurchaseRecord
+    Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
@@ -23,6 +23,7 @@ from home.views import ReturnNoDetailViewSet
 from blind_box.stock_updater import prsc
 import logging
 import simplejson as json
+
 log = logging.getLogger(__name__)
 
 
@@ -51,11 +52,11 @@ class BlindBoxViewSet(ReturnNoDetailViewSet):
             blind_box = BlindBox.objects.get(id=blind_box_id, status=BlindBox.STATUS_ON)
         except BlindBox.DoesNotExist:
             raise CustomAPIException('盲盒不存在或已下架')
-        
+
         # 检查盲盒库存
         if blind_box.stock <= 0:
             raise CustomAPIException('盲盒库存不足，请稍后再试！')
-        
+
         # 检查奖品池库存
         available_prizes = Prize.objects.filter(status=Prize.STATUS_ON)
         available_count = 0
@@ -63,10 +64,10 @@ class BlindBoxViewSet(ReturnNoDetailViewSet):
             stock = prsc.get_stock(prize.id)
             if stock and int(stock) > 0:
                 available_count += 1
-        
+
         if available_count < blind_box.grids_num:
             raise CustomAPIException('奖品库存不足，请稍后再试！')
-        
+
         return Response({'can_purchase': True})
 
 
@@ -83,12 +84,12 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         """转盘抽奖"""
         wheel_activity = self.get_object()
         user = request.user
-        
+
         with transaction.atomic():
             winning_record = draw_wheel_prize(wheel_activity, user)
             if not winning_record:
                 raise CustomAPIException('抽奖失败，请稍后重试')
-        
+
         return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 
@@ -106,13 +107,13 @@ class WinningRecordViewSet(ReturnNoDetailViewSet):
     def receive(self, request, pk=None):
         """领取奖品（纸质票、券码类型）"""
         winning_record = self.get_object()
-        
+
         if winning_record.source_type not in [Prize.SR_TICKET, Prize.SR_CODE]:
             raise CustomAPIException('该奖品类型不支持此操作')
-        
+
         if winning_record.status != WinningRecord.ST_PENDING_RECEIVE:
             raise CustomAPIException('该中奖记录状态不正确')
-        
+
         # 弹窗提示用户联系客服
         return Response({
             'message': '请联系在线客服提供中奖记录信息领取奖品！',
@@ -123,13 +124,13 @@ class WinningRecordViewSet(ReturnNoDetailViewSet):
     def confirm_receipt(self, request, pk=None):
         """确认收货（实物奖品）"""
         winning_record = self.get_object()
-        
+
         if winning_record.source_type != Prize.SR_GOOD:
             raise CustomAPIException('该奖品类型不支持此操作')
-        
+
         if winning_record.status != WinningRecord.ST_PENDING_RECEIPT:
             raise CustomAPIException('该中奖记录状态不正确')
-        
+
         winning_record.set_completed()
         return Response({'message': '确认收货成功'})
 

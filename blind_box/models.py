@@ -516,7 +516,7 @@ class WinningRecordAbstract(models.Model):
         self.save(update_fields=['status', 'ship_at', 'express_no', 'express_company_code', 'express_company_name'])
 
 
-class WheelWinningRecord(WinningRecordAbstract):
+class BlindBoxWinningRecord(WinningRecordAbstract):
     blind_box_order = models.ForeignKey(BlindBoxOrder, on_delete=models.SET_NULL, verbose_name='盲盒订单',
                                         related_name='blind_box_items',
                                         null=True, blank=True)
@@ -737,7 +737,7 @@ class UserLotteryRecord(models.Model):
                            snapshot=snapshot)
 
 
-class BlindBoxWinningRecord(WinningRecordAbstract):
+class WheelWinningRecord(WinningRecordAbstract):
     lottery_record = models.ForeignKey(UserLotteryRecord, on_delete=models.SET_NULL, verbose_name='转盘抽奖记录',
                                        related_name='lottery_items',
                                        null=True, blank=True)
@@ -745,7 +745,7 @@ class BlindBoxWinningRecord(WinningRecordAbstract):
     wheel_name = models.CharField('转盘名称', max_length=128)
 
     class Meta:
-        verbose_name_plural = verbose_name = '盲盒中奖记录'
+        verbose_name_plural = verbose_name = '转盘中奖记录'
         ordering = ['-pk']
 
 
