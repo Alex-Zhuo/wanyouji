@@ -83,12 +83,10 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         """转盘抽奖"""
         wheel_activity = self.get_object()
         user = request.user
-
         with transaction.atomic():
             winning_record = draw_wheel_prize(wheel_activity, user)
             if not winning_record:
                 raise CustomAPIException('抽奖失败，请稍后重试')
-
         return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 

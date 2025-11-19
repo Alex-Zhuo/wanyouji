@@ -87,14 +87,17 @@ class BlindBoxDetailSerializer(BlindBoxSerializer):
 
 
 class WheelSectionSerializer(serializers.ModelSerializer):
-    prize_name_display = serializers.SerializerMethodField()
+    prize = serializers.SerializerMethodField()
+
+    def get_prize(self, obj):
+        if not obj.prize:
+            return None
+        data = PrizeSerializer(obj.prize, context=self.context).data
+        return data
 
     class Meta:
         model = WheelSection
-        fields = ['id', 'prize', 'prize_name', 'prize_name_display', 'weight', 'winning_tip', 'is_enabled']
-
-    def get_prize_name_display(self, obj):
-        return obj.prize_name or (obj.prize.title if obj.prize else '')
+        fields = ['no', 'prize', 'is_no_prize']
 
 
 class WheelActivityBasicSerializer(serializers.ModelSerializer):
@@ -104,8 +107,13 @@ class WheelActivityBasicSerializer(serializers.ModelSerializer):
 
 
 class WheelActivitySerializer(serializers.ModelSerializer):
-    sections = WheelSectionSerializer(many=True, read_only=True)
+    sections = serializers.SerializerMethodField()
     config = serializers.SerializerMethodField()
+
+    def get_sections(self, obj):
+        qs = obj.sections.filter(is_enabled=True)
+        data = WheelSectionSerializer(qs, many=True, context=self.context).data
+        return data
 
     def get_config(self, obj):
         bl = BlindBasic.get()
