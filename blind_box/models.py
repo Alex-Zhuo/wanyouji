@@ -524,7 +524,7 @@ class BlindBoxWinningRecord(WinningRecordAbstract):
     blind_box_title = models.CharField('盲盒名称', max_length=128)
 
     class Meta:
-        verbose_name_plural = verbose_name = '转盘中奖记录'
+        verbose_name_plural = verbose_name = '盲盒中奖记录'
         ordering = ['-pk']
 
 
