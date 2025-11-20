@@ -24,7 +24,7 @@ class PrizeOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prize
-        fields = ['head_image', 'rare_type_display']
+        fields = ['head_image', 'rare_type_display', 'rare_type']
 
 
 class PrizeSnapshotSerializer(serializers.ModelSerializer):
