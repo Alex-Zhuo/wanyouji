@@ -116,7 +116,7 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
             else:
                 log.warning(f"盲盒抢购排队超时失败")
                 raise CustomAPIException('当前抢够人数较多，请稍后重试')
-        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
+        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at, order_no=order.order_no))
 
     @action(methods=['get'], detail=False)
     def prizes(self, request):
