@@ -60,9 +60,10 @@ class PrizeDetailImageInline(admin.TabularInline):
 
 
 class PrizeAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'title', 'status', 'source_type', 'rare_type', 'amount', 'stock',
+    list_display = ['no', 'title', 'display_order', 'status', 'source_type', 'rare_type', 'amount', 'stock',
                     'weight', 'create_at']
     list_filter = ['status', 'source_type', 'rare_type']
+    list_editable = ['display_order']
     search_fields = ['no', 'title']
     actions = [set_on, set_off, 'add_stock']
     inlines = [PrizeDetailImageInline]
@@ -177,9 +178,10 @@ blind_set_off.short_description = '下架'
 
 
 class BlindBoxAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'title', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
+    list_display = ['no', 'title', 'display_order', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
                     'rare_weight_multiple', 'hidden_weight_multiple', 'create_at']
     list_filter = ['status', 'type', 'grids_num']
+    list_editable = ['display_order']
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
     actions = [set_on, set_off, 'add_stock']

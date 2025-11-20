@@ -181,7 +181,7 @@ class Prize(UseShortNoAbstract):
 
     class Meta:
         verbose_name_plural = verbose_name = '奖品'
-        ordering = ['-display_order']
+        ordering = ['-display_order', '-pk']
 
     @classmethod
     def prize_update_stock_from_redis(cls):
@@ -251,11 +251,12 @@ class BlindBox(UseShortNoAbstract):
     hidden_weight_multiple = models.PositiveSmallIntegerField('隐藏款权重倍数', default=1)
     logo = models.ImageField('盲盒封面图', upload_to=f'{IMAGE_FIELD_PREFIX}/blind/box',
                              validators=[validate_image_file_extension])
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '盲盒'
-        ordering = ['-pk']
+        ordering = ['-display_order', '-pk']
 
     def __str__(self):
         return self.title
