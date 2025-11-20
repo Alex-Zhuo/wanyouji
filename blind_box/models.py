@@ -398,7 +398,7 @@ class BlindBox(UseShortNoAbstract):
             raise
 
     @classmethod
-    def test_draw_prize(cls):
+    def test_draw_prize(cls, test_count=10000):
         blind_box = cls.objects.first()
         available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
         # 可用奖品池
@@ -432,7 +432,6 @@ class BlindBox(UseShortNoAbstract):
             print(f"{prize}: {prob:.4f} ({prob * 100:.2f}%)")
         print("\n使用random.choices方法进行10000次抽奖测试：")
         # 进行多次抽奖测试
-        test_count = 10000
         results = {}
         # 测试手动实现的方法
         results_manual = {}
@@ -440,7 +439,7 @@ class BlindBox(UseShortNoAbstract):
             selected, index = weighted_random_choice(candidates)
             if selected:
                 results_manual[selected.title] = results_manual.get(selected.title, 0) + 1
-                results[index] = results_manual.get(index, 0) + 1
+                results[index] = results.get(index, 0) + 1
         # 输出测试结果
         for prize, count in results_manual.items():
             actual_prob = count / test_count
