@@ -56,12 +56,12 @@ class BlindBoxViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     http_method_names = ['get']
 
     @action(methods=['get'], detail=True)
-    def details(self, request, no):
+    def details(self, request, pk):
         try:
-            obj = BlindBox.objects.get(no=no)
+            obj = BlindBox.objects.get(no=pk)
             data = BlindBoxDetailSerializer(obj, context={'request': request}).data
         except BlindBox.DoesNotExist:
-            log.error(no)
+            log.error(pk)
             raise Http404
         return Response(data)
 

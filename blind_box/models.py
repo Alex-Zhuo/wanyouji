@@ -212,6 +212,9 @@ class Prize(UseNoAbstract):
     def prize_del_redis_stock(self):
         prsc.remove(self.id)
 
+    @classmethod
+    def test_draw_prize(cls):
+
 
 class PrizeDetailImage(models.Model):
     """奖品详情介绍图附表"""
