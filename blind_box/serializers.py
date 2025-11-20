@@ -151,10 +151,21 @@ class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):
 class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
     source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
+    snapshot = serializers.SerializerMethodField()
+
+    def get_snapshot(self, obj):
+        request = self.context.get('request')
+        snapshot = json.loads(obj.snapshot)
+        head_image = snapshot.get('head_image', None)
+        if head_image:
+            snapshot['head_image'] = request.build_absolute_uri(head_image)
+        else:
+            snapshot['head_image'] = None
+        return snapshot
 
     class Meta:
         model = BlindBoxWinningRecord
-        fields = ['no', 'source_type', 'source_type_display', 'status', 'status_display']
+        fields = ['no', 'source_type', 'source_type_display', 'status', 'status_display', 'snapshot', 'winning_at']
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
