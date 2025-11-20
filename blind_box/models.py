@@ -617,7 +617,7 @@ def winning_record_no(tail_length=3):
 
 
 class WinningRecordAbstract(models.Model):
-    ST_UNPAID = 1  # 待领取
+    ST_UNPAID = 1  # 未付款
     ST_PENDING_RECEIVE = 2  # 待领取
     ST_PENDING_SHIP = 3  # 待发货
     ST_PENDING_RECEIPT = 4  # 待收货

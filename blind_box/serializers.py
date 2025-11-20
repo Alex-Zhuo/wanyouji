@@ -172,9 +172,21 @@ class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
 
 
 class BlindBoxWinningRecordDetailSerializer(BlindBoxWinningRecordSerializer):
+    box = serializers.SerializerMethodField()
+
+    def get_box(self, obj):
+        order = obj.blind_box_order
+        data = dict(title=obj.blind_box_title, order_no=None, amount=0,
+                    box_no=obj.blind_box.no if obj.blind_box else None)
+        if order:
+            data['order_no'] = order.order_no
+            data['amount'] = order.amount
+        return data
+
     class Meta:
-        model = LotteryPurchaseRecord
-        fields = BlindBoxWinningRecordSerializer.Meta.fields
+        model = BlindBoxWinningRecord
+        fields = BlindBoxWinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
+                                                                'box']
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
