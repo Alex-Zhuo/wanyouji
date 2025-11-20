@@ -540,6 +540,21 @@ class BlindBoxOrder(models.Model):
             self.transaction_id = self.receipt.transaction_id
             self.pay_at = timezone.now()
             self.save(update_fields=['status', 'pay_at', 'transaction_id'])
+            self.change_prize_status()
+
+    def change_prize_status(self):
+        self.blind_box_items.exclude(source_type=SR_COUPON).update(status=WinningRecordAbstract.ST_PENDING_RECEIVE)
+        bb_qs = self.blind_box_items.filter(source_type=SR_COUPON)
+        from coupon.models import UserCouponRecord
+        for bb in bb_qs:
+            if bb.prize and bb.prize.coupon:
+                coupon = bb.prize.coupon
+                try:
+                    UserCouponRecord.create_record(self.user.id, coupon, win_prize_no=bb.no)
+                except Exception as e:
+                    log.error('盲盒付款发放消费券失败')
+                    log.error(e)
+                    pass
 
     @classmethod
     def get_snapshot(cls, blind_box: BlindBox):

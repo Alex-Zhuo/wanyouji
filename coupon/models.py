@@ -228,6 +228,7 @@ class UserCouponRecord(UseNoAbstract):
                                      related_name='buy_order')
     order = models.OneToOneField(TicketOrder, verbose_name='使用订单', null=True, blank=True, on_delete=models.SET_NULL,
                                  related_name='coupon_order')
+    win_prize_no = models.CharField('中奖序号', max_length=128, null=True, blank=True, editable=False)
     snapshot = models.TextField('优惠券快照', null=True, blank=True, help_text='领取时保存的快照', editable=False)
 
     class Meta:
@@ -237,11 +238,11 @@ class UserCouponRecord(UseNoAbstract):
         return '{}:{}'.format(self.user, self.coupon)
 
     @classmethod
-    def create_record(cls, user_id: int, coupon, buy_order: 'CouponOrder' = None):
+    def create_record(cls, user_id: int, coupon, buy_order: 'CouponOrder' = None, win_prize_no=None):
         obj = cls.objects.create(user_id=user_id, coupon=coupon, expire_time=coupon.expire_time, amount=coupon.amount,
                                  discount=coupon.discount, coupon_type=coupon.type,
                                  require_amount=coupon.require_amount, require_num=coupon.require_num,
-                                 buy_order=buy_order)
+                                 buy_order=buy_order, win_prize_no=win_prize_no)
         obj.save_common()
         # 增加购买数量
         cls.set_user_obtain_cache(coupon.no, user_id, 1)
