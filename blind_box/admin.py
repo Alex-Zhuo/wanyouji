@@ -597,7 +597,7 @@ class WheelSectionInline(RemoveDeleteStackedInline):
     model = WheelSection
     extra = 0
     autocomplete_fields = ['prize']
-    readonly_fields = ['no']
+    exclude = ['no']
 
 
 class WheelActivityAdmin(RemoveDeleteModelAdmin):

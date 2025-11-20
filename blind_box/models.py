@@ -183,6 +183,9 @@ class Prize(UseShortNoAbstract):
         verbose_name_plural = verbose_name = '奖品'
         ordering = ['-display_order', '-pk']
 
+    def __str__(self):
+        return self.title
+
     @classmethod
     def prize_update_stock_from_redis(cls):
         close_old_connections()
