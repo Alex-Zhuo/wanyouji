@@ -25,8 +25,8 @@ SR_TICKET = 2
 SR_CODE = 3
 SR_GOOD = 4
 PRIZE_SOURCE_TYPE_CHOICES = ((SR_COUPON, '消费券'), (SR_TICKET, '纸质票'), (SR_CODE, '券码'), (SR_GOOD, '实物奖品'))
-notify_url = '/api/blind/receipt/notify/'
-refund_notify_url = '/api/blind/receipt/refund_notify/'
+notify_url = '/api/lottery/receipt/notify/'
+refund_notify_url = '/api/lottery/receipt/refund_notify/'
 
 log = logging.getLogger(__name__)
 
