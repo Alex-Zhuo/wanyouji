@@ -621,7 +621,7 @@ class WinningRecordAbstract(models.Model):
     prize = models.ForeignKey(Prize, verbose_name='奖品', on_delete=models.SET_NULL, null=True)
     source_type = models.PositiveSmallIntegerField('奖品类型', choices=PRIZE_SOURCE_TYPE_CHOICES, default=SR_COUPON)
     remark = models.TextField('备注', blank=True, max_length=1000, null=True)
-    status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_PENDING_RECEIVE)
+    status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_UNPAID)
     express_no = models.CharField('快递单号', max_length=50, blank=True, null=True)
     express_company_code = models.CharField('快递公司编码', max_length=30, blank=True, null=True)
     express_company_name = models.CharField('快递公司', max_length=50, blank=True, null=True)
