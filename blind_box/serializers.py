@@ -43,7 +43,6 @@ class PrizeSerializer(serializers.ModelSerializer):
 
 class PrizeDetailSerializer(PrizeSerializer):
     detail_images = PrizeDetailImageSerializer(many=True, read_only=True)
-    head_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Prize
