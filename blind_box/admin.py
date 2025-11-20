@@ -555,7 +555,7 @@ class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
     fieldsets = (
         ('基本信息', {
             'fields': (
-                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'blind_box_title', 'blind_box_order')
+                'no', 'user', 'mobile', 'prize', 'source_type', 'blind_box_title', 'blind_box_order')
         }),
         ('状态信息', {
             'fields': ('status', 'winning_at', 'receive_at', 'ship_at', 'complete_at')
