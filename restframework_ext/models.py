@@ -2,7 +2,7 @@
 from django.db import models
 from django.conf import settings
 
-from common.utils import get_no
+from common.utils import get_no, get_short_no
 from mall.utils import randomstrwithdatetime
 from mall.mall_conf import default_pay_type
 import logging
@@ -20,6 +20,14 @@ class DateDetailAbstract(models.Model):
 
 class UseNoAbstract(models.Model):
     no = models.CharField('编号', max_length=64, unique=True, db_index=True, null=True, default=get_no)
+
+    class Meta:
+        abstract = True
+
+
+class UseShortNoAbstract(models.Model):
+    no = models.CharField('编号', max_length=64, unique=True, db_index=True, null=True, default=get_short_no,
+                          editable=False)
 
     class Meta:
         abstract = True

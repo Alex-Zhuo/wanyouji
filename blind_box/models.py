@@ -4,7 +4,7 @@ from django.db import models
 
 from common.config import IMAGE_FIELD_PREFIX, FILE_FIELD_PREFIX
 from mp.models import WeiXinPayConfig
-from restframework_ext.models import UseNoAbstract, ReceiptAbstract
+from restframework_ext.models import UseShortNoAbstract, ReceiptAbstract
 from django.utils import timezone
 from random import sample
 from django.conf import settings
@@ -156,7 +156,7 @@ class BlindReceipt(ReceiptAbstract):
         self.biz_paid()
 
 
-class Prize(UseNoAbstract):
+class Prize(UseShortNoAbstract):
     title = models.CharField('名称', max_length=128)
     STATUS_OFF = 2
     STATUS_ON = 1
@@ -216,6 +216,7 @@ class Prize(UseNoAbstract):
     def test_draw_prize(cls):
         pass
 
+
 class PrizeDetailImage(models.Model):
     """奖品详情介绍图附表"""
     prize = models.ForeignKey(Prize, verbose_name='奖品', on_delete=models.CASCADE, related_name='detail_images')
@@ -230,7 +231,7 @@ class PrizeDetailImage(models.Model):
         return str(self.id)
 
 
-class BlindBox(UseNoAbstract):
+class BlindBox(UseShortNoAbstract):
     title = models.CharField('名称', max_length=128)
     STATUS_OFF = 2
     STATUS_ON = 1
@@ -656,7 +657,7 @@ class WinningRecordShipmentReceipt(models.Model):
         return f"{self.create_at.strftime('%Y-%m-%d %H:%M:%S')} - {self.operator}"
 
 
-class WheelActivity(UseNoAbstract):
+class WheelActivity(UseShortNoAbstract):
     """转盘活动"""
     STATUS_OFF = 2
     STATUS_ON = 1
@@ -678,7 +679,7 @@ class WheelActivity(UseNoAbstract):
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
 
-class WheelSection(UseNoAbstract):
+class WheelSection(UseShortNoAbstract):
     """转盘片区附表"""
     wheel_activity = models.ForeignKey(WheelActivity, verbose_name='转盘活动', on_delete=models.CASCADE,
                                        related_name='sections')
