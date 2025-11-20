@@ -188,6 +188,9 @@ class MpPayClient(PayClient):
                 if t_order and type(t_order) == TicketOrder:
                     time_expire = t_order.get_wx_pay_end_at()
                     logger.warning('time_expire is {}'.format(time_expire))
+        else:
+            if hasattr(receipt, 'pay_end_at') and receipt.pay_end_at:
+                time_expire = receipt.pay_end_at
         result = self.create_order(receipt, trade_type=trade_type if trade_type else 'JSAPI', notify_url=notify_url,
                                    time_expire=time_expire)
         if result.get('result_code') == result.get('return_code') == 'SUCCESS':
