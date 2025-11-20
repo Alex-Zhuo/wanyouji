@@ -18,6 +18,7 @@ from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndV
 import logging
 from caches import get_redis_name, run_with_lock
 from decimal import Decimal
+from blind_box.stock_updater import prsc
 
 log = logging.getLogger(__name__)
 
@@ -63,9 +64,78 @@ class PrizeAdmin(RemoveDeleteModelAdmin):
                     'weight', 'create_at']
     list_filter = ['status', 'source_type', 'rare_type']
     search_fields = ['no', 'title']
-    actions = [set_on, set_off]
+    actions = [set_on, set_off, 'add_stock']
     inlines = [PrizeDetailImageInline]
     readonly_fields = ['no']
+
+    def response_post_save_add(self, request, obj):
+        if obj.status == Prize.STATUS_ON:
+            obj.prize_redis_stock()
+        return super(PrizeAdmin, self).response_post_save_add(request, obj)
+
+    def add_stock(self, request, queryset):
+        obj = queryset.first()
+        key = get_redis_name('prize_stock_lock{}'.format(obj.id))
+        with run_with_lock(key, 3) as got:
+            if not got:
+                return JsonResponse(data={
+                    'status': 'error',
+                    'msg': '请勿点击多次！'
+                })
+        post = request.POST
+        if not post.get('_selected'):
+            return JsonResponse(data={
+                'status': 'error',
+                'msg': '请先勾选一条记录！'
+            })
+        else:
+            if queryset.count() > 1:
+                return JsonResponse(data={
+                    'status': 'error',
+                    'msg': '该功能功能只能单选！'
+                })
+            num = int(post.get('add_stock'))
+            st = obj.prize_change_stock(int(num))
+            if st:
+                prsc.instant_persist(obj.id)
+                return JsonResponse(data={
+                    'status': 'success',
+                    'msg': '执行成功！'
+                })
+            return JsonResponse(data={
+                'status': 'error',
+                'msg': '执行成功，请稍后再试！'
+            })
+
+    add_stock.short_description = '增加库存数量'
+    add_stock.type = 'success'
+    add_stock.icon = 'el-icon-s-promotion'
+    # 指定为弹出层，这个参数最关键
+    add_stock.layer = {
+        # 弹出层中的输入框配置
+        # 这里指定对话框的标题
+        'title': '增加库存数量',
+        # 提示信息
+        'tips': '输入增加的库存数量',
+        # 确认按钮显示文本
+        'confirm_button': '确认提交',
+        # 取消按钮显示文本
+        'cancel_button': '取消',
+        # 弹出层对话框的宽度，默认50%
+        'width': '50%',
+        # 表单中 label的宽度，对应element-ui的 label-width，默认80px
+        'labelWidth': "100px",
+        'params': [
+            {
+                'require': True,
+                'type': 'number',
+                'width': '300px',
+                'key': 'add_stock',
+                'label': '数量',
+                'value': 0
+            },
+        ]
+    }
 
 
 # ========== 盲盒相关 ==========
@@ -279,6 +349,7 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
     search_fields = ['=mobile', '=no']
     readonly_fields = ['no', 'user', 'prize', 'winning_at', 'receive_at', 'ship_at', 'complete_at']
     actions = [export_shipment_list, 'shipping_good', set_completed]
+
     # def source_type_display(self, obj):
     #     return obj.get_source_type_display()
     #
