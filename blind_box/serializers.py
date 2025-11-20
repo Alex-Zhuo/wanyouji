@@ -29,6 +29,7 @@ class PrizeOrderSerializer(serializers.ModelSerializer):
 
 class PrizeSnapshotSerializer(serializers.ModelSerializer):
     rare_type_display = serializers.ReadOnlyField(source='get_rare_type_display')
+    source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
     head_image = serializers.SerializerMethodField()
 
     def get_head_image(self, obj):
@@ -36,7 +37,8 @@ class PrizeSnapshotSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prize
-        fields = ['title', 'rare_type', 'no', 'desc', 'instruction', 'rare_type_display', 'amount', 'head_image']
+        fields = ['title', 'source_type', 'source_type_display', 'rare_type', 'no', 'desc', 'instruction',
+                  'rare_type_display', 'amount', 'head_image']
 
 
 class PrizeDetailImageSerializer(serializers.ModelSerializer):
