@@ -122,7 +122,7 @@ class WheelActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WheelActivity
-        fields = ['no', 'name', 'description', 'sections', 'config']
+        fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image']
 
 
 class WinningRecordSerializer(serializers.ModelSerializer):
@@ -213,8 +213,8 @@ class BlindBoxOrderCreateSerializer(serializers.ModelSerializer):
                 auto_cancel_minutes = cb.auto_cancel_minutes if cb else 5
                 pay_end_at = timezone.now() + auto_cancel_minutes
                 receipt = BlindReceipt.create_record(amount=real_amount, user=user,
-                                                      pay_type=validated_data['pay_type'], biz=BlindReceipt.BIZ_BLIND,
-                                                      wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
+                                                     pay_type=validated_data['pay_type'], biz=BlindReceipt.BIZ_BLIND,
+                                                     wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
                 validated_data['pay_end_at'] = pay_end_at

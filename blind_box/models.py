@@ -709,7 +709,11 @@ class WheelActivity(UseShortNoAbstract):
     STATUS_OFF = 2
     STATUS_ON = 1
     STATUS_CHOICES = ((STATUS_OFF, '下架'), (STATUS_ON, '上架'))
-    name = models.CharField('名称', max_length=128)
+    name = models.CharField('标题', max_length=128)
+    title_image = models.ImageField('标题图', upload_to=f'{IMAGE_FIELD_PREFIX}/wheel',
+                                    validators=[validate_image_file_extension], null=True)
+    bg_image = models.ImageField('背景图', upload_to=f'{IMAGE_FIELD_PREFIX}/wheel',
+                                 validators=[validate_image_file_extension], null=True)
     status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=STATUS_ON, help_text='最多一个上架')
     description = models.TextField('活动说明', blank=True)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
