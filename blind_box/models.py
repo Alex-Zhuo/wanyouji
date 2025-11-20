@@ -424,7 +424,7 @@ class BlindBox(UseShortNoAbstract):
                     'weight': weight
                 })
         from blind_box.lottery_utils import weighted_random_choice, calculate_probabilities_prize
-        probabilities = calculate_probabilities_prize(available_prizes)
+        probabilities = calculate_probabilities_prize(candidates)
         print("各奖品的理论概率：")
         for prize, prob in probabilities.items():
             print(f"{prize}: {prob:.4f} ({prob * 100:.2f}%)")
@@ -435,7 +435,7 @@ class BlindBox(UseShortNoAbstract):
         # 测试手动实现的方法
         results_manual = {}
         for _ in range(test_count):
-            selected, index = weighted_random_choice(available_prizes)
+            selected, index = weighted_random_choice(candidates)
             if selected:
                 results_manual[selected.title] = results_manual.get(selected.title, 0) + 1
                 results[index] = results_manual.get(index, 0) + 1
