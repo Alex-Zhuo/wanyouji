@@ -37,12 +37,12 @@ class PrizeViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     http_method_names = ['get']
 
     @action(methods=['get'], detail=True)
-    def details(self, request, no):
+    def details(self, request, pk):
         try:
-            obj = Prize.objects.get(no=no)
+            obj = Prize.objects.get(no=pk)
             data = PrizeDetailSerializer(obj, context={'request': request}).data
         except Prize.DoesNotExist:
-            log.error(no)
+            log.error(pk)
             raise Http404
         return Response(data)
 
