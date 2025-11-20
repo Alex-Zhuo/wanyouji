@@ -214,7 +214,7 @@ class Prize(UseNoAbstract):
 
     @classmethod
     def test_draw_prize(cls):
-
+        pass
 
 class PrizeDetailImage(models.Model):
     """奖品详情介绍图附表"""
