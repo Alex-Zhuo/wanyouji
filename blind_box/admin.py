@@ -18,7 +18,7 @@ from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndV
 import logging
 from caches import get_redis_name, run_with_lock
 from decimal import Decimal
-from blind_box.stock_updater import prsc
+from blind_box.stock_updater import prsc, bdbc
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +66,12 @@ class PrizeAdmin(RemoveDeleteModelAdmin):
     search_fields = ['no', 'title']
     actions = [set_on, set_off, 'add_stock']
     inlines = [PrizeDetailImageInline]
-    readonly_fields = ['no']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['no', 'stock']
+        else:
+            return ['no']
 
     def response_post_save_add(self, request, obj):
         if obj.status == Prize.STATUS_ON:
@@ -149,19 +154,110 @@ class BlindBoxDetailImageInline(admin.TabularInline):
     extra = 0
 
 
+def blind_set_on(modeladmin, request, queryset):
+    qs = queryset.filter(status=BlindBox.STATUS_OFF)
+    qs.update(status=BlindBox.STATUS_ON)
+    for obj in qs:
+        obj.blind_box_redis_stock()
+    messages.success(request, '执行成功')
+
+
+blind_set_on.short_description = '上架'
+
+
+def blind_set_off(modeladmin, request, queryset):
+    qs = queryset.filter(status=BlindBox.STATUS_ON)
+    qs.update(status=BlindBox.STATUS_OFF)
+    for obj in qs:
+        obj.blind_box_del_redis_stock()
+    messages.success(request, '执行成功')
+
+
+blind_set_off.short_description = '下架'
+
+
 class BlindBoxAdmin(RemoveDeleteModelAdmin):
     list_display = ['no', 'title', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
                     'rare_weight_multiple', 'hidden_weight_multiple', 'create_at']
     list_filter = ['status', 'type', 'grids_num']
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
-    readonly_fields = ['no']
-    # def logo_display(self, obj):
-    #     if obj.head_image:
-    #         return mark_safe(f'<img src="{obj.logo.url}" style="max-width: 50px; max-height: 50px;" />')
-    #     return '-'
-    #
-    # logo_display.short_description = '盲盒封面图'
+    actions = [set_on, set_off, 'add_stock']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['no', 'stock']
+        else:
+            return ['no']
+
+    def response_post_save_add(self, request, obj):
+        if obj.status == BlindBox.STATUS_ON:
+            obj.blind_box_redis_stock()
+        return super(BlindBoxAdmin, self).response_post_save_add(request, obj)
+
+    def add_stock(self, request, queryset):
+        obj = queryset.first()
+        key = get_redis_name('blind_stock_lock{}'.format(obj.id))
+        with run_with_lock(key, 3) as got:
+            if not got:
+                return JsonResponse(data={
+                    'status': 'error',
+                    'msg': '请勿点击多次！'
+                })
+        post = request.POST
+        if not post.get('_selected'):
+            return JsonResponse(data={
+                'status': 'error',
+                'msg': '请先勾选一条记录！'
+            })
+        else:
+            if queryset.count() > 1:
+                return JsonResponse(data={
+                    'status': 'error',
+                    'msg': '该功能功能只能单选！'
+                })
+            num = int(post.get('add_stock'))
+            st = obj.blind_box_change_stock(int(num))
+            if st:
+                bdbc.instant_persist(obj.id)
+                return JsonResponse(data={
+                    'status': 'success',
+                    'msg': '执行成功！'
+                })
+            return JsonResponse(data={
+                'status': 'error',
+                'msg': '执行成功，请稍后再试！'
+            })
+
+    add_stock.short_description = '增加库存数量'
+    add_stock.type = 'success'
+    add_stock.icon = 'el-icon-s-promotion'
+    # 指定为弹出层，这个参数最关键
+    add_stock.layer = {
+        # 弹出层中的输入框配置
+        # 这里指定对话框的标题
+        'title': '增加库存数量',
+        # 提示信息
+        'tips': '输入增加的库存数量',
+        # 确认按钮显示文本
+        'confirm_button': '确认提交',
+        # 取消按钮显示文本
+        'cancel_button': '取消',
+        # 弹出层对话框的宽度，默认50%
+        'width': '50%',
+        # 表单中 label的宽度，对应element-ui的 label-width，默认80px
+        'labelWidth': "100px",
+        'params': [
+            {
+                'require': True,
+                'type': 'number',
+                'width': '300px',
+                'key': 'add_stock',
+                'label': '数量',
+                'value': 0
+            },
+        ]
+    }
 
 
 def export_blind_box_order(modeladmin, request, queryset):

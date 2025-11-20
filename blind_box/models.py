@@ -176,11 +176,12 @@ class Prize(UseShortNoAbstract):
     weight = models.PositiveSmallIntegerField('权重数', default=0)
     head_image = models.ImageField('奖品头图', upload_to=f'{IMAGE_FIELD_PREFIX}/blind/prize/head',
                                    validators=[validate_image_file_extension], null=True, blank=True)
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
         verbose_name_plural = verbose_name = '奖品'
-        ordering = ['-pk']
+        ordering = ['-display_order']
 
     @classmethod
     def prize_update_stock_from_redis(cls):
