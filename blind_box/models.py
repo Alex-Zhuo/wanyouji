@@ -19,7 +19,6 @@ from django.db.models import F
 from datetime import timedelta
 from typing import List, Optional
 from blind_box.stock_updater import prsc, StockModel
-from blind_box.lottery_utils import weighted_random_choice
 
 SR_COUPON = 1
 SR_TICKET = 2
@@ -212,10 +211,6 @@ class Prize(UseShortNoAbstract):
     def prize_del_redis_stock(self):
         prsc.remove(self.id)
 
-    @classmethod
-    def test_draw_prize(cls):
-        pass
-
 
 class PrizeDetailImage(models.Model):
     """奖品详情介绍图附表"""
@@ -295,6 +290,7 @@ class BlindBox(UseShortNoAbstract):
 
     @atomic
     def draw_blind_box_prizes(self) -> List[Prize]:
+        from blind_box.lottery_utils import weighted_random_choice
         """
         盲盒抽奖
         每个格抽出的奖品不重复，下一格抽取时需要去掉上一格的奖品
@@ -398,6 +394,32 @@ class BlindBox(UseShortNoAbstract):
                         log.error(f"回滚奖品 {prize_id} 库存失败: {rollback_error}")
             # 重新抛出异常
             raise
+
+    @classmethod
+    def test_draw_prize(cls):
+        available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+        from blind_box.lottery_utils import weighted_random_choice, calculate_probabilities_prize
+        probabilities = calculate_probabilities_prize(available_prizes)
+        print("各奖品的理论概率：")
+        for prize, prob in probabilities.items():
+            print(f"{prize}: {prob:.4f} ({prob * 100:.2f}%)")
+        print("\n使用random.choices方法进行10000次抽奖测试：")
+        # 进行多次抽奖测试
+        test_count = 10000
+        results = {}
+        # 测试手动实现的方法
+        results_manual = {}
+        for _ in range(test_count):
+            selected, index = weighted_random_choice(available_prizes)
+            if selected:
+                results_manual[selected.title] = results_manual.get(selected.title, 0) + 1
+                results[index] = results_manual.get(index, 0) + 1
+        # 输出测试结果
+        for prize, count in results_manual.items():
+            actual_prob = count / test_count
+            theoretical_prob = probabilities[prize]
+            print(f"{prize}: 出现{count}次, 实际概率: {actual_prob:.4f}, 理论概率: {theoretical_prob:.4f}")
+        print(results)
 
 
 class BlindBoxCarouselImage(models.Model):
