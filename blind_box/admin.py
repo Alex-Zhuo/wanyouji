@@ -34,9 +34,9 @@ class BlindBasicAdmin(RemoveDeleteModelAdmin):
 # ========== 奖品相关 ==========
 def set_on(modeladmin, request, queryset):
     qs = queryset.filter(status=Prize.STATUS_OFF)
-    qs.update(status=Prize.STATUS_ON)
     for obj in qs:
         obj.prize_redis_stock()
+    qs.update(status=Prize.STATUS_ON)
     messages.success(request, '执行成功')
 
 
@@ -45,9 +45,9 @@ set_on.short_description = '批量上架'
 
 def set_off(modeladmin, request, queryset):
     qs = queryset.filter(status=Prize.STATUS_ON)
-    qs.update(status=Prize.STATUS_OFF)
     for obj in qs:
         obj.prize_del_redis_stock()
+    qs.update(status=Prize.STATUS_OFF)
     messages.success(request, '执行成功')
 
 
@@ -157,9 +157,9 @@ class BlindBoxDetailImageInline(admin.TabularInline):
 
 def blind_set_on(modeladmin, request, queryset):
     qs = queryset.filter(status=BlindBox.STATUS_OFF)
-    qs.update(status=BlindBox.STATUS_ON)
     for obj in qs:
         obj.blind_box_redis_stock()
+    qs.update(status=BlindBox.STATUS_ON)
     messages.success(request, '执行成功')
 
 
@@ -168,9 +168,9 @@ blind_set_on.short_description = '上架'
 
 def blind_set_off(modeladmin, request, queryset):
     qs = queryset.filter(status=BlindBox.STATUS_ON)
-    qs.update(status=BlindBox.STATUS_OFF)
     for obj in qs:
         obj.blind_box_del_redis_stock()
+    qs.update(status=BlindBox.STATUS_OFF)
     messages.success(request, '执行成功')
 
 
