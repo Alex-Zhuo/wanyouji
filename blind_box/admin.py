@@ -65,7 +65,7 @@ class PrizeAdmin(RemoveDeleteModelAdmin):
     search_fields = ['no', 'title']
     actions = [set_on, set_off]
     inlines = [PrizeDetailImageInline]
-
+    readonly_fields = ['no']
 
 
 # ========== 盲盒相关 ==========
@@ -85,7 +85,7 @@ class BlindBoxAdmin(RemoveDeleteModelAdmin):
     list_filter = ['status', 'type', 'grids_num']
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
-
+    readonly_fields = ['no']
     # def logo_display(self, obj):
     #     if obj.head_image:
     #         return mark_safe(f'<img src="{obj.logo.url}" style="max-width: 50px; max-height: 50px;" />')
@@ -279,7 +279,6 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
     search_fields = ['=mobile', '=no']
     readonly_fields = ['no', 'user', 'prize', 'winning_at', 'receive_at', 'ship_at', 'complete_at']
     actions = [export_shipment_list, 'shipping_good', set_completed]
-
     # def source_type_display(self, obj):
     #     return obj.get_source_type_display()
     #
