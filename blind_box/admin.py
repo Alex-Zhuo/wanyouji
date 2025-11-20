@@ -184,7 +184,7 @@ class BlindBoxAdmin(RemoveDeleteModelAdmin):
     list_editable = ['display_order']
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
-    actions = [set_on, set_off, 'add_stock']
+    actions = [blind_set_on, blind_set_off, 'add_stock']
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
