@@ -59,7 +59,7 @@ class PrizeDetailImageInline(admin.TabularInline):
     extra = 0
 
 
-class PrizeAdmin(RemoveDeleteModelAdmin):
+class PrizeAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     list_display = ['no', 'title', 'display_order', 'status', 'source_type', 'rare_type', 'amount', 'stock',
                     'weight', 'create_at']
     list_filter = ['status', 'source_type', 'rare_type']
@@ -177,7 +177,7 @@ def blind_set_off(modeladmin, request, queryset):
 blind_set_off.short_description = '下架'
 
 
-class BlindBoxAdmin(RemoveDeleteModelAdmin):
+class BlindBoxAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     list_display = ['no', 'title', 'display_order', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
                     'rare_weight_multiple', 'hidden_weight_multiple', 'create_at']
     list_filter = ['status', 'type', 'grids_num']
