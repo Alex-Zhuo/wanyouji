@@ -433,7 +433,7 @@ class BlindBox(UseShortNoAbstract):
         print("各奖品的理论概率：")
         for prize, prob in probabilities.items():
             print(f"{prize}: {prob:.4f} ({prob * 100:.2f}%)")
-        print("\n使用random.choices方法进行10000次抽奖测试：")
+        print("\n进行10000次抽奖测试：")
         # 进行多次抽奖测试
         results = {}
         # 测试手动实现的方法
