@@ -161,11 +161,18 @@ class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
             snapshot['head_image'] = request.build_absolute_uri(head_image)
         else:
             snapshot['head_image'] = None
+        snapshot['quantity'] = 1
         return snapshot
 
     class Meta:
         model = BlindBoxWinningRecord
         fields = ['no', 'source_type', 'source_type_display', 'status', 'status_display', 'snapshot', 'winning_at']
+
+
+class BlindBoxWinningRecordDetailSerializer(BlindBoxWinningRecordSerializer):
+    class Meta:
+        model = LotteryPurchaseRecord
+        fields = BlindBoxWinningRecordSerializer.Meta.fields
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):

@@ -14,7 +14,8 @@ from blind_box.models import (
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
-    BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer
+    BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer,
+    BlindBoxWinningRecordDetailSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -130,7 +131,7 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
             raise CustomAPIException('订单未支付')
 
 
-class BlindWinningRecordViewSet(DetailPKtoNoViewSet):
+class BlindWinningRecordViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     """盲盒中奖记录"""
     queryset = BlindBoxWinningRecord.objects.exclude(status=BlindBoxWinningRecord.ST_UNPAID)
     permission_classes = [IsPermittedUser]
@@ -138,6 +139,16 @@ class BlindWinningRecordViewSet(DetailPKtoNoViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
     http_method_names = ['get']
+
+    @action(methods=['get'], detail=True)
+    def details(self, request, pk):
+        try:
+            obj = BlindBoxWinningRecord.objects.get(no=pk)
+            data = BlindBoxWinningRecordDetailSerializer(obj, context={'request': request}).data
+        except BlindBoxWinningRecord.DoesNotExist:
+            log.error(pk)
+            raise Http404
+        return Response(data)
 
     # @action(methods=['post'], detail=True)
     # def receive(self, request, pk=None):
