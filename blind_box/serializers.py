@@ -161,7 +161,9 @@ class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
             snapshot['head_image'] = request.build_absolute_uri(head_image)
         else:
             snapshot['head_image'] = None
-        snapshot['quantity'] = 1
+        quantity = snapshot.get('quantity', None)
+        if not quantity:
+            snapshot['quantity'] = 1
         return snapshot
 
     class Meta:
