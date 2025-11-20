@@ -566,6 +566,10 @@ class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.exclude(BlindBoxWinningRecord.ST_UNPAID)
+
 
 class WheelWinningRecordAdmin(WinningRecordAbstractAdmin):
     list_display = WinningRecordAbstractAdmin.list_display + ['lottery_record', 'wheel_name']

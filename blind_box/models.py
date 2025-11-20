@@ -695,18 +695,12 @@ class WinningRecordAbstract(models.Model):
         self.save(update_fields=['status', 'ship_at', 'express_no', 'express_company_code', 'express_company_name'])
 
 
-class BlindBoxWinningRecordManager(models.Manager):
-    def get_queryset(self):
-        return super(BlindBoxWinningRecordManager, self).get_queryset().exclude(status=WinningRecordAbstract.ST_UNPAID)
-
-
 class BlindBoxWinningRecord(WinningRecordAbstract):
     blind_box_order = models.ForeignKey(BlindBoxOrder, on_delete=models.SET_NULL, verbose_name='盲盒订单',
                                         related_name='blind_box_items',
                                         null=True, blank=True)
     blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.SET_NULL, null=True, blank=True)
     blind_box_title = models.CharField('盲盒名称', max_length=128)
-    # objects = BlindBoxWinningRecordManager()
 
     class Meta:
         verbose_name_plural = verbose_name = '盲盒中奖记录'
