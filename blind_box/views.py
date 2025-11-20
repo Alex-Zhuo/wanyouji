@@ -123,7 +123,7 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
         order_no = request.GET.get('order_no')
         try:
             order = self.queryset.get(order_no=order_no, user=request.user, status=BlindBoxOrder.ST_PAID)
-            qs = order.blind_box_items.all()
+            qs = order.blind_box_items.exclude(BlindBoxWinningRecord.ST_UNPAID)
             data = BlindBoxOrderPrizeSerializer(qs, many=True, context={'request': request}).data
             return Response(data)
         except BlindBox.DoesNotExist:
