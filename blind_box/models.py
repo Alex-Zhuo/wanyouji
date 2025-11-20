@@ -397,7 +397,32 @@ class BlindBox(UseShortNoAbstract):
 
     @classmethod
     def test_draw_prize(cls):
+        blind_box = cls.objects.first()
         available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+        # 可用奖品池
+        candidates = []
+        for prize in available_prizes:
+            # 检查库存（从redis实时获取）
+            stock = prsc.get_stock(prize.id)
+            if not stock or int(stock) <= 0:
+                continue
+            # 计算权重：奖品权重数 × 类型倍数
+            # 普通款：权重 = 奖品权重数
+            # 稀有款：权重 = 奖品权重数 × 稀有款权重倍数
+            # 隐藏款：权重 = 奖品权重数 × 隐藏款权重倍数
+            base_weight = prize.weight
+            if prize.rare_type == Prize.RA_RARE:
+                weight = base_weight * blind_box.rare_weight_multiple
+            elif prize.rare_type == Prize.RA_HIDDEN:
+                weight = base_weight * blind_box.hidden_weight_multiple
+            else:
+                weight = base_weight
+            # 权重必须大于0才能参与抽奖
+            if weight > 0:
+                candidates.append({
+                    'item': prize,
+                    'weight': weight
+                })
         from blind_box.lottery_utils import weighted_random_choice, calculate_probabilities_prize
         probabilities = calculate_probabilities_prize(available_prizes)
         print("各奖品的理论概率：")
