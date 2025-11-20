@@ -706,7 +706,7 @@ class BlindBoxWinningRecord(WinningRecordAbstract):
                                         null=True, blank=True)
     blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.SET_NULL, null=True, blank=True)
     blind_box_title = models.CharField('盲盒名称', max_length=128)
-    objects = BlindBoxWinningRecordManager()
+    # objects = BlindBoxWinningRecordManager()
 
     class Meta:
         verbose_name_plural = verbose_name = '盲盒中奖记录'
