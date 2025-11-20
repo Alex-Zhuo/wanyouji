@@ -29,10 +29,14 @@ class PrizeOrderSerializer(serializers.ModelSerializer):
 
 class PrizeSnapshotSerializer(serializers.ModelSerializer):
     rare_type_display = serializers.ReadOnlyField(source='get_rare_type_display')
+    head_image = serializers.SerializerMethodField()
+
+    def get_head_image(self, obj):
+        return obj.head_image.url
 
     class Meta:
         model = Prize
-        fields = ['title', 'rare_type', 'no', 'desc', 'instruction', 'rare_type_display', 'amount']
+        fields = ['title', 'rare_type', 'no', 'desc', 'instruction', 'rare_type_display', 'amount', 'head_image']
 
 
 class PrizeDetailImageSerializer(serializers.ModelSerializer):
@@ -144,23 +148,13 @@ class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):
         fields = ['prize']
 
 
-class WinningRecordSerializer(serializers.ModelSerializer):
+class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
     source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
-    source_display = serializers.ReadOnlyField(source='get_source_display')
-    prize_title = serializers.SerializerMethodField()
 
     class Meta:
         model = BlindBoxWinningRecord
-        fields = [
-            'no', 'user', 'mobile', 'prize', 'prize_title', 'source_type', 'source_type_display',
-            'instruction', 'status', 'status_display', 'express_no', 'express_company_code',
-            'express_company_name', 'source', 'source_display', 'winning_at', 'receive_at',
-            'ship_at', 'complete_at'
-        ]
-
-    def get_prize_title(self, obj):
-        return obj.prize.title if obj.prize else ''
+        fields = ['no', 'source_type', 'source_type_display', 'status', 'status_display']
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):

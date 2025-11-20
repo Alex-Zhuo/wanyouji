@@ -13,7 +13,7 @@ from blind_box.models import (
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
-    WinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
+    BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
@@ -130,6 +130,41 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
             raise CustomAPIException('订单未支付')
 
 
+class BlindWinningRecordViewSet(DetailPKtoNoViewSet):
+    """盲盒中奖记录"""
+    queryset = BlindBoxWinningRecord.objects.exclude(status=BlindBoxWinningRecord.ST_UNPAID)
+    permission_classes = [IsPermittedUser]
+    serializer_class = BlindBoxWinningRecordSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+    http_method_names = ['get']
+
+    # @action(methods=['post'], detail=True)
+    # def receive(self, request, pk=None):
+    #     """领取奖品（纸质票、券码类型）"""
+    #     winning_record = self.get_object()
+    #     if winning_record.source_type not in [Prize.SR_TICKET, Prize.SR_CODE]:
+    #         raise CustomAPIException('该奖品类型不支持此操作')
+    #     if winning_record.status != WinningRecord.ST_PENDING_RECEIVE:
+    #         raise CustomAPIException('该中奖记录状态不正确')
+    #     # 弹窗提示用户联系客服
+    #     return Response({
+    #         'message': '请联系在线客服提供中奖记录信息领取奖品！',
+    #         'winning_no': winning_record.no
+    #     })
+    #
+    # @action(methods=['post'], detail=True)
+    # def confirm_receipt(self, request, pk=None):
+    #     """确认收货（实物奖品）"""
+    #     winning_record = self.get_object()
+    #     if winning_record.source_type != Prize.SR_GOOD:
+    #         raise CustomAPIException('该奖品类型不支持此操作')
+    #     if winning_record.status != WinningRecord.ST_PENDING_RECEIPT:
+    #         raise CustomAPIException('该中奖记录状态不正确')
+    #     winning_record.set_completed()
+    #     return Response({'message': '确认收货成功'})
+
+
 class WheelActivityViewSet(ReturnNoDetailViewSet):
     """转盘活动列表"""
     queryset = WheelActivity.objects.filter(status=WheelActivity.STATUS_ON)
@@ -154,47 +189,6 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 
-# class BlindWinningRecordViewSet(ReturnNoDetailViewSet):
-#     """中奖记录"""
-#     queryset = BlindBoxWinningRecord.objects.all()
-#     permission_classes = [IsPermittedUser]
-#     serializer_class = WinningRecordSerializer
-#     pagination_class = StandardResultsSetPagination
-#     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-#     filter_fields = ['status', 'source_type']
-#     http_method_names = ['get', 'post', 'patch']
-#
-#     @action(methods=['post'], detail=True)
-#     def receive(self, request, pk=None):
-#         """领取奖品（纸质票、券码类型）"""
-#         winning_record = self.get_object()
-#
-#         if winning_record.source_type not in [Prize.SR_TICKET, Prize.SR_CODE]:
-#             raise CustomAPIException('该奖品类型不支持此操作')
-#
-#         if winning_record.status != WinningRecord.ST_PENDING_RECEIVE:
-#             raise CustomAPIException('该中奖记录状态不正确')
-#
-#         # 弹窗提示用户联系客服
-#         return Response({
-#             'message': '请联系在线客服提供中奖记录信息领取奖品！',
-#             'winning_no': winning_record.no
-#         })
-#
-#     @action(methods=['post'], detail=True)
-#     def confirm_receipt(self, request, pk=None):
-#         """确认收货（实物奖品）"""
-#         winning_record = self.get_object()
-#
-#         if winning_record.source_type != Prize.SR_GOOD:
-#             raise CustomAPIException('该奖品类型不支持此操作')
-#
-#         if winning_record.status != WinningRecord.ST_PENDING_RECEIPT:
-#             raise CustomAPIException('该中奖记录状态不正确')
-#
-#         winning_record.set_completed()
-#         return Response({'message': '确认收货成功'})
-#
 #
 class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
     """抽奖次数购买记录"""
