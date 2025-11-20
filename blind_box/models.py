@@ -543,8 +543,9 @@ class BlindBoxOrder(models.Model):
             self.change_prize_status()
 
     def change_prize_status(self):
-        self.blind_box_items.exclude(source_type=SR_COUPON).update(status=WinningRecordAbstract.ST_PENDING_RECEIVE)
-        bb_qs = self.blind_box_items.filter(source_type=SR_COUPON)
+        qs = self.blind_box_items.filter(status=WinningRecordAbstract.ST_UNPAID)
+        qs.exclude(source_type=SR_COUPON).update(status=WinningRecordAbstract.ST_PENDING_RECEIVE)
+        bb_qs = qs.filter(source_type=SR_COUPON)
         from coupon.models import UserCouponRecord
         for bb in bb_qs:
             if bb.prize and bb.prize.coupon:
