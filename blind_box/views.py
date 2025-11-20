@@ -21,14 +21,12 @@ from restframework_ext.permissions import IsPermittedUser
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
 from restframework_ext.pagination import StandardResultsSetPagination
 from home.views import ReturnNoDetailViewSet, DetailPKtoNoViewSet
-from blind_box.stock_updater import prsc
 import logging
-import simplejson as json
 from django.http import Http404
 
 from restframework_ext.views import BaseReceiptViewset
 from django.shortcuts import get_object_or_404
-
+from concu.api_limit import try_queue
 log = logging.getLogger(__name__)
 
 
@@ -109,8 +107,7 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
 
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def create_order(self, request):
-        from concu.api_limit import try_queue
-        with try_queue('blindbox-order', 1, 3) as got:
+        with try_queue('blindbox-order', 1, 5) as got:
             if got:
                 s = BlindBoxOrderCreateSerializer(data=request.data, context={'request': request})
                 s.is_valid(True)
@@ -143,6 +140,7 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     #         if not winning_record:
     #             raise CustomAPIException('抽奖失败，请稍后重试')
     #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
+
 
 # class BlindWinningRecordViewSet(ReturnNoDetailViewSet):
 #     """中奖记录"""
@@ -186,12 +184,24 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
 #         return Response({'message': '确认收货成功'})
 #
 #
-# class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
-#     """抽奖次数购买记录"""
-#     queryset = LotteryPurchaseRecord.objects.all()
-#     permission_classes = [IsPermittedUser]
-#     serializer_class = LotteryPurchaseRecordSerializer
-#     pagination_class = StandardResultsSetPagination
-#     filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-#     filter_fields = ['status', 'wheel_activity']
-#     http_method_names = ['get']
+class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
+    """抽奖次数购买记录"""
+    queryset = LotteryPurchaseRecord.objects.all()
+    permission_classes = [IsPermittedUser]
+    serializer_class = LotteryPurchaseRecordSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+    filter_fields = ['status']
+    http_method_names = ['get']
+
+    @action(methods=['post'], detail=False, http_method_names=['post'])
+    def create_order(self, request):
+        with try_queue('wheel-order', 100, 5) as got:
+            if got:
+                s = BlindBoxOrderCreateSerializer(data=request.data, context={'request': request})
+                s.is_valid(True)
+                order = s.create(s.validated_data)
+            else:
+                log.warning(f"盲盒抢购排队超时失败")
+                raise CustomAPIException('当前抢够人数较多，请稍后重试')
+        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))

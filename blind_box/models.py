@@ -502,6 +502,7 @@ class BlindBoxOrder(models.Model):
                                    related_name='blind_receipt')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
+    pay_type = models.SmallIntegerField('付款类型', choices=BlindReceipt.PAY_CHOICES, default=BlindReceipt.PAY_NOT_SET)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
     refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
@@ -793,6 +794,9 @@ class LotteryPurchaseRecord(models.Model):
     status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_PAID)
     create_at = models.DateTimeField('下单时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
+    wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
+                                      on_delete=models.SET_NULL)
+    pay_type = models.SmallIntegerField('付款类型', choices=BlindReceipt.PAY_CHOICES, default=BlindReceipt.PAY_NOT_SET)
     refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
     cancel_at = models.DateTimeField('取消时间', null=True, blank=True)
     snapshot = models.TextField('转盘快照', help_text='下单时保存的快照', editable=False)
