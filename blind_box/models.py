@@ -552,6 +552,9 @@ class BlindBoxOrder(models.Model):
                 coupon = bb.prize.coupon
                 try:
                     UserCouponRecord.create_record(self.user.id, coupon, win_prize_no=bb.no)
+                    bb.status = WinningRecordAbstract.ST_COMPLETED
+                    bb.complete_at = timezone.now()
+                    bb.save(update_fields=['status', 'complete_at'])
                 except Exception as e:
                     log.error('盲盒付款发放消费券失败')
                     log.error(e)
