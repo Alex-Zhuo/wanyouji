@@ -220,6 +220,26 @@ class BlindBoxOrderCreateSerializer(serializers.ModelSerializer):
                 order = BlindBoxOrder.objects.create(**validated_data)
                 if not blind_box.blind_box_change_stock(-1):
                     raise CustomAPIException('盲盒库存不足')
+                try:
+                    prize_list = blind_box.draw_blind_box_prizes()
+                    blind_win_list = []
+                    prize_num = 0
+                    for prize in prize_list:
+                        prize_snapshot = BlindBoxWinningRecord.get_snapshot(prize)
+                        blind_win_list.append(BlindBoxWinningRecord(blind_box_order=order, blind_box=blind_box,
+                                                                    blind_box_title=blind_box.title, user=request.user,
+                                                                    mobile=user.mobile, prize=prize,
+                                                                    source_type=prize.source_type,
+                                                                    snapshot=prize_snapshot))
+                        prize_num += 1
+                    if prize_num < blind_box.grids_num:
+                        raise CustomAPIException(f"奖品库存不足，请稍后再试...")
+                    if blind_win_list:
+                        BlindBoxWinningRecord.objects.bulk_create(blind_win_list)
+                except Exception as e:
+                    # 盲盒库存回滚
+                    blind_box.blind_box_change_stock(1)
+                    raise CustomAPIException(str(e))
                 return order
             else:
                 raise CustomAPIException('请不要太快下单，稍后再试')

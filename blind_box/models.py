@@ -293,7 +293,6 @@ class BlindBox(UseShortNoAbstract):
         from blind_box.stock_updater import bdbc
         bdbc.remove(self.id)
 
-    @atomic
     def draw_blind_box_prizes(self) -> List[Prize]:
         from blind_box.lottery_utils import weighted_random_choice
         """
