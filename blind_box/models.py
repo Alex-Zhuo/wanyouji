@@ -745,6 +745,8 @@ class WheelSection(UseShortNoAbstract):
     wheel_activity = models.ForeignKey(WheelActivity, verbose_name='转盘活动', on_delete=models.CASCADE,
                                        related_name='sections')
     prize = models.ForeignKey(Prize, verbose_name='关联奖品', on_delete=models.SET_NULL, null=True, blank=True)
+    thank_image = models.ImageField('谢谢参与头图', upload_to=f'{IMAGE_FIELD_PREFIX}/wheel/section',
+                                    validators=[validate_image_file_extension], null=True, blank=True)
     is_no_prize = models.BooleanField('是否谢谢参与', default=False, help_text='勾选后则该片区不中奖')
     weight = models.PositiveSmallIntegerField('权重数', default=0)
     winning_tip = models.CharField('中奖提示语', max_length=200, blank=True)
