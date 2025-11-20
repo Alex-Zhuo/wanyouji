@@ -46,7 +46,7 @@ class PrizeDetailSerializer(PrizeSerializer):
 
     class Meta:
         model = Prize
-        fields = PrizeSerializer.Meta.fields + ['detail_images', 'desc', 'instruction']
+        fields = PrizeSerializer.Meta.fields + ['detail_images', 'desc', 'instruction', 'amount']
 
 
 class BlindBoxCarouselImageSerializer(serializers.ModelSerializer):
