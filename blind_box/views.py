@@ -8,7 +8,8 @@ from django.db import transaction
 from datetime import timedelta
 
 from blind_box.models import (
-    Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder
+    Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder,
+    BlindReceipt, BlindOrderRefund
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
@@ -25,7 +26,34 @@ import logging
 import simplejson as json
 from django.http import Http404
 
+from restframework_ext.views import BaseReceiptViewset
+from django.shortcuts import get_object_or_404
 log = logging.getLogger(__name__)
+
+
+class BlindReceiptViewSet(BaseReceiptViewset):
+    permission_classes = []
+    receipt_class = BlindReceipt
+    refund_class = BlindOrderRefund
+
+    def before_pay(self, request, pk):
+        receipt = get_object_or_404(self.receipt_class, payno=pk)
+        now = timezone.now()
+        order = None
+        if receipt.biz == receipt.BIZ_BLIND:
+            order = receipt.blind_receipt
+            if order.status != order.ST_DEFAULT:
+                raise CustomAPIException('订单状态错误')
+        elif receipt.biz == receipt.BIZ_LOTTERY:
+            order = receipt.lottery_receipt
+        if not order:
+            raise CustomAPIException('找不到订单')
+        # receipt.query_status(order.order_no)
+        # if receipt.paid:
+        #     raise CustomAPIException('该订单已经付款，请尝试刷新订单页面')
+        # if order.create_at < expire_at:
+        #     order.cancel()
+        #     raise CustomAPIException('该订单支付过期，请重新下单')
 
 
 class PrizeViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
