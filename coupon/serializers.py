@@ -10,7 +10,7 @@ from coupon.models import Coupon, UserCouponRecord, CouponActivity, CouponOrder,
 from restframework_ext.exceptions import CustomAPIException
 from ticket.models import ShowType, ShowProject
 from caches import get_redis_name, run_with_lock
-
+from datetime import timedelta
 log = logging.getLogger(__name__)
 
 
@@ -297,7 +297,7 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
                 wx_pay_config = WeiXinPayConfig.get_default()
                 cb = CouponBasic.get()
                 auto_cancel_minutes = cb.auto_cancel_minutes if cb else 5
-                pay_end_at = timezone.now() + auto_cancel_minutes
+                pay_end_at = timezone.now() + timedelta(minutes=auto_cancel_minutes)
                 receipt = CouponReceipt.create_record(amount=real_amount, user=user,
                                                       pay_type=validated_data['pay_type'], biz=CouponReceipt.BIZ_ACT,
                                                       wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
