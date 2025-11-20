@@ -15,7 +15,6 @@ from blind_box.serializers import (
     WinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer
 )
-from blind_box.lottery_utils import draw_wheel_prize, draw_blind_box_prizes
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
 from restframework_ext.filterbackends import OwnerFilterMixinDjangoFilterBackend
@@ -90,7 +89,7 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
         return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
 
 
-class WheelActivityViewSet(ReturnNoDetailViewSet, ReturnNoDetailViewSet):
+class WheelActivityViewSet(ReturnNoDetailViewSet):
     """转盘活动列表"""
     queryset = WheelActivity.objects.filter(status=WheelActivity.STATUS_ON)
     permission_classes = [IsPermittedUser]
@@ -101,17 +100,17 @@ class WheelActivityViewSet(ReturnNoDetailViewSet, ReturnNoDetailViewSet):
         obj = self.queryset.first()
         data = self.serializer_class(obj, context={'request': request}).data
         return Response(data)
-
-    @action(methods=['post'], detail=True)
-    def draw(self, request, pk=None):
-        """转盘抽奖"""
-        wheel_activity = self.get_object()
-        user = request.user
-        with transaction.atomic():
-            winning_record = draw_wheel_prize(wheel_activity, user)
-            if not winning_record:
-                raise CustomAPIException('抽奖失败，请稍后重试')
-        return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
+    #
+    # @action(methods=['post'], detail=True)
+    # def draw(self, request, pk=None):
+    #     """转盘抽奖"""
+    #     wheel_activity = self.get_object()
+    #     user = request.user
+    #     with transaction.atomic():
+    #         winning_record = draw_wheel_prize(wheel_activity, user)
+    #         if not winning_record:
+    #             raise CustomAPIException('抽奖失败，请稍后重试')
+    #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 # class BlindWinningRecordViewSet(ReturnNoDetailViewSet):
 #     """中奖记录"""
