@@ -59,19 +59,13 @@ class PrizeDetailImageInline(admin.TabularInline):
 
 
 class PrizeAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'title', 'head_image_display', 'status', 'source_type', 'rare_type', 'amount', 'stock',
+    list_display = ['no', 'title', 'status', 'source_type', 'rare_type', 'amount', 'stock',
                     'weight', 'create_at']
     list_filter = ['status', 'source_type', 'rare_type']
     search_fields = ['no', 'title']
     actions = [set_on, set_off]
     inlines = [PrizeDetailImageInline]
 
-    def head_image_display(self, obj):
-        if obj.head_image:
-            return mark_safe(f'<img src="{obj.head_image.url}" style="max-width: 50px; max-height: 50px;" />')
-        return '-'
-
-    head_image_display.short_description = '奖品头图'
 
 
 # ========== 盲盒相关 ==========
@@ -86,18 +80,18 @@ class BlindBoxDetailImageInline(admin.TabularInline):
 
 
 class BlindBoxAdmin(RemoveDeleteModelAdmin):
-    list_display = ['no', 'title', 'logo_display', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
+    list_display = ['no', 'title', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
                     'rare_weight_multiple', 'hidden_weight_multiple', 'create_at']
     list_filter = ['status', 'type', 'grids_num']
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
 
-    def logo_display(self, obj):
-        if obj.head_image:
-            return mark_safe(f'<img src="{obj.logo.url}" style="max-width: 50px; max-height: 50px;" />')
-        return '-'
-
-    logo_display.short_description = '盲盒封面图'
+    # def logo_display(self, obj):
+    #     if obj.head_image:
+    #         return mark_safe(f'<img src="{obj.logo.url}" style="max-width: 50px; max-height: 50px;" />')
+    #     return '-'
+    #
+    # logo_display.short_description = '盲盒封面图'
 
 
 def export_blind_box_order(modeladmin, request, queryset):
