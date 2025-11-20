@@ -14,7 +14,7 @@ from blind_box.models import (
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     WinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
-    BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer
+    BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -27,6 +27,7 @@ from django.http import Http404
 from restframework_ext.views import BaseReceiptViewset
 from django.shortcuts import get_object_or_404
 from concu.api_limit import try_queue
+
 log = logging.getLogger(__name__)
 
 
@@ -116,6 +117,17 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
                 log.warning(f"盲盒抢购排队超时失败")
                 raise CustomAPIException('当前抢够人数较多，请稍后重试')
         return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
+
+    @action(methods=['get'], detail=False)
+    def prizes(self, request):
+        order_no = request.GET.get('order_no')
+        try:
+            order = self.queryset.get(order_no=order_no, user=request.user, status=BlindBoxOrder.ST_PAID)
+            qs = order.blind_box_items.all()
+            data = BlindBoxOrderPrizeSerializer(qs, many=True, context={'request': request}).data
+            return Response(data)
+        except BlindBox.DoesNotExist:
+            raise CustomAPIException('订单未支付')
 
 
 class WheelActivityViewSet(ReturnNoDetailViewSet):

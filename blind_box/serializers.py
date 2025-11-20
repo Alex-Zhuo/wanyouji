@@ -15,7 +15,16 @@ from blind_box.models import (
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
 from datetime import timedelta
+
 log = logging.getLogger(__name__)
+
+
+class PrizeOrderSerializer(serializers.ModelSerializer):
+    rare_type_display = serializers.ReadOnlyField(source='get_rare_type_display')
+
+    class Meta:
+        model = Prize
+        fields = ['head_image', 'rare_type_display']
 
 
 class PrizeSnapshotSerializer(serializers.ModelSerializer):
@@ -122,6 +131,17 @@ class WheelActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = WheelActivity
         fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image']
+
+
+class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):
+    prize = serializers.SerializerMethodField()
+
+    def get_prize(self, obj):
+        return PrizeOrderSerializer(obj.prize, context=self.context).data
+
+    class Meta:
+        model = BlindBoxWinningRecord
+        fields = ['prize']
 
 
 class WinningRecordSerializer(serializers.ModelSerializer):
