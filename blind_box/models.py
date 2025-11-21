@@ -799,6 +799,7 @@ class WheelActivity(UseShortNoAbstract):
             if success:
                 # 扣库存成功
                 prsc.record_update_ts(prize.id)
+                return selected_section
         if thank_section:
             return thank_section
         else:
