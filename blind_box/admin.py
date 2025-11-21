@@ -645,7 +645,7 @@ lottery_set_paid.short_description = u'后台付款'
 
 
 class LotteryPurchaseRecordAdmin(OnlyViewAdmin):
-    list_display = ['order_no', 'user', 'mobile', 'purchase_count', 'amount', 'refund_amount', 'status', 'create_at',
+    list_display = ['order_no', 'user', 'mobile', 'multiply', 'amount', 'refund_amount', 'status', 'create_at',
                     'pay_at',
                     'transaction_id']
     list_filter = ['status', 'create_at']

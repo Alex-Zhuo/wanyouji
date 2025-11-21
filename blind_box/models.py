@@ -806,21 +806,22 @@ class LotteryPurchaseRecord(models.Model):
         (ST_REFUNDED, '已退款'),
     )
     order_no = models.CharField('订单号', max_length=128, unique=True, default=lottery_purchase_order_no, db_index=True)
-    receipt = models.OneToOneField(BlindReceipt, verbose_name='收款记录', on_delete=models.SET_NULL, null=True,
-                                   related_name='lottery_receipt')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
     mobile = models.CharField('手机号', max_length=20)
-    purchase_count = models.PositiveIntegerField('购买次数')
+    multiply = models.PositiveIntegerField('购买次数')
     amount = models.DecimalField('实付金额', max_digits=13, decimal_places=2)
     refund_amount = models.DecimalField('已退款金额', max_digits=10, decimal_places=2, default=0)
     status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_PAID)
     create_at = models.DateTimeField('下单时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
+    receipt = models.OneToOneField(BlindReceipt, verbose_name='收款记录', on_delete=models.SET_NULL, null=True,
+                                   related_name='lottery_receipt')
     wx_pay_config = models.ForeignKey(WeiXinPayConfig, verbose_name='微信支付', blank=True, null=True,
                                       on_delete=models.SET_NULL)
     pay_type = models.SmallIntegerField('付款类型', choices=BlindReceipt.PAY_CHOICES, default=BlindReceipt.PAY_NOT_SET)
     refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
     cancel_at = models.DateTimeField('取消时间', null=True, blank=True)
+    pay_end_at = models.DateTimeField('支付截止时间', null=True)
     snapshot = models.TextField('转盘快照', help_text='下单时保存的快照', editable=False)
     transaction_id = models.CharField('微信支付单号', max_length=32, null=True, blank=True)
 
