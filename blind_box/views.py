@@ -229,8 +229,8 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         """转盘抽奖"""
         s = WheelActivityDrawSerializer(data=request.data, context={'request': request})
         s.is_valid(True)
-        s.create(s.validated_data)
-        return Response()
+        section = s.create(s.validated_data)
+        return Response(data=dict(section_no=section.no))
 
     @action(methods=['get'], detail=False)
     def rest_times(self, request):
