@@ -124,7 +124,6 @@ class WheelActivityBasicSerializer(serializers.ModelSerializer):
 class WheelActivitySerializer(serializers.ModelSerializer):
     sections = serializers.SerializerMethodField()
     config = serializers.SerializerMethodField()
-    rest_times = serializers.SerializerMethodField()
 
     def get_sections(self, obj):
         qs = obj.sections.filter(is_enabled=True)
@@ -135,14 +134,9 @@ class WheelActivitySerializer(serializers.ModelSerializer):
         bl = BlindBasic.get()
         return dict(price=bl.price_per_lottery, rule=bl.wheel_rule, open_buy_times=bl.open_buy_times)
 
-    def get_rest_times(self, obj):
-        user = self.context.get('request').user
-        ul = UserLotteryTimes.get_or_create_record(user)
-        return ul.times
-
     class Meta:
         model = WheelActivity
-        fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image', 'rest_times']
+        fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image']
 
 
 class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):

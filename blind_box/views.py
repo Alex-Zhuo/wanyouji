@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder,
-    BlindReceipt, BlindOrderRefund, SR_GOOD
+    BlindReceipt, BlindOrderRefund, SR_GOOD, UserLotteryTimes
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
@@ -222,6 +222,7 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         obj = self.queryset.first()
         data = self.serializer_class(obj, context={'request': request}).data
         return Response(data)
+
     #
     # @action(methods=['post'], detail=True)
     # def draw(self, request, pk=None):
@@ -233,6 +234,12 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     #         if not winning_record:
     #             raise CustomAPIException('抽奖失败，请稍后重试')
     #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
+
+    @action(methods=['get'], detail=False)
+    def rest_times(self, request):
+        """获取可用次数"""
+        obj = UserLotteryTimes.get_or_create_record(request.user)
+        return Response(data=dict(times=obj.times))
 
 
 class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
