@@ -168,7 +168,7 @@ class BlindWinningRecordViewSet(WinningRecordCommonViewSet):
             raise Http404
         return Response(data)
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False, http_method_names=['post'])
     def receive(self, request):
         """实物领取奖品"""
         s = BlindBoxWinningReceiveSerializer(data=request.data, context={'request': request})
