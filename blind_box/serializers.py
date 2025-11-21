@@ -208,6 +208,18 @@ class BlindBoxWinningRecordDetailSerializer(WinningRecordDetailSerializer):
         fields = WinningRecordDetailSerializer.Meta.fields
 
 
+class WheelWinningRecordSerializer(WinningRecordSerializer):
+    class Meta:
+        model = WheelWinningRecord
+        fields = WinningRecordSerializer.Meta.fields
+
+
+class WheelWinningRecordDetailSerializer(WinningRecordDetailSerializer):
+    class Meta:
+        model = WheelWinningRecord
+        fields = WinningRecordDetailSerializer.Meta.fields
+
+
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
 
@@ -446,3 +458,35 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
     class Meta:
         model = WheelActivity
         fields = ['no']
+
+
+class WheelWinningReceiveSerializer(serializers.ModelSerializer):
+    no = serializers.CharField(required=True, help_text='中奖编号')
+    address_id = serializers.IntegerField(required=True, help_text='用户地址ID')
+
+    @atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        key = get_redis_name('win_rc{}'.format(request.user.id))
+        with run_with_lock(key, 3) as got:
+            if got:
+                try:
+                    obj = WheelWinningRecord.objects.get(no=validated_data['no'], user=user,
+                                                         status=WheelWinningRecord.ST_PENDING_RECEIVE)
+                except WheelWinningRecord.DoesNotExist:
+                    raise CustomAPIException('找不到获奖记录,或已经领取过了')
+                if obj.source_type != SR_GOOD:
+                    raise CustomAPIException('该奖品类型不支持此操作')
+                from mall.models import UserAddress
+                try:
+                    address = UserAddress.objects.get(pk=validated_data['address_id'], user=user)
+                except UserAddress.DoesNotExist:
+                    raise CustomAPIException('地址错误')
+                obj.set_received(address)
+            else:
+                raise CustomAPIException('请勿重复领取')
+
+    class Meta:
+        model = WheelWinningRecord
+        fields = ['no', 'address_id']

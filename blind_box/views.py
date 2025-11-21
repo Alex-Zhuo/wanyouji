@@ -5,14 +5,15 @@ from django.utils import timezone
 
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder,
-    BlindReceipt, BlindOrderRefund, SR_GOOD, UserLotteryTimes
+    BlindReceipt, BlindOrderRefund, SR_GOOD, UserLotteryTimes, WinningRecordAbstract
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer,
     BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer, LotteryPurchaseRecordCreateSerializer,
-    WheelActivityDrawSerializer
+    WheelActivityDrawSerializer, WheelWinningRecordSerializer, WheelWinningRecordDetailSerializer,
+    WheelWinningReceiveSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -149,6 +150,22 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
 
 
 class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
+    permission_classes = [IsPermittedUser]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
+    http_method_names = ['get']
+
+    @action(methods=['post'], detail=True, http_method_names=['post'])
+    def confirm(self, request, pk):
+        """确认收货（实物奖品）"""
+        obj = self.get_object()
+        if obj.source_type != SR_GOOD:
+            raise CustomAPIException('该奖品类型不支持此操作')
+        if obj.status != WinningRecordAbstract.ST_PENDING_RECEIPT:
+            raise CustomAPIException('待收货状态才能确认')
+        obj.set_completed()
+        return Response()
+
     @action(methods=['get'], detail=True)
     def query_express(self, request, pk):
         """
@@ -171,12 +188,8 @@ class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
 
 class BlindWinningRecordViewSet(WinningRecordCommonViewSet):
     """盲盒中奖记录"""
-    queryset = BlindBoxWinningRecord.objects.exclude(status=BlindBoxWinningRecord.ST_UNPAID)
-    permission_classes = [IsPermittedUser]
     serializer_class = BlindBoxWinningRecordSerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = (OwnerFilterMixinDjangoFilterBackend,)
-    http_method_names = ['get']
+    queryset = BlindBoxWinningRecord.objects.exclude(status=BlindBoxWinningRecord.ST_UNPAID)
 
     @action(methods=['get'], detail=True)
     def details(self, request, pk):
@@ -261,3 +274,30 @@ class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
                 log.warning(f"转盘次数购买排队超时失败")
                 raise CustomAPIException('当前活动火爆，请稍后再试')
         return Response(data=dict(receipt_id=payno, pay_end_at=pay_end_at))
+
+
+class WheelWinningRecordViewSet(WinningRecordCommonViewSet):
+    """转盘中奖记录"""
+    serializer_class = WheelWinningRecordSerializer
+    queryset = WheelWinningRecord.objects.exclude(status=WheelWinningRecord.ST_UNPAID)
+
+    @action(methods=['get'], detail=True)
+    def details(self, request, pk):
+        """
+        转盘中奖详情
+        """
+        try:
+            obj = self.get_object()
+            data = WheelWinningRecordDetailSerializer(obj, context={'request': request}).data
+        except WheelWinningRecord.DoesNotExist:
+            log.error(pk)
+            raise Http404
+        return Response(data)
+
+    @action(methods=['post'], detail=False, http_method_names=['post'])
+    def receive(self, request):
+        """转盘实物领取奖品"""
+        s = WheelWinningReceiveSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        s.create(s.validated_data)
+        return Response()
