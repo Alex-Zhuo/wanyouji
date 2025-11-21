@@ -9,13 +9,13 @@ from datetime import timedelta
 
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder,
-    BlindReceipt, BlindOrderRefund
+    BlindReceipt, BlindOrderRefund, SR_GOOD, WinningRecordAbstract
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer,
-    BlindBoxWinningRecordDetailSerializer
+    BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -28,6 +28,7 @@ from django.http import Http404
 from restframework_ext.views import BaseReceiptViewset
 from django.shortcuts import get_object_or_404
 from concu.api_limit import try_queue
+from caches import run_with_lock, get_redis_name
 
 log = logging.getLogger(__name__)
 
@@ -143,27 +144,21 @@ class BlindWinningRecordViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=True)
     def details(self, request, pk):
         try:
-            obj = BlindBoxWinningRecord.objects.get(no=pk)
+            obj = self.get_object()
             data = BlindBoxWinningRecordDetailSerializer(obj, context={'request': request}).data
         except BlindBoxWinningRecord.DoesNotExist:
             log.error(pk)
             raise Http404
         return Response(data)
 
-    # @action(methods=['post'], detail=True)
-    # def receive(self, request, pk=None):
-    #     """领取奖品（纸质票、券码类型）"""
-    #     winning_record = self.get_object()
-    #     if winning_record.source_type not in [Prize.SR_TICKET, Prize.SR_CODE]:
-    #         raise CustomAPIException('该奖品类型不支持此操作')
-    #     if winning_record.status != WinningRecord.ST_PENDING_RECEIVE:
-    #         raise CustomAPIException('该中奖记录状态不正确')
-    #     # 弹窗提示用户联系客服
-    #     return Response({
-    #         'message': '请联系在线客服提供中奖记录信息领取奖品！',
-    #         'winning_no': winning_record.no
-    #     })
-    #
+    @action(methods=['post'], detail=False)
+    def receive(self, request):
+        """实物领取奖品"""
+        s = BlindBoxWinningReceiveSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        s.create(s.validated_data)
+        return Response()
+
     # @action(methods=['post'], detail=True)
     # def confirm_receipt(self, request, pk=None):
     #     """确认收货（实物奖品）"""

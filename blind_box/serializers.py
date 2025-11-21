@@ -295,3 +295,33 @@ class BlindBoxOrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlindBoxOrder
         fields = ['amount', 'pay_type', 'box_no']
+
+
+class BlindBoxWinningReceiveSerializer(serializers.ModelSerializer):
+    no = serializers.CharField(required=True, help_text='中奖编号')
+    address_id = serializers.IntegerField(required=True, help_text='用户地址ID')
+
+    @atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        key = get_redis_name('win_rc{}'.format(request.user.id))
+        with run_with_lock(key, 3) as got:
+            if got:
+                try:
+                    obj = BlindBoxWinningRecord.objects.get(no=validated_data['no'], user=user,
+                                                            status=BlindBoxWinningRecord.ST_PENDING_RECEIVE)
+                except BlindBoxWinningRecord.DoesNotExist:
+                    raise CustomAPIException('找不到获奖记录,或已经领取过了')
+                from mall.models import UserAddress
+                try:
+                    address = UserAddress.objects.get(pk=validated_data['address_id'],user=user)
+                except UserAddress.DoesNotExist:
+                    raise CustomAPIException('地址错误')
+                obj.set_received(address)
+            else:
+                raise CustomAPIException('请勿重复领取')
+
+    class Meta:
+        model = BlindBoxWinningRecord
+        fields = ['no', 'address_id']

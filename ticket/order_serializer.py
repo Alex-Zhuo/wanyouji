@@ -87,8 +87,10 @@ class TicketOrderCreateCommonSerializer(serializers.ModelSerializer):
 
     def validate_express_address_id(self, value):
         if value:
+            request = self.context.get('request')
+            user = request.user
             try:
-                return UserAddress.objects.get(pk=value)
+                return UserAddress.objects.get(pk=value, user=user)
             except UserAddress.DoesNotExist:
                 raise CustomAPIException('收获地址不存在')
 
