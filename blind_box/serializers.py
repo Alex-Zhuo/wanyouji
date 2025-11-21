@@ -387,3 +387,27 @@ class LotteryPurchaseRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = LotteryPurchaseRecord
         fields = ['amount', 'pay_type', 'multiply']
+
+
+class WheelActivityDrawSerializer(serializers.ModelSerializer):
+    no = serializers.CharField(required=True, help_text='转盘编号')
+
+    @atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        key = get_redis_name('wheeldw{}'.format(request.user.id))
+        with run_with_lock(key, 3) as got:
+            if got:
+                try:
+                    obj = WheelActivity.objects.get(no=validated_data['no'], status=WheelActivity.STATUS_ON)
+                except WheelActivity.DoesNotExist:
+                    raise CustomAPIException('转盘活动已结束！')
+                section = obj.draw_wheel_prize(user)
+                return section
+            else:
+                raise CustomAPIException('请勿重复领取')
+
+    class Meta:
+        model = WheelActivity
+        fields = ['no']

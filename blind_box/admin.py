@@ -20,6 +20,8 @@ from caches import get_redis_name, run_with_lock
 from decimal import Decimal
 from blind_box.stock_updater import prsc, bdbc
 
+from dj_ext import AdminException
+
 log = logging.getLogger(__name__)
 
 
@@ -604,11 +606,36 @@ class WheelSectionInline(RemoveDeleteStackedInline):
     exclude = ['no']
 
 
+def wheel_set_on(modeladmin, request, queryset):
+    obj = queryset.first()
+    num = obj.sections.filter(is_enabled=True).count()
+    if num < 3:
+        raise AdminException('转盘片区小于3,不可上架')
+    obj.status = WheelActivity.STATUS_ON
+    obj.save(update_fields=['status'])
+    messages.success(request, '执行成功')
+
+
+wheel_set_on.short_description = '上架'
+
+
+def wheel_set_off(modeladmin, request, queryset):
+    obj = queryset.first()
+    obj.status = WheelActivity.STATUS_OFF
+    obj.save(update_fields=['status'])
+    messages.success(request, '执行成功')
+
+
+wheel_set_off.short_description = '下架'
+
+
 class WheelActivityAdmin(RemoveDeleteModelAdmin):
     list_display = ['name', 'status', 'create_at']
     list_filter = ['status', 'create_at']
     search_fields = ['name']
     inlines = [WheelSectionInline]
+    readonly_fields = ['status']
+    actions = [wheel_set_on, wheel_set_off]
 
 
 # ========== 抽奖次数购买记录相关 ==========

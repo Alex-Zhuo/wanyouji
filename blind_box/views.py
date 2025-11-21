@@ -11,7 +11,8 @@ from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer,
-    BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer, LotteryPurchaseRecordCreateSerializer
+    BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer, LotteryPurchaseRecordCreateSerializer,
+    WheelActivityDrawSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -223,17 +224,13 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         data = self.serializer_class(obj, context={'request': request}).data
         return Response(data)
 
-    #
-    # @action(methods=['post'], detail=True)
-    # def draw(self, request, pk=None):
-    #     """转盘抽奖"""
-    #     wheel_activity = self.get_object()
-    #     user = request.user
-    #     with transaction.atomic():
-    #         winning_record = draw_wheel_prize(wheel_activity, user)
-    #         if not winning_record:
-    #             raise CustomAPIException('抽奖失败，请稍后重试')
-    #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
+    @action(methods=['post'], detail=False)
+    def draw(self, request):
+        """转盘抽奖"""
+        s = WheelActivityDrawSerializer(data=request.data, context={'request': request})
+        s.is_valid(True)
+        s.create(s.validated_data)
+        return Response()
 
     @action(methods=['get'], detail=False)
     def rest_times(self, request):

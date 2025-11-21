@@ -19,6 +19,7 @@ from django.db.models import F
 from datetime import timedelta
 from typing import List, Optional
 from blind_box.stock_updater import prsc, StockModel
+from blind_box.lottery_utils import weighted_random_choice
 
 SR_COUPON = 1
 SR_TICKET = 2
@@ -295,7 +296,6 @@ class BlindBox(UseShortNoAbstract):
         bdbc.remove(self.id)
 
     def draw_blind_box_prizes(self) -> List[Prize]:
-        from blind_box.lottery_utils import weighted_random_choice
         """
         盲盒抽奖
         每个格抽出的奖品不重复，下一格抽取时需要去掉上一格的奖品
@@ -761,72 +761,61 @@ class WheelActivity(UseShortNoAbstract):
         if self.status == self.STATUS_ON:
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
-
-    # def draw_wheel_prize(self, user) -> Prize:
-    #     """
-    #     转盘抽奖
-    #     转盘片区附表中库存不为0的奖品权重数总和
-    #     """
-    #     # 获取启用的片区
-    #     sections = wheel_activity.sections.filter(is_enabled=True).select_related('prize')
-    #
-    #     # 构建候选奖品列表（库存不为0的奖品）
-    #     candidates = []
-    #     for section in sections:
-    #         prize = section.prize
-    #         if prize and prize.status == Prize.STATUS_ON:
-    #             # 检查库存（从redis获取）
-    #             stock = prsc.get_stock(prize.id)
-    #             if stock and int(stock) > 0:
-    #                 candidates.append({
-    #                     'item': prize,
-    #                     'weight': section.weight,
-    #                     'section': section
-    #                 })
-    #
-    #     if not candidates:
-    #         log.warning(f"转盘活动 {wheel_activity.id} 没有可抽中的奖品")
-    #         return None
-    #
-    #     # 根据权重随机选择
-    #     selected = weighted_random_choice(candidates)
-    #     if not selected:
-    #         return None
-    #
-    #     prize = selected
-    #     section = next(c['section'] for c in candidates if c['item'] == prize)
-    #
-    #     # 减少库存（使用incr方法，ceiling=0表示减后必须>=0）
-    #     success, new_stock = prsc.incr(prize.id, -1, ceiling=0)
-    #     if not success:
-    #         log.warning(f"奖品 {prize.id} 库存不足")
-    #         return None
-    #     prsc.record_update_ts(prize.id)
-    #
-    #     # 创建中奖记录
-    #     winning_record = WinningRecord.objects.create(
-    #         user=user,
-    #         mobile=user.mobile if hasattr(user, 'mobile') else '',
-    #         prize=prize,
-    #         source_type=prize.source_type,
-    #         instruction=prize.instruction,
-    #         status=ST_PENDING_RECEIVE if prize.source_type in [SR_TICKET, SR_CODE] else (
-    #             ST_PENDING_SHIP if prize.source_type == SR_GOOD else ST_COMPLETED
-    #         ),
-    #         source=WinningRecord.SOURCE_WHEEL,
-    #         wheel_activity=wheel_activity,
-    #         winning_at=timezone.now()
-    #     )
-    #
-    #     # 如果是消费券类型，自动进入"我的消费券"并设置为已完成
-    #     if prize.source_type == SR_COUPON:
-    #         # TODO: 这里需要调用消费券模块的接口，将消费券添加到用户账户
-    #         # from coupon.models import UserCouponRecord, Coupon
-    #         # 需要根据prize关联的消费券信息创建UserCouponRecord
-    #         winning_record.set_completed()
-    #
-    #     return winning_record
-
+    def draw_wheel_prize(self, user) -> Optional[None, 'WheelSection']:
+        """
+        转盘抽奖
+        转盘片区附表中库存不为0的奖品权重数总和
+        """
+        # 获取启用的片区
+        ul = UserLotteryTimes.get_or_create_record(user)
+        if ul.times <= 0:
+            raise CustomAPIException('抽奖次数不足')
+        sections = self.sections.filter(is_enabled=True).select_related('prize')
+        # 构建候选奖品列表（库存不为0的奖品）
+        candidates = []
+        thank_section = None
+        for section in sections:
+            candidates.append({
+                'weight': section.weight,
+                'item': section
+            })
+            if not thank_section and section.is_no_prize:
+                thank_section = section
+        if not candidates:
+            log.warning(f"转盘活动 {self.no} 没有上架的片区")
+            raise CustomAPIException('活动未开始，请稍后再试')
+        # 根据权重随机选择
+        selected_section, _ = weighted_random_choice(candidates)
+        if not selected_section:
+            if thank_section:
+                return thank_section
+            else:
+                log.warning(f"转盘活动 {self.no} 没有抽中的片区")
+                raise CustomAPIException('活动未开始，请稍后再试.')
+        prize = selected_section.prize
+        # 非谢谢参与且有设置奖品,而且奖品需要上架和有库存
+        if not selected_section.is_no_prize and prize and prize.status == Prize.STATUS_ON:
+            # 减少库存（使用incr方法，ceiling=0表示减后必须>=0）
+            success, new_stock = prsc.incr(prize.id, -1, ceiling=0)
+            if success:
+                # 扣库存成功
+                prsc.record_update_ts(prize.id)
+                # 扣减次数
+                try:
+                    st = ul.update_times(1, False)
+                    if not st:
+                        raise Exception('抽奖失败，请稍后再试...')
+                    else:
+                        return selected_section
+                except Exception as e:
+                    prsc.incr(prize.id, 1, ceiling=Ellipsis)
+                    prsc.record_update_ts(prize.id)
+                    log.info(f"已回滚奖品 {prize.id} 的库存")
+                    raise CustomAPIException('抽奖失败，请稍后再试...')
+        if thank_section:
+            return thank_section
+        else:
+            raise CustomAPIException('活动未开始，请稍后再试..')
 
 
 class WheelSection(UseShortNoAbstract):
