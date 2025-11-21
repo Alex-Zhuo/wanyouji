@@ -769,7 +769,7 @@ class WheelActivity(UseShortNoAbstract):
         转盘片区附表中库存不为0的奖品权重数总和
         """
         # 获取启用的片区
-        sections = self.sections.filter(is_enabled=True).select_related('prize')
+        sections = self.sections.filter(is_enabled=True)
         # 构建候选奖品列表（库存不为0的奖品）
         candidates = []
         thank_section = None
