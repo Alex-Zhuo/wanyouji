@@ -176,7 +176,7 @@ class BlindWinningRecordViewSet(WinningRecordCommonViewSet):
         s.create(s.validated_data)
         return Response()
 
-    @action(methods=['post'], detail=True)
+    @action(methods=['post'], detail=True, http_method_names=['post'])
     def confirm(self, request, pk):
         """确认收货（实物奖品）"""
         obj = self.get_object()
