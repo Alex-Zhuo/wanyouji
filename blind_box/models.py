@@ -878,7 +878,7 @@ class LotteryPurchaseRecord(models.Model):
     multiply = models.PositiveIntegerField('购买次数')
     amount = models.DecimalField('实付金额', max_digits=13, decimal_places=2)
     refund_amount = models.DecimalField('已退款金额', max_digits=10, decimal_places=2, default=0)
-    status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_PAID)
+    status = models.PositiveSmallIntegerField('状态', choices=STATUS_CHOICES, default=ST_UNPAID)
     create_at = models.DateTimeField('下单时间', auto_now_add=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
     receipt = models.OneToOneField(BlindReceipt, verbose_name='收款记录', on_delete=models.SET_NULL, null=True,
