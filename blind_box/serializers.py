@@ -178,6 +178,20 @@ class WinningRecordSerializer(serializers.ModelSerializer):
 
 
 class WinningRecordDetailSerializer(WinningRecordSerializer):
+    class Meta:
+        fields = WinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
+                                                        'express_address', 'express_phone',
+                                                        'express_user_name', 'express_company_name',
+                                                        'express_no']
+
+
+class BlindBoxWinningRecordSerializer(WinningRecordSerializer):
+    class Meta:
+        model = BlindBoxWinningRecord
+        fields = WinningRecordSerializer.Meta.fields
+
+
+class BlindBoxWinningRecordDetailSerializer(WinningRecordDetailSerializer):
     box = serializers.SerializerMethodField()
 
     def get_box(self, obj):
@@ -190,22 +204,8 @@ class WinningRecordDetailSerializer(WinningRecordSerializer):
         return data
 
     class Meta:
-        fields = WinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
-                                                        'box', 'express_address', 'express_phone',
-                                                        'express_user_name', 'express_company_name',
-                                                        'express_no']
-
-
-class BlindBoxWinningRecordSerializer(WinningRecordSerializer):
-    class Meta:
         model = BlindBoxWinningRecord
-        fields = WinningRecordSerializer.Meta.fields
-
-
-class BlindBoxWinningRecordDetailSerializer(WinningRecordDetailSerializer):
-    class Meta:
-        model = BlindBoxWinningRecord
-        fields = WinningRecordDetailSerializer.Meta.fields
+        fields = WinningRecordDetailSerializer.Meta.fields + ['box']
 
 
 class WheelWinningRecordSerializer(WinningRecordSerializer):
@@ -217,7 +217,7 @@ class WheelWinningRecordSerializer(WinningRecordSerializer):
 class WheelWinningRecordDetailSerializer(WinningRecordDetailSerializer):
     class Meta:
         model = WheelWinningRecord
-        fields = WinningRecordDetailSerializer.Meta.fields
+        fields = WinningRecordDetailSerializer.Meta.fields + ['wheel_name']
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
