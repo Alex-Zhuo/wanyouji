@@ -719,6 +719,15 @@ class WinningRecordAbstract(models.Model):
         return self.source_type == SR_GOOD and self.status in [self.ST_PENDING_RECEIPT,
                                                                self.ST_COMPLETED] and self.express_no
 
+    @classmethod
+    def auto_finished(cls):
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        records = cls.objects.filter(
+            source_type=SR_GOOD,
+            status=cls.ST_PENDING_RECEIPT,
+            ship_at__lte=seven_days_ago)
+        records.update(status=cls.ST_COMPLETED, complete_at=timezone.now())
+
 
 class BlindBoxWinningRecord(WinningRecordAbstract):
     blind_box_order = models.ForeignKey(BlindBoxOrder, on_delete=models.SET_NULL, verbose_name='盲盒订单',

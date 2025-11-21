@@ -476,6 +476,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'blind_box.tasks.blind_box_update_stock_from_redis_task',
         'schedule': timedelta(seconds=33),  # 盲盒库存
     },
+    'blind_box_order_auto_cancel_task': {
+        'task': 'blind_box.tasks.blind_box_order_auto_cancel_task',
+        'schedule': timedelta(seconds=117),  # 盲盒订单自动取消
+    },
+    'auto_confirm_prize_task': {
+        'task': 'blind_box.tasks.auto_confirm_prize_task',
+        'schedule': timedelta(seconds=601),  # 中奖记录自动完成
+    },
 
     # 彩艺任务
     'confirm_order_task': {
