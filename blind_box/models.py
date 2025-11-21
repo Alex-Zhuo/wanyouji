@@ -845,6 +845,7 @@ class LotteryPurchaseRecord(models.Model):
             self.transaction_id = self.receipt.transaction_id
             self.pay_at = timezone.now()
             self.save(update_fields=['status', 'pay_at', 'transaction_id'])
+            self.change_lottery_times(1, True)
 
     @classmethod
     def can_refund_status(cls):
@@ -855,17 +856,17 @@ class LotteryPurchaseRecord(models.Model):
         self.status = self.ST_REFUNDING
         self.save(update_fields=['refund_amount', 'status'])
         # 申请退款时减抽奖次数
-        self.return_lottery_times()
+        self.change_lottery_times(-1, True)
 
     def set_refunded(self):
         self.refund_at = timezone.now()
         self.status = self.ST_REFUNDED
         self.save(update_fields=['status', 'refund_at'])
 
-    def return_lottery_times(self):
+    def change_lottery_times(self, times, add_total=True):
         if self.user:
             ult = UserLotteryTimes.get_or_create_record(self.user)
-            ult.update_times(-1, True)
+            ult.update_times(times, add_total)
 
 
 class UserLotteryTimes(models.Model):
