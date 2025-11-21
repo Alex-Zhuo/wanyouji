@@ -701,6 +701,11 @@ class WinningRecordAbstract(models.Model):
             self.express_company_name = express_company_name
         self.save(update_fields=['status', 'ship_at', 'express_no', 'express_company_code', 'express_company_name'])
 
+    @property
+    def can_query_express(self):
+        return self.source_type == SR_GOOD and self.status in [self.ST_PENDING_RECEIPT,
+                                                               self.ST_COMPLETED] and not self.express_no
+
 
 class BlindBoxWinningRecord(WinningRecordAbstract):
     blind_box_order = models.ForeignKey(BlindBoxOrder, on_delete=models.SET_NULL, verbose_name='盲盒订单',

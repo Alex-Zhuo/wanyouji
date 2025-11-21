@@ -136,15 +136,15 @@ class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=True)
     def query_express(self, request, pk):
         # 查看物流
-        order = self.get_object()
-        express_no = order.express_no
-        if not express_no:
+        obj = self.get_object()
+        express_no = obj.express_no
+        if not obj.can_query_express:
             raise CustomAPIException('还未发货')
         # if order.express_comp_no in ['SFEXPRESS', 'ZTO']:
         #     express_no = '{}:{}'.format(express_no, order.mobile[-4:])
         from qcloud import get_tencent
         client = get_tencent()
-        succ, data = client.query_express(order.id, express_no, order.express_phone)
+        succ, data = client.query_express(obj.id, express_no, obj.express_phone)
         if succ:
             return Response(data)
         else:
@@ -214,7 +214,6 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     #     return Response(WinningRecordSerializer(winning_record, context={'request': request}).data)
 
 
-#
 class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
     """抽奖次数购买记录"""
     queryset = LotteryPurchaseRecord.objects.all()
@@ -225,14 +224,14 @@ class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
     filter_fields = ['status']
     http_method_names = ['get']
 
-    @action(methods=['post'], detail=False, http_method_names=['post'])
-    def create_order(self, request):
-        with try_queue('wheel-order', 100, 5) as got:
-            if got:
-                s = BlindBoxOrderCreateSerializer(data=request.data, context={'request': request})
-                s.is_valid(True)
-                order = s.create(s.validated_data)
-            else:
-                log.warning(f"盲盒抢购排队超时失败")
-                raise CustomAPIException('当前抢够人数较多，请稍后重试')
-        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
+    # @action(methods=['post'], detail=False, http_method_names=['post'])
+    # def create_order(self, request):
+    #     with try_queue('wheel-order', 500, 5) as got:
+    #         if got:
+    #             s = LotteryPurchaseRecordCreateSerializer(data=request.data, context={'request': request})
+    #             s.is_valid(True)
+    #             order = s.create(s.validated_data)
+    #         else:
+    #             log.warning(f"转盘次数购买排队超时失败")
+    #             raise CustomAPIException('当前活动火爆，请稍后再试')
+    #     return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
