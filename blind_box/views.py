@@ -1,15 +1,11 @@
 # coding=utf-8
-from django.shortcuts import render
-from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
-from django.db import transaction
-from datetime import timedelta
 
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, LotteryPurchaseRecord, BlindBoxOrder,
-    BlindReceipt, BlindOrderRefund, SR_GOOD, WinningRecordAbstract
+    BlindReceipt, BlindOrderRefund, SR_GOOD
 )
 from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
@@ -28,7 +24,6 @@ from django.http import Http404
 from restframework_ext.views import BaseReceiptViewset
 from django.shortcuts import get_object_or_404
 from concu.api_limit import try_queue
-from caches import run_with_lock, get_redis_name
 
 log = logging.getLogger(__name__)
 

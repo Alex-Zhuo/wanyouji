@@ -13,4 +13,5 @@ router.register(r'blind_order', BlindBoxOrderViewSet, basename='blind_order')
 router.register(r'blind_prize', BlindWinningRecordViewSet, basename='blind_prize')
 router.register(r'receipt', BlindReceiptViewSet, basename='blind_receipt')
 router.register(r'wheel', WheelActivityViewSet, basename='wheel')
+
 router.register(r'wheel_order', LotteryPurchaseRecordViewSet, basename='wheel_order')
