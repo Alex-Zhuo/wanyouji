@@ -10,7 +10,7 @@ import simplejson as json
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic, BlindBoxOrder,
-    BlindReceipt, SR_GOOD, UserLotteryTimes
+    BlindReceipt, SR_GOOD, UserLotteryTimes, UserLotteryRecord
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -400,12 +400,23 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
         with run_with_lock(key, 3) as got:
             if got:
                 try:
-                    obj = WheelActivity.objects.get(no=validated_data['no'], status=WheelActivity.STATUS_ON)
+                    wheel_activity = WheelActivity.objects.get(no=validated_data['no'], status=WheelActivity.STATUS_ON)
                 except WheelActivity.DoesNotExist:
                     raise CustomAPIException('转盘活动已结束！')
-                section = obj.draw_wheel_prize(user)
+                section = wheel_activity.draw_wheel_prize(user)
                 if not section:
                     raise CustomAPIException('转盘活动已结束!！')
+                else:
+                    is_prize = not section.is_no_prize and section.prize
+                    lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
+                    prize_snapshot = WheelWinningRecord.get_snapshot(section.prize)
+                    if is_prize:
+                        prize = section.prize
+                        WheelWinningRecord.objects.create(lottery_record=lottery_record, wheel_activity=wheel_activity,
+                                                          wheel_name=wheel_activity.name, user=user,
+                                                          mobile=user.mobile, prize=prize,
+                                                          source_type=prize.source_type,
+                                                          snapshot=prize_snapshot)
                 return section
             else:
                 raise CustomAPIException('请勿重复领取')

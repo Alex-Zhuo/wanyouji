@@ -224,7 +224,7 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
         data = self.serializer_class(obj, context={'request': request}).data
         return Response(data)
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False, http_method_names=['post'])
     def draw(self, request):
         """转盘抽奖"""
         s = WheelActivityDrawSerializer(data=request.data, context={'request': request})

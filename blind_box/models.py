@@ -806,7 +806,6 @@ class WheelActivity(UseShortNoAbstract):
                     if not st:
                         raise Exception('抽奖失败，请稍后再试...')
                     else:
-
                         return selected_section
                 except Exception as e:
                     prsc.incr(prize.id, 1, ceiling=Ellipsis)
