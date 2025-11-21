@@ -156,7 +156,7 @@ class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):
         fields = ['prize']
 
 
-class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
+class WinningRecordSerializer(serializers.ModelSerializer):
     status_display = serializers.ReadOnlyField(source='get_status_display')
     source_type_display = serializers.ReadOnlyField(source='get_source_type_display')
     snapshot = serializers.SerializerMethodField()
@@ -179,12 +179,11 @@ class BlindBoxWinningRecordSerializer(serializers.ModelSerializer):
         return obj.can_query_express
 
     class Meta:
-        model = BlindBoxWinningRecord
         fields = ['no', 'source_type', 'source_type_display', 'status', 'status_display', 'snapshot', 'winning_at',
                   'query_express']
 
 
-class BlindBoxWinningRecordDetailSerializer(BlindBoxWinningRecordSerializer):
+class WinningRecordDetailSerializer(WinningRecordSerializer):
     box = serializers.SerializerMethodField()
 
     def get_box(self, obj):
@@ -197,11 +196,22 @@ class BlindBoxWinningRecordDetailSerializer(BlindBoxWinningRecordSerializer):
         return data
 
     class Meta:
+        fields = WinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
+                                                        'box', 'express_address', 'express_phone',
+                                                        'express_user_name', 'express_company_name',
+                                                        'express_no']
+
+
+class BlindBoxWinningRecordSerializer(WinningRecordSerializer):
+    class Meta:
         model = BlindBoxWinningRecord
-        fields = BlindBoxWinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
-                                                                'box', 'express_address', 'express_phone',
-                                                                'express_user_name', 'express_company_name',
-                                                                'express_no']
+        fields = WinningRecordSerializer.Meta.fields
+
+
+class BlindBoxWinningRecordDetailSerializer(WinningRecordDetailSerializer):
+    class Meta:
+        model = BlindBoxWinningRecord
+        fields = WinningRecordDetailSerializer.Meta.fields
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
