@@ -10,7 +10,7 @@ import simplejson as json
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic, BlindBoxOrder,
-    BlindReceipt, SR_GOOD
+    BlindReceipt, SR_GOOD, UserLotteryTimes
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -124,6 +124,7 @@ class WheelActivityBasicSerializer(serializers.ModelSerializer):
 class WheelActivitySerializer(serializers.ModelSerializer):
     sections = serializers.SerializerMethodField()
     config = serializers.SerializerMethodField()
+    rest_times = serializers.SerializerMethodField()
 
     def get_sections(self, obj):
         qs = obj.sections.filter(is_enabled=True)
@@ -134,9 +135,14 @@ class WheelActivitySerializer(serializers.ModelSerializer):
         bl = BlindBasic.get()
         return dict(price=bl.price_per_lottery, rule=bl.wheel_rule)
 
+    def get_rest_times(self, obj):
+        user = self.context.get('request').user
+        ul = UserLotteryTimes.get_or_create_record(user)
+        return ul.times
+
     class Meta:
         model = WheelActivity
-        fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image']
+        fields = ['no', 'name', 'description', 'sections', 'config', 'title_image', 'bg_image', 'rest_times']
 
 
 class BlindBoxOrderPrizeSerializer(serializers.ModelSerializer):
@@ -317,7 +323,7 @@ class BlindBoxWinningReceiveSerializer(serializers.ModelSerializer):
                     raise CustomAPIException('该奖品类型不支持此操作')
                 from mall.models import UserAddress
                 try:
-                    address = UserAddress.objects.get(pk=validated_data['address_id'],user=user)
+                    address = UserAddress.objects.get(pk=validated_data['address_id'], user=user)
                 except UserAddress.DoesNotExist:
                     raise CustomAPIException('地址错误')
                 obj.set_received(address)
