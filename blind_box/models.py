@@ -704,7 +704,7 @@ class WinningRecordAbstract(models.Model):
     @property
     def can_query_express(self):
         return self.source_type == SR_GOOD and self.status in [self.ST_PENDING_RECEIPT,
-                                                               self.ST_COMPLETED] and not self.express_no
+                                                               self.ST_COMPLETED] and self.express_no
 
 
 class BlindBoxWinningRecord(WinningRecordAbstract):
