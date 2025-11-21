@@ -912,7 +912,7 @@ class LotteryPurchaseRecord(models.Model):
             self.transaction_id = self.receipt.transaction_id
             self.pay_at = timezone.now()
             self.save(update_fields=['status', 'pay_at', 'transaction_id'])
-            self.change_lottery_times(1, True)
+            self.change_lottery_times(self.multiply, True)
 
     @classmethod
     def can_refund_status(cls):
