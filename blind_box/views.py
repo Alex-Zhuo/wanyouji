@@ -132,7 +132,24 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
             raise CustomAPIException('订单未支付')
 
 
-class BlindWinningRecordViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
+class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
+    @action(methods=['get'], detail=True)
+    def query_express(self, request, pk):
+        # 查看物流
+        order = self.get_object()
+        express_no = order.express_no
+        # if order.express_comp_no in ['SFEXPRESS', 'ZTO']:
+        #     express_no = '{}:{}'.format(express_no, order.mobile[-4:])
+        from qcloud import get_tencent
+        client = get_tencent()
+        succ, data = client.query_express(order.id, express_no, order.express_phone)
+        if succ:
+            return Response(data)
+        else:
+            raise CustomAPIException(data)
+
+
+class BlindWinningRecordViewSet(WinningRecordCommonViewSet):
     """盲盒中奖记录"""
     queryset = BlindBoxWinningRecord.objects.exclude(status=BlindBoxWinningRecord.ST_UNPAID)
     permission_classes = [IsPermittedUser]
@@ -159,16 +176,16 @@ class BlindWinningRecordViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
         s.create(s.validated_data)
         return Response()
 
-    # @action(methods=['post'], detail=True)
-    # def confirm_receipt(self, request, pk=None):
-    #     """确认收货（实物奖品）"""
-    #     winning_record = self.get_object()
-    #     if winning_record.source_type != Prize.SR_GOOD:
-    #         raise CustomAPIException('该奖品类型不支持此操作')
-    #     if winning_record.status != WinningRecord.ST_PENDING_RECEIPT:
-    #         raise CustomAPIException('该中奖记录状态不正确')
-    #     winning_record.set_completed()
-    #     return Response({'message': '确认收货成功'})
+    @action(methods=['post'], detail=True)
+    def confirm(self, request, pk):
+        """确认收货（实物奖品）"""
+        obj = self.get_object()
+        if obj.source_type != SR_GOOD:
+            raise CustomAPIException('该奖品类型不支持此操作')
+        if obj.status != BlindBoxWinningRecord.ST_PENDING_RECEIPT:
+            raise CustomAPIException('待收货状态才能确认')
+        obj.set_completed()
+        return Response()
 
 
 class WheelActivityViewSet(ReturnNoDetailViewSet):

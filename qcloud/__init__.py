@@ -11,7 +11,7 @@ from datetime import datetime as pydatetime
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 import logging
-from caches import get_pika_redis
+from caches import get_pika_redis, get_redis_name
 import json, requests
 from urllib.error import HTTPError
 from streaming.utils import create_streaming_response, api_response_stream_generator
@@ -253,7 +253,7 @@ class TencentCloudImpl(object):
         """
         try:
             name = 'query_express'
-            key = '%s_%s' % (number, order_id)
+            key = get_redis_name('%s_%s' % (number, order_id))
             with get_pika_redis() as redis:
                 st = False
                 data = redis.hget(name, key)

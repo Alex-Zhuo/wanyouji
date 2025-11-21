@@ -10,7 +10,7 @@ import simplejson as json
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic, BlindBoxOrder,
-    BlindReceipt
+    BlindReceipt, SR_GOOD
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -313,6 +313,8 @@ class BlindBoxWinningReceiveSerializer(serializers.ModelSerializer):
                                                             status=BlindBoxWinningRecord.ST_PENDING_RECEIVE)
                 except BlindBoxWinningRecord.DoesNotExist:
                     raise CustomAPIException('找不到获奖记录,或已经领取过了')
+                if obj.source_type != SR_GOOD:
+                    raise CustomAPIException('该奖品类型不支持此操作')
                 from mall.models import UserAddress
                 try:
                     address = UserAddress.objects.get(pk=validated_data['address_id'],user=user)
