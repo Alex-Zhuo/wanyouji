@@ -682,7 +682,7 @@ class WinningRecordAbstract(models.Model):
     def set_received(self, address):
         """设置为已领取（客服操作后调用）"""
         if self.status == self.ST_PENDING_RECEIVE:
-            self.status = self.ST_COMPLETED
+            self.status = self.ST_PENDING_SHIP
             self.receive_at = timezone.now()
             self.express_address = address.to_express_address_new
             self.express_user_name = address.receive_name

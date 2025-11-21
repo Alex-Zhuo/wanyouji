@@ -138,6 +138,8 @@ class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
         # 查看物流
         order = self.get_object()
         express_no = order.express_no
+        if not express_no:
+            raise CustomAPIException('还未发货')
         # if order.express_comp_no in ['SFEXPRESS', 'ZTO']:
         #     express_no = '{}:{}'.format(express_no, order.mobile[-4:])
         from qcloud import get_tencent
