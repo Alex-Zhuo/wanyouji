@@ -351,14 +351,6 @@ CELERY_TIMEZONE = celery_config['TIMEZONE'] if celery_config else TIME_ZONE
 CELERY_RESULT_BACKEND = celery_config[
     'result_backend'] if celery_config else 'redis://127.0.0.1:6379/6'  # BACKEND配置，这里使用redis
 # celery内容等消息的格式设置，默认json
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    'visibility_timeout': 3600,
-    'retry_policy': {
-        'timeout': 5.0
-    },
-    'fanout_prefix': True,
-    'fanout_patterns': True
-}
 CELERY_ACCEPT_CONTENT = ['application/json', ]
 CELERY_TASK_SERIALIZER = 'json'  # 任务序列化
 CELERY_RESULT_SERIALIZER = 'json'  # 结果序列化方案
