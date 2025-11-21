@@ -133,7 +133,7 @@ class WheelActivitySerializer(serializers.ModelSerializer):
 
     def get_config(self, obj):
         bl = BlindBasic.get()
-        return dict(price=bl.price_per_lottery, rule=bl.wheel_rule)
+        return dict(price=bl.price_per_lottery, rule=bl.wheel_rule, open_buy_times=bl.open_buy_times)
 
     def get_rest_times(self, obj):
         user = self.context.get('request').user
@@ -199,7 +199,9 @@ class BlindBoxWinningRecordDetailSerializer(BlindBoxWinningRecordSerializer):
     class Meta:
         model = BlindBoxWinningRecord
         fields = BlindBoxWinningRecordSerializer.Meta.fields + ['winning_at', 'receive_at', 'ship_at', 'complete_at',
-                                                                'box']
+                                                                'box', 'express_address', 'express_phone',
+                                                                'express_user_name', 'express_company_name',
+                                                                'express_no']
 
 
 class LotteryPurchaseRecordSerializer(serializers.ModelSerializer):
@@ -339,63 +341,49 @@ class BlindBoxWinningReceiveSerializer(serializers.ModelSerializer):
         model = BlindBoxWinningRecord
         fields = ['no', 'address_id']
 
-# class CouponOrderCreateSerializer(serializers.ModelSerializer):
-#     amount = serializers.DecimalField(max_digits=9, decimal_places=2, required=True)
-#     coupon_no = serializers.CharField(required=True, help_text='消费卷号')
-#     pay_type = serializers.IntegerField(required=True)
-#     multiply = serializers.IntegerField(required=True)
-#
-#     @atomic
-#     def create(self, validated_data):
-#         request = self.context.get('request')
-#         user = request.user
-#         if not user.mobile:
-#             raise CustomAPIException('请先绑定手机')
-#         if validated_data['multiply'] != 1:
-#             raise CustomAPIException('每次最多购买一张')
-#         key = get_redis_name('cnpod_{}'.format(user.id))
-#         coupon_no = validated_data.pop('coupon_no')
-#         with run_with_lock(key, 5) as got:
-#             if got:
-#                 try:
-#                     coupon = Coupon.objects.get(no=coupon_no, status=Coupon.STATUS_ON, source_type=Coupon.SR_PAY)
-#                 except Coupon.DoesNotExist:
-#                     raise CustomAPIException('消费卷已下架')
-#                 obtain_num = UserCouponRecord.get_user_obtain_cache(coupon.no, user.id)
-#                 # obtain_num = user.coupons.filter(coupon_id=coupon.id).count()
-#                 if coupon.user_obtain_limit > 0 and obtain_num >= coupon.user_obtain_limit:
-#                     raise CustomAPIException('消费券已达到购买上限')
-#                 if coupon.pay_amount == 0:
-#                     raise CustomAPIException('消费券可免费领取')
-#                 if coupon.stock <= 0:
-#                     raise CustomAPIException('消费券库存不足')
-#                 real_amount = coupon.pay_amount * validated_data['multiply']
-#                 if real_amount != validated_data['amount']:
-#                     log.error('{},{}'.format(validated_data['amount'], real_amount))
-#                     raise CustomAPIException('下单失败，金额错误')
-#                 validated_data['coupon'] = coupon
-#                 validated_data['user'] = user
-#                 validated_data['mobile'] = user.mobile
-#                 # validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
-#                 from mp.models import WeiXinPayConfig
-#                 wx_pay_config = WeiXinPayConfig.get_default()
-#                 cb = CouponBasic.get()
-#                 auto_cancel_minutes = cb.auto_cancel_minutes if cb else 5
-#                 pay_end_at = timezone.now() + timedelta(minutes=auto_cancel_minutes)
-#                 receipt = CouponReceipt.create_record(amount=real_amount, user=user,
-#                                                       pay_type=validated_data['pay_type'], biz=CouponReceipt.BIZ_ACT,
-#                                                       wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
-#                 validated_data['receipt'] = receipt
-#                 validated_data['wx_pay_config'] = wx_pay_config
-#                 validated_data['coupon_name'] = coupon.name
-#                 validated_data['pay_end_at'] = pay_end_at
-#                 order = CouponOrder.objects.create(**validated_data)
-#                 if not coupon.coupon_change_stock(-validated_data['multiply']):
-#                     raise CustomAPIException('消费券库存不足')
-#                 return order
-#             else:
-#                 raise CustomAPIException('请不要太快下单，稍后再试')
-#
-#     class Meta:
-#         model = CouponOrder
-#         fields = ['amount', 'pay_type', 'coupon_no', 'multiply']
+
+class LotteryPurchaseRecordCreateSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=9, decimal_places=2, required=True)
+    pay_type = serializers.IntegerField(required=True)
+    multiply = serializers.IntegerField(required=True)
+
+    @atomic
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        if not user.mobile:
+            raise CustomAPIException('请先绑定手机')
+        key = get_redis_name('lottime_{}'.format(user.id))
+        config = BlindBasic.get()
+        # with run_with_lock(key, 5) as got:
+        #     if got:
+        #         real_amount = coupon.pay_amount * validated_data['multiply']
+        #         if real_amount != validated_data['amount']:
+        #             log.error('{},{}'.format(validated_data['amount'], real_amount))
+        #             raise CustomAPIException('下单失败，金额错误')
+        #         validated_data['coupon'] = coupon
+        #         validated_data['user'] = user
+        #         validated_data['mobile'] = user.mobile
+        #         # validated_data['snapshot'] = CouponOrder.get_snapshot(coupon)
+        #         from mp.models import WeiXinPayConfig
+        #         wx_pay_config = WeiXinPayConfig.get_default()
+        #         cb = CouponBasic.get()
+        #         auto_cancel_minutes = cb.auto_cancel_minutes if cb else 5
+        #         pay_end_at = timezone.now() + timedelta(minutes=auto_cancel_minutes)
+        #         receipt = CouponReceipt.create_record(amount=real_amount, user=user,
+        #                                               pay_type=validated_data['pay_type'], biz=CouponReceipt.BIZ_ACT,
+        #                                               wx_pay_config=wx_pay_config, pay_end_at=pay_end_at)
+        #         validated_data['receipt'] = receipt
+        #         validated_data['wx_pay_config'] = wx_pay_config
+        #         validated_data['coupon_name'] = coupon.name
+        #         validated_data['pay_end_at'] = pay_end_at
+        #         order = CouponOrder.objects.create(**validated_data)
+        #         if not coupon.coupon_change_stock(-validated_data['multiply']):
+        #             raise CustomAPIException('消费券库存不足')
+        #         return order
+        #     else:
+        #         raise CustomAPIException('请不要太快下单，稍后再试')
+
+    class Meta:
+        model = LotteryPurchaseRecord
+        fields = ['amount', 'pay_type', 'multiply']

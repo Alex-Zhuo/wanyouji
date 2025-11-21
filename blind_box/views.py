@@ -15,7 +15,7 @@ from blind_box.serializers import (
     PrizeSerializer, BlindBoxSerializer, WheelActivitySerializer,
     BlindBoxWinningRecordSerializer, LotteryPurchaseRecordSerializer, BlindBoxDetailSerializer, PrizeDetailSerializer,
     BlindBoxOrderSerializer, BlindBoxOrderCreateSerializer, BlindBoxOrderPrizeSerializer,
-    BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer
+    BlindBoxWinningRecordDetailSerializer, BlindBoxWinningReceiveSerializer, LotteryPurchaseRecordCreateSerializer
 )
 from restframework_ext.exceptions import CustomAPIException
 from restframework_ext.permissions import IsPermittedUser
@@ -34,6 +34,9 @@ log = logging.getLogger(__name__)
 
 
 class BlindReceiptViewSet(BaseReceiptViewset):
+    """
+    盲盒和转盘次数支付接口
+    """
     permission_classes = []
     receipt_class = BlindReceipt
     refund_class = BlindOrderRefund
@@ -71,6 +74,9 @@ class PrizeViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
 
     @action(methods=['get'], detail=True)
     def details(self, request, pk):
+        """
+        奖品详情接口
+        """
         try:
             obj = Prize.objects.get(no=pk)
             data = PrizeDetailSerializer(obj, context={'request': request}).data
@@ -90,6 +96,9 @@ class BlindBoxViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
 
     @action(methods=['get'], detail=True)
     def details(self, request, pk):
+        """
+        盲盒详情接口
+        """
         try:
             obj = BlindBox.objects.get(no=pk)
             data = BlindBoxDetailSerializer(obj, context={'request': request}).data
@@ -100,6 +109,9 @@ class BlindBoxViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
 
 
 class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
+    """
+    盲盒订单接口
+    """
     queryset = BlindBoxOrder.objects.all()
     serializer_class = BlindBoxOrderSerializer
     permission_classes = [IsPermittedUser]
@@ -110,6 +122,9 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
 
     @action(methods=['post'], detail=False, http_method_names=['post'])
     def create_order(self, request):
+        """
+        盲盒下单接口
+        """
         with try_queue('blindbox-order', 1, 5) as got:
             if got:
                 s = BlindBoxOrderCreateSerializer(data=request.data, context={'request': request})
@@ -122,6 +137,11 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
 
     @action(methods=['get'], detail=False)
     def prizes(self, request):
+        """
+        参数：
+        order_no
+        查询盲盒订单中奖记录列表
+        """
         order_no = request.GET.get('order_no')
         try:
             order = self.queryset.get(order_no=order_no, user=request.user, status=BlindBoxOrder.ST_PAID)
@@ -135,7 +155,9 @@ class BlindBoxOrderViewSet(ReturnNoDetailViewSet):
 class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
     @action(methods=['get'], detail=True)
     def query_express(self, request, pk):
-        # 查看物流
+        """
+        查看实物中奖记录物流
+        """
         obj = self.get_object()
         express_no = obj.express_no
         if not obj.can_query_express:
@@ -162,6 +184,9 @@ class BlindWinningRecordViewSet(WinningRecordCommonViewSet):
 
     @action(methods=['get'], detail=True)
     def details(self, request, pk):
+        """
+        盲盒中奖详情
+        """
         try:
             obj = self.get_object()
             data = BlindBoxWinningRecordDetailSerializer(obj, context={'request': request}).data
@@ -198,6 +223,7 @@ class WheelActivityViewSet(ReturnNoDetailViewSet):
     http_method_names = ['get']
 
     def list(self, request, *args, **kwargs):
+        """转盘活动取第一个上架状态的"""
         obj = self.queryset.first()
         data = self.serializer_class(obj, context={'request': request}).data
         return Response(data)
@@ -224,14 +250,15 @@ class LotteryPurchaseRecordViewSet(ReturnNoDetailViewSet):
     filter_fields = ['status']
     http_method_names = ['get']
 
-    # @action(methods=['post'], detail=False, http_method_names=['post'])
-    # def create_order(self, request):
-    #     with try_queue('wheel-order', 500, 5) as got:
-    #         if got:
-    #             s = LotteryPurchaseRecordCreateSerializer(data=request.data, context={'request': request})
-    #             s.is_valid(True)
-    #             order = s.create(s.validated_data)
-    #         else:
-    #             log.warning(f"转盘次数购买排队超时失败")
-    #             raise CustomAPIException('当前活动火爆，请稍后再试')
-    #     return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))
+    @action(methods=['post'], detail=False, http_method_names=['post'])
+    def create_order(self, request):
+        """抽奖次数下单"""
+        with try_queue('wheel-order', 500, 5) as got:
+            if got:
+                s = LotteryPurchaseRecordCreateSerializer(data=request.data, context={'request': request})
+                s.is_valid(True)
+                order = s.create(s.validated_data)
+            else:
+                log.warning(f"转盘次数购买排队超时失败")
+                raise CustomAPIException('当前活动火爆，请稍后再试')
+        return Response(data=dict(receipt_id=order.receipt.payno, pay_end_at=order.pay_end_at))

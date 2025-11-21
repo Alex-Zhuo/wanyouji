@@ -58,6 +58,7 @@ def blind_refund_no(tail_length=3):
 
 class BlindBasic(models.Model):
     price_per_lottery = models.DecimalField('一次抽奖机会价格', max_digits=13, decimal_places=2)
+    open_buy_times = models.BooleanField('是否开启购买转盘次数', default=True)
     auto_cancel_minutes = models.PositiveSmallIntegerField('自动取消盲盒订单分钟数', default=10,
                                                            help_text='订单创建时间开始多少分钟后未支付自动取消订单',
                                                            validators=[cancel_minutes_limit])

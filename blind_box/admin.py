@@ -459,7 +459,7 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
     # status_display.short_description = '状态'
 
     def shipping_good(self, request, queryset):
-        qs = queryset.filter(status=WinningRecordAbstract.ST_PENDING_SHIP)
+        qs = queryset.filter(status__in=[WinningRecordAbstract.ST_PENDING_SHIP, WinningRecordAbstract.ST_COMPLETED])
         if not qs:
             return JsonResponse(data={
                 'status': 'error',
