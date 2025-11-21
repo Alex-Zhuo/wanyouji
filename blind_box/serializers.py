@@ -10,7 +10,7 @@ import simplejson as json
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic, BlindBoxOrder,
-    BlindReceipt, SR_GOOD, UserLotteryTimes, UserLotteryRecord
+    BlindReceipt, SR_GOOD, UserLotteryTimes, UserLotteryRecord, SR_COUPON
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -418,15 +418,17 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                         lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
                         if is_prize:
                             prize_snapshot = WheelWinningRecord.get_snapshot(prize)
-                            status = WheelWinningRecord.ST_PENDING_RECEIVE
-                            if prize.source_type == SR_GOOD:
-                                status = WheelWinningRecord.ST_COMPLETED
                             ww = WheelWinningRecord.objects.create(lottery_record=lottery_record,
                                                                    wheel_activity=wheel_activity,
                                                                    wheel_name=wheel_activity.name, user=user,
                                                                    mobile=user.mobile, prize=prize,
                                                                    source_type=prize.source_type,
-                                                                   snapshot=prize_snapshot, status=status)
+                                                                   snapshot=prize_snapshot,
+                                                                   status=WheelWinningRecord.ST_PENDING_RECEIVE)
+                            if prize.source_type == SR_COUPON:
+                                # 发优惠卷
+                                ww.send_coupon()
+                        # 减次数
                         st = ul.update_times(-1, False)
                         if not st:
                             raise Exception('抽奖失败，减次数失败')

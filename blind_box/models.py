@@ -550,17 +550,16 @@ class BlindBoxOrder(models.Model):
         bb_qs = qs.filter(source_type=SR_COUPON)
         from coupon.models import UserCouponRecord
         for bb in bb_qs:
-            if bb.prize and bb.prize.coupon:
-                coupon = bb.prize.coupon
-                try:
-                    UserCouponRecord.create_record(self.user.id, coupon, win_prize_no=bb.no)
-                    bb.status = WinningRecordAbstract.ST_COMPLETED
-                    bb.complete_at = timezone.now()
-                    bb.save(update_fields=['status', 'complete_at'])
-                except Exception as e:
-                    log.error('盲盒付款发放消费券失败')
-                    log.error(e)
-                    pass
+            bb.send_coupon()
+            # if bb.prize and bb.prize.coupon:
+            #     coupon = bb.prize.coupon
+            #     try:
+            #         UserCouponRecord.create_record(self.user.id, coupon, win_prize_no=bb.no)
+            #         bb.set_completed()
+            #     except Exception as e:
+            #         log.error('盲盒付款发放消费券失败')
+            #         log.error(e)
+            #         pass
 
     @classmethod
     def get_snapshot(cls, blind_box: BlindBox):
@@ -674,6 +673,18 @@ class WinningRecordAbstract(models.Model):
         # 归还库存
         if self.prize:
             self.prize.prize_change_stock(1)
+
+    def send_coupon(self):
+        if self.prize and self.prize.coupon:
+            coupon = self.prize.coupon
+            try:
+                from coupon.models import UserCouponRecord
+                UserCouponRecord.create_record(self.user.id, coupon, win_prize_no=self.no)
+                self.set_completed()
+            except Exception as e:
+                log.error('盲盒付款发放消费券失败')
+                log.error(e)
+                pass
 
     def set_completed(self):
         """设置为已完成"""
