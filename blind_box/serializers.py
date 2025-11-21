@@ -407,7 +407,7 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                 if not section:
                     raise CustomAPIException('转盘活动已结束!！')
                 else:
-                    is_prize = not section.is_no_prize and section.prize
+                    is_prize = True if (not section.is_no_prize) and section.prize else False
                     lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
                     prize_snapshot = WheelWinningRecord.get_snapshot(section.prize)
                     if is_prize:
