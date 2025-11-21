@@ -506,6 +506,7 @@ class BlindBoxOrder(models.Model):
                                       on_delete=models.SET_NULL)
     pay_type = models.SmallIntegerField('付款类型', choices=BlindReceipt.PAY_CHOICES, default=BlindReceipt.PAY_NOT_SET)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
+    cancel_at = models.DateTimeField('取消时间', null=True, blank=True)
     pay_at = models.DateTimeField('支付时间', null=True, blank=True)
     refund_at = models.DateTimeField('退款完成时间', null=True, blank=True)
     transaction_id = models.CharField('交易号', max_length=100, null=True, blank=True)
