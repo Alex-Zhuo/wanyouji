@@ -403,20 +403,36 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                     wheel_activity = WheelActivity.objects.get(no=validated_data['no'], status=WheelActivity.STATUS_ON)
                 except WheelActivity.DoesNotExist:
                     raise CustomAPIException('转盘活动已结束！')
-                section = wheel_activity.draw_wheel_prize(user)
+                ul = UserLotteryTimes.get_or_create_record(user)
+                if ul.times <= 0:
+                    raise CustomAPIException('抽奖次数不足')
+                section = wheel_activity.draw_wheel_prize()
                 if not section:
                     raise CustomAPIException('转盘活动已结束!！')
                 else:
-                    is_prize = True if (not section.is_no_prize) and section.prize else False
-                    lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
-                    prize_snapshot = WheelWinningRecord.get_snapshot(section.prize)
-                    if is_prize:
-                        prize = section.prize
-                        WheelWinningRecord.objects.create(lottery_record=lottery_record, wheel_activity=wheel_activity,
-                                                          wheel_name=wheel_activity.name, user=user,
-                                                          mobile=user.mobile, prize=prize,
-                                                          source_type=prize.source_type,
-                                                          snapshot=prize_snapshot)
+                    from blind_box.stock_updater import prsc
+                    prize = section.prize
+                    is_prize = True if (not section.is_no_prize) and prize else False
+                    try:
+                        lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
+                        prize_snapshot = WheelWinningRecord.get_snapshot(section.prize)
+                        if is_prize:
+                            WheelWinningRecord.objects.create(lottery_record=lottery_record,
+                                                              wheel_activity=wheel_activity,
+                                                              wheel_name=wheel_activity.name, user=user,
+                                                              mobile=user.mobile, prize=prize,
+                                                              source_type=prize.source_type,
+                                                              snapshot=prize_snapshot)
+                            st = ul.update_times(-1, False)
+                            if not st:
+                                raise Exception('抽奖失败，减次数失败')
+                    except Exception as e:
+                        log.error(e)
+                        if is_prize:
+                            prsc.incr(prize.id, 1, ceiling=Ellipsis)
+                            prsc.record_update_ts(prize.id)
+                            log.info(f"已回滚奖品 {prize.id} 的库存")
+                            raise CustomAPIException('抽奖失败，请稍后再试...')
                 return section
             else:
                 raise CustomAPIException('请勿重复领取')

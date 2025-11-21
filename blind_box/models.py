@@ -761,15 +761,12 @@ class WheelActivity(UseShortNoAbstract):
         if self.status == self.STATUS_ON:
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
-    def draw_wheel_prize(self, user):
+    def draw_wheel_prize(self):
         """
         转盘抽奖
         转盘片区附表中库存不为0的奖品权重数总和
         """
         # 获取启用的片区
-        ul = UserLotteryTimes.get_or_create_record(user)
-        if ul.times <= 0:
-            raise CustomAPIException('抽奖次数不足')
         sections = self.sections.filter(is_enabled=True).select_related('prize')
         # 构建候选奖品列表（库存不为0的奖品）
         candidates = []
@@ -800,18 +797,6 @@ class WheelActivity(UseShortNoAbstract):
             if success:
                 # 扣库存成功
                 prsc.record_update_ts(prize.id)
-                # 扣减次数
-                try:
-                    st = ul.update_times(-1, False)
-                    if not st:
-                        raise Exception('抽奖失败，请稍后再试...')
-                    else:
-                        return selected_section
-                except Exception as e:
-                    prsc.incr(prize.id, 1, ceiling=Ellipsis)
-                    prsc.record_update_ts(prize.id)
-                    log.info(f"已回滚奖品 {prize.id} 的库存")
-                    raise CustomAPIException('抽奖失败，请稍后再试...')
         if thank_section:
             return thank_section
         else:
