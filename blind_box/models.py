@@ -762,7 +762,7 @@ class WheelActivity(UseShortNoAbstract):
         if self.status == self.STATUS_ON:
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
-    @pysnooper.snoop(log.debug)
+    # @pysnooper.snoop(log.debug)
     def draw_wheel_prize(self):
         """
         转盘抽奖
