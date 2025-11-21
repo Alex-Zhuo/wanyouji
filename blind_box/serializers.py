@@ -112,7 +112,7 @@ class WheelSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WheelSection
-        fields = ['no', 'prize', 'is_no_prize']
+        fields = ['no', 'prize', 'is_no_prize', 'thank_image', 'winning_tip']
 
 
 class WheelActivityBasicSerializer(serializers.ModelSerializer):
@@ -406,10 +406,14 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                 ul = UserLotteryTimes.get_or_create_record(user)
                 if ul.times <= 0:
                     raise CustomAPIException('抽奖次数不足')
+                # 减了库存
                 section = wheel_activity.draw_wheel_prize()
                 if not section:
                     raise CustomAPIException('转盘活动已结束!！')
                 else:
+                    st = ul.update_times(-1, False)
+                    if not st:
+                        raise Exception('抽奖失败，减次数失败')
                     from blind_box.stock_updater import prsc
                     prize = section.prize
                     is_prize = True if (not section.is_no_prize) and prize else False
@@ -417,15 +421,15 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                         lottery_record = UserLotteryRecord.create_record(user, wheel_activity, is_prize=is_prize)
                         prize_snapshot = WheelWinningRecord.get_snapshot(section.prize)
                         if is_prize:
-                            WheelWinningRecord.objects.create(lottery_record=lottery_record,
-                                                              wheel_activity=wheel_activity,
-                                                              wheel_name=wheel_activity.name, user=user,
-                                                              mobile=user.mobile, prize=prize,
-                                                              source_type=prize.source_type,
-                                                              snapshot=prize_snapshot)
-                            st = ul.update_times(-1, False)
-                            if not st:
-                                raise Exception('抽奖失败，减次数失败')
+                            status = WheelWinningRecord.ST_PENDING_RECEIVE
+                            if prize.source_type == SR_GOOD:
+                                status = WheelWinningRecord.ST_COMPLETED
+                            ww = WheelWinningRecord.objects.create(lottery_record=lottery_record,
+                                                                   wheel_activity=wheel_activity,
+                                                                   wheel_name=wheel_activity.name, user=user,
+                                                                   mobile=user.mobile, prize=prize,
+                                                                   source_type=prize.source_type,
+                                                                   snapshot=prize_snapshot, status=status)
                     except Exception as e:
                         log.error(e)
                         if is_prize:

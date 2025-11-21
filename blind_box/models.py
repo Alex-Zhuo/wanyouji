@@ -954,7 +954,7 @@ class UserLotteryTimes(models.Model):
 
 class UserLotteryRecord(models.Model):
     no = models.CharField('编号', max_length=128, unique=True, default=price_his_no, db_index=True, editable=False)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
     mobile = models.CharField('手机号', null=True, max_length=20)
     wheel_activity = models.ForeignKey(WheelActivity, verbose_name='转盘活动', on_delete=models.SET_NULL, null=True)
     is_prize = models.BooleanField('是否中奖', default=False)
