@@ -404,6 +404,8 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                 except WheelActivity.DoesNotExist:
                     raise CustomAPIException('转盘活动已结束！')
                 section = obj.draw_wheel_prize(user)
+                if not section:
+                    raise CustomAPIException('转盘活动已结束!！')
                 return section
             else:
                 raise CustomAPIException('请勿重复领取')

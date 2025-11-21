@@ -761,7 +761,7 @@ class WheelActivity(UseShortNoAbstract):
         if self.status == self.STATUS_ON:
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
-    def draw_wheel_prize(self, user) -> Optional[None, 'WheelSection']:
+    def draw_wheel_prize(self, user):
         """
         转盘抽奖
         转盘片区附表中库存不为0的奖品权重数总和
