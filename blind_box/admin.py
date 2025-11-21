@@ -776,9 +776,9 @@ class UserLotteryTimesAdmin(OnlyViewAdmin):
 
 
 class UserLotteryRecordAdmin(OnlyViewAdmin):
-    list_display = ['no', 'user', 'mobile', 'wheel_activity', 'create_at']
+    list_display = ['no', 'user', 'mobile', 'wheel_activity', 'is_prize', 'create_at']
     search_fields = ['=mobile']
-    list_filter = ['create_at']
+    list_filter = ['is_prize', 'create_at']
     autocomplete_fields = ['user', 'wheel_activity']
 
 
