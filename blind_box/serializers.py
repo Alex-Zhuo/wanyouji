@@ -411,9 +411,6 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                 if not section:
                     raise CustomAPIException('转盘活动已结束!！')
                 else:
-                    st = ul.update_times(-1, False)
-                    if not st:
-                        raise Exception('抽奖失败，减次数失败')
                     from blind_box.stock_updater import prsc
                     prize = section.prize
                     is_prize = True if (not section.is_no_prize) and prize else False
@@ -430,6 +427,9 @@ class WheelActivityDrawSerializer(serializers.ModelSerializer):
                                                                    mobile=user.mobile, prize=prize,
                                                                    source_type=prize.source_type,
                                                                    snapshot=prize_snapshot, status=status)
+                        st = ul.update_times(-1, False)
+                        if not st:
+                            raise Exception('抽奖失败，减次数失败')
                     except Exception as e:
                         log.error(e)
                         if is_prize:

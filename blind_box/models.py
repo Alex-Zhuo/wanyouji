@@ -20,6 +20,7 @@ from datetime import timedelta
 from typing import List, Optional
 from blind_box.stock_updater import prsc, StockModel
 from blind_box.lottery_utils import weighted_random_choice
+import pysnooper
 
 SR_COUPON = 1
 SR_TICKET = 2
@@ -761,6 +762,7 @@ class WheelActivity(UseShortNoAbstract):
         if self.status == self.STATUS_ON:
             WheelActivity.objects.filter(status=self.STATUS_ON).exclude(pk=self.pk).update(status=self.STATUS_OFF)
 
+    @pysnooper.snoop(log.debug)
     def draw_wheel_prize(self):
         """
         转盘抽奖
