@@ -802,7 +802,7 @@ class WheelActivity(UseShortNoAbstract):
                 prsc.record_update_ts(prize.id)
                 # 扣减次数
                 try:
-                    st = ul.update_times(1, False)
+                    st = ul.update_times(-1, False)
                     if not st:
                         raise Exception('抽奖失败，请稍后再试...')
                     else:
