@@ -909,7 +909,7 @@ class LotteryPurchaseRecord(models.Model):
             self.transaction_id = self.receipt.transaction_id
             self.pay_at = timezone.now()
             self.save(update_fields=['status', 'pay_at', 'transaction_id'])
-            self.change_lottery_times(self.multiply, True)
+            self.change_lottery_times(self.multiply, UserLotteryTimesDetail.SR_BUY, True)
 
     @classmethod
     def can_refund_status(cls):
@@ -920,17 +920,18 @@ class LotteryPurchaseRecord(models.Model):
         self.status = self.ST_REFUNDING
         self.save(update_fields=['refund_amount', 'status'])
         # 申请退款时减抽奖次数
-        self.change_lottery_times(-1, True)
+        self.change_lottery_times(-1, UserLotteryTimesDetail.SR_REFUND, True)
 
     def set_refunded(self):
         self.refund_at = timezone.now()
         self.status = self.ST_REFUNDED
         self.save(update_fields=['status', 'refund_at'])
 
-    def change_lottery_times(self, times, add_total=True):
+    def change_lottery_times(self, times, source_type, add_total=True):
         if self.user:
-            ult = UserLotteryTimes.get_or_create_record(self.user)
-            ult.update_times(times, add_total)
+            # ult = UserLotteryTimes.get_or_create_record(self.user)
+            # ult.update_times(times, add_total)
+            UserLotteryTimesDetail.add_record(self.user, times=times, source_type=source_type, add_total=add_total)
 
 
 class UserLotteryTimes(models.Model):
@@ -973,6 +974,35 @@ class UserLotteryTimes(models.Model):
                 log.error('转盘抽奖次数，更新失败,{},{},{}'.format(self.id, times, add_total))
                 st = False
         return st
+
+
+class UserLotteryTimesDetail(models.Model):
+    record = models.ForeignKey(UserLotteryTimes, verbose_name='用户转盘次数', on_delete=models.SET_NULL, null=True)
+    times = models.IntegerField('次数', default=0)
+    SR_NEW = 1
+    SR_BUY = 2
+    SR_REFUND = 3
+    SOURCE_TYPE_CHOICES = ((SR_NEW, '邀请新用户获得'), (SR_BUY, '购买获得'), (SR_REFUND, '退款扣减'))
+    source_type = models.PositiveSmallIntegerField('订单类型', choices=SOURCE_TYPE_CHOICES, default=SR_NEW)
+    create_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = verbose_name = '用户转盘次数明细'
+        ordering = ['-pk']
+
+    def __str__(self):
+        return str(self.id)
+
+    @classmethod
+    def add_record(cls, user, times: int, source_type: int, add_total=True):
+        try:
+            record, _ = UserLotteryTimes.get_or_create_record(user)
+            inst = cls.objects.create(record=record, times=times, source_type=source_type)
+            record.update_times(times, add_total)
+            return inst
+        except Exception as e:
+            log.error(e)
+            log.error('增加转盘次数失败')
 
 
 class UserLotteryRecord(models.Model):

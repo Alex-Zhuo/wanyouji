@@ -11,10 +11,11 @@ from blind_box.models import (
     Prize, BlindBox, WheelWinningRecord, BlindBoxWinningRecord, WinningRecordShipmentReceipt,
     WheelActivity, WheelSection, LotteryPurchaseRecord,
     PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, UserLotteryTimes, BlindBasic, UserLotteryRecord,
-    BlindBoxOrder, WinningRecordAbstract
+    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail
 )
 from dj import technology_admin
-from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndViewAdmin, RemoveDeleteStackedInline
+from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndViewAdmin, RemoveDeleteStackedInline, \
+    OnlyReadTabularInline
 import logging
 from caches import get_redis_name, run_with_lock
 from decimal import Decimal
@@ -769,10 +770,16 @@ class LotteryPurchaseRecordAdmin(OnlyViewAdmin):
     }
 
 
+class UserLotteryTimesDetailInline(OnlyReadTabularInline):
+    model = UserLotteryTimesDetail
+    extra = 0
+
+
 class UserLotteryTimesAdmin(OnlyViewAdmin):
     list_display = ['user', 'times', 'total_times', 'create_at', 'update_at']
     search_fields = ['=mobile']
     autocomplete_fields = ['user']
+    inlines = [UserLotteryTimesDetailInline]
 
 
 class UserLotteryRecordAdmin(OnlyViewAdmin):
