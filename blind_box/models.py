@@ -600,8 +600,7 @@ class BlindBoxOrder(models.Model):
             self.blind_box.blind_box_change_stock(1)
         # 奖品明细无效
         for item in self.blind_box_items.all():
-            prize = item.prize
-            prize.set_invalid()
+            item.set_invalid()
 
     def do_refund(self, refund_amount, refund_reason=None):
         st, msg, obj = BlindOrderRefund.create_record(self, source_type=BlindOrderRefund.SR_BLIND_BOX,
