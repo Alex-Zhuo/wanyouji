@@ -439,11 +439,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'auth_check_over_time_code': {
         'task': 'ticket.tasks.auth_check_over_time_code',
-        'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+        'schedule': timedelta(seconds=67),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
     'update_goods_sales': {
         'task': 'ticket.tasks.update_goods_sales',
-        'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+        'schedule': timedelta(seconds=69),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     },
     'update_focus_num': {
         'task': 'ticket.tasks.update_focus_num',
