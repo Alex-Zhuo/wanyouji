@@ -383,12 +383,16 @@ CELERY_BEAT_SCHEDULE = {
     #     'schedule': timedelta(seconds=125),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     #     # 'schedule': crontab(minute='*/2'),  # 每隔2分钟执行一次 （celery.schedule 的 crontab方式实现）
     # },
-
+    #
     # 其他任务
     # 'down_load_task': {
     #     'task': 'ticket.tasks.down_load_task',
     #     'schedule': timedelta(seconds=181),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     # },
+
+
+
+    # 这下面是需要的任务
     'add_session_actual_amount': {
         'task': 'ticket.tasks.add_session_actual_amount',
         'schedule': timedelta(seconds=153),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
@@ -457,15 +461,15 @@ CELERY_BEAT_SCHEDULE = {
     # 消费卷
     'coupon_expire_task': {
         'task': 'coupon.tasks.coupon_expire_task',
-        'schedule': timedelta(seconds=61),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+        'schedule': timedelta(seconds=61),  # 消费卷过期
     },
     'coupon_order_auto_cancel': {
         'task': 'coupon.tasks.coupon_order_auto_cancel',
-        'schedule': timedelta(seconds=127),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+        'schedule': timedelta(seconds=127),  # 消费卷订单取消
     },
     'coupon_update_stock_from_redis': {
         'task': 'coupon.tasks.coupon_update_stock_from_redis',
-        'schedule': timedelta(seconds=47),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+        'schedule': timedelta(seconds=47),  # 消费卷库存
     },
     # 盲盒
     'prize_update_stock_from_redis_task': {
@@ -485,84 +489,17 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=601),  # 中奖记录自动完成
     },
 
-    # 彩艺任务
-    'confirm_order_task': {
-        'task': 'caiyicloud.tasks.confirm_order_task',
-        'schedule': timedelta(seconds=61),  # 异步执行彩艺确认订单任务
-    },
-    'cy_update_stock_task': {
-        'task': 'caiyicloud.tasks.cy_update_stock_task',
-        'schedule': timedelta(seconds=183),  # 更新库存
-    },
-    'promote_auto_end_task': {
-        'task': 'caiyicloud.tasks.promote_auto_end_task',
-        'schedule': timedelta(seconds=57),  # 营销活动设为已结束
-    },
-
-    # 快手任务
-    # 'session_push_to_ks': {
-    #     'task': 'kuaishou_wxa.tasks.session_push_to_ks',
-    #     'schedule': timedelta(seconds=81),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # # 彩艺任务
+    # 'confirm_order_task': {
+    #     'task': 'caiyicloud.tasks.confirm_order_task',
+    #     'schedule': timedelta(seconds=61),  # 异步执行彩艺确认订单任务
     # },
-    # 'settle_order_to_ks': {
-    #     'task': 'kuaishou_wxa.tasks.settle_order_to_ks',
-    #     'schedule': timedelta(seconds=307),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # 'cy_update_stock_task': {
+    #     'task': 'caiyicloud.tasks.cy_update_stock_task',
+    #     'schedule': timedelta(seconds=183),  # 更新库存
     # },
-    # 'ks_order_report_task': {
-    #     'task': 'kuaishou_wxa.tasks.ks_order_report_task',
-    #     'schedule': timedelta(seconds=91),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
+    # 'promote_auto_end_task': {
+    #     'task': 'caiyicloud.tasks.promote_auto_end_task',
+    #     'schedule': timedelta(seconds=57),  # 营销活动设为已结束
     # },
-    # 'ks_check_cps': {
-    #     'task': 'kuaishou_wxa.tasks.ks_check_cps',
-    #     'schedule': timedelta(seconds=900),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-
-    # 抖音任务
-    # 'check_add_booking_task': {
-    #     'task': 'ticket.tasks.check_add_booking_task',
-    #     'schedule': crontab(minute=00, hour=1)
-    # },
-    # 'session_push_to_xhs_task': {
-    #     'task': 'xiaohongshu.tasks.session_push_to_xhs',
-    #     'schedule': timedelta(seconds=67)
-    # },
-    # 'goods_push_to_dou_yin': {
-    #     'task': 'ticket.tasks.goods_push_to_dou_yin',
-    #     'schedule': timedelta(seconds=310),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'goods_draft_dou_yin': {
-    #     'task': 'ticket.tasks.goods_draft_dou_yin',
-    #     'schedule': timedelta(seconds=150),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'auth_check_over_time_code_tiktok': {
-    #     'task': 'ticket.tasks.auth_check_over_time_code_tiktok',
-    #     'schedule': timedelta(seconds=60),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'plan_to_dou_yin': {
-    #     'task': 'ticket.tasks.plan_to_dou_yin',
-    #     'schedule': timedelta(seconds=155),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'check_cps_source': {
-    #     'task': 'ticket.tasks.check_cps_source',
-    #     'schedule': timedelta(seconds=605),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-    # 'pull_tiktok_qual': {
-    #     'task': 'ticket.tasks.pull_tiktok_qual',
-    #     'schedule': timedelta(hours=12),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
-    # },
-
-    # 小红书任务
-    # 'xhs_auto_verify_code_task': {
-    #     'task': 'xiaohongshu.tasks.xhs_auto_verify_code',
-    #     'schedule': timedelta(seconds=63)
-    # },
-    # 'xhs_check_approve_task': {
-    #     'task': 'xiaohongshu.tasks.xhs_check_approve_task',
-    #     'schedule': timedelta(seconds=125)
-    # },
-    # 'xhs_get_poi_list': {
-    #     'task': 'ticket.tasks.xhs_get_poi_list',
-    #     'schedule': crontab(minute=30, hour=0)
-    # },
-
 }
