@@ -390,8 +390,6 @@ CELERY_BEAT_SCHEDULE = {
     #     'schedule': timedelta(seconds=181),  # 每隔10分钟执行一次（datetime的 timedelta方式来实现）
     # },
 
-
-
     # 这下面是需要的任务
     'add_session_actual_amount': {
         'task': 'ticket.tasks.add_session_actual_amount',
@@ -489,17 +487,17 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=601),  # 中奖记录自动完成
     },
 
-    # # 彩艺任务
-    # 'confirm_order_task': {
-    #     'task': 'caiyicloud.tasks.confirm_order_task',
-    #     'schedule': timedelta(seconds=61),  # 异步执行彩艺确认订单任务
-    # },
-    # 'cy_update_stock_task': {
-    #     'task': 'caiyicloud.tasks.cy_update_stock_task',
-    #     'schedule': timedelta(seconds=183),  # 更新库存
-    # },
-    # 'promote_auto_end_task': {
-    #     'task': 'caiyicloud.tasks.promote_auto_end_task',
-    #     'schedule': timedelta(seconds=57),  # 营销活动设为已结束
-    # },
+    # 彩艺任务
+    'confirm_order_task': {
+        'task': 'caiyicloud.tasks.confirm_order_task',
+        'schedule': timedelta(seconds=61),  # 异步执行彩艺确认订单任务
+    },
+    'cy_update_stock_task': {
+        'task': 'caiyicloud.tasks.cy_update_stock_task',
+        'schedule': timedelta(seconds=183),  # 更新库存
+    },
+    'promote_auto_end_task': {
+        'task': 'caiyicloud.tasks.promote_auto_end_task',
+        'schedule': timedelta(seconds=57),  # 营销活动设为已结束
+    },
 }

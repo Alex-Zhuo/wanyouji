@@ -10,7 +10,7 @@ from restframework_ext.permissions import IsPermittedUser
 import jwt
 import uuid
 from caiyicloud.models import CyOrder, CaiYiCloudApp, PromoteActivity
-from caiyicloud.api import caiyi_cloud
+from caiyicloud.api import caiyi_cloud, HOST_DEBUG
 from caiyicloud.serializers import CySeatUrlSerializer, CheckPromoteActivitySerializer, \
     PromoteActivitySerializer, PromoteActivityDetailSerializer
 from datetime import datetime
@@ -32,6 +32,9 @@ class CaiYiViewSet(viewsets.ViewSet):
         # log.error(request.body)
         # log.debug(request.META)
         ret = dict(code=200, resp_code="000000", msg="成功", trace_id=uuid.uuid4().hex)
+        if HOST_DEBUG:
+            log.debug('HOST_DEBUG 彩艺云返回')
+            return JsonResponse(ret)
         ret_error = dict(code=500, resp_code="100000", msg="失败", trace_id=uuid.uuid4().hex)
         # return JsonResponse(ret)
         data = request.data
