@@ -652,6 +652,7 @@ class CouponOrder(models.Model):
     status = models.PositiveSmallIntegerField('状态', choices=PAYMENT_STATUS, default=ST_DEFAULT)
     multiply = models.PositiveSmallIntegerField('数量')
     amount = models.DecimalField('实付金额', max_digits=10, decimal_places=2)
+    actual_amount = models.DecimalField('实付金额', max_digits=10, decimal_places=2, default=0)
     refund_amount = models.DecimalField('已退款金额', max_digits=10, decimal_places=2, default=0)
     receipt = models.OneToOneField(CouponReceipt, verbose_name='支付记录', on_delete=models.PROTECT,
                                    related_name='coupon_receipt')

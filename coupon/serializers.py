@@ -304,6 +304,7 @@ class CouponOrderCreateSerializer(serializers.ModelSerializer):
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
                 validated_data['coupon_name'] = coupon.name
+                validated_data['actual_amount'] = validated_data['amount']
                 validated_data['pay_end_at'] = pay_end_at
                 order = CouponOrder.objects.create(**validated_data)
                 if not coupon.coupon_change_stock(-validated_data['multiply']):

@@ -294,6 +294,7 @@ class BlindBoxOrderCreateSerializer(serializers.ModelSerializer):
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
                 validated_data['pay_end_at'] = pay_end_at
+                validated_data['actual_amount'] = validated_data['amount']
                 order = BlindBoxOrder.objects.create(**validated_data)
                 if not blind_box.blind_box_change_stock(-1):
                     raise CustomAPIException('盲盒库存不足')
@@ -391,6 +392,7 @@ class LotteryPurchaseRecordCreateSerializer(serializers.ModelSerializer):
                 validated_data['receipt'] = receipt
                 validated_data['wx_pay_config'] = wx_pay_config
                 validated_data['pay_end_at'] = pay_end_at
+                validated_data['actual_amount'] = validated_data['amount']
                 LotteryPurchaseRecord.objects.create(**validated_data)
                 return receipt.payno, pay_end_at
             else:
