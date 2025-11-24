@@ -127,6 +127,20 @@
                     that.openPopup($('button[data-name="coupon_refund"]'), event)
                 })
             }
+            if (window.location.href.indexOf('/blind_box/blindboxorder/') >= 0) {
+                $('button[data-name="blind_box_refund"]').hide()
+                this.cancel()
+                $('.item_blind_box_refund').click(function (event) {
+                    that.openPopup($('button[data-name="blind_box_refund"]'), event)
+                })
+            }
+            if (window.location.href.indexOf('/blind_box/lotterypurchaserecord/') >= 0) {
+                $('button[data-name="lottery_refund"]').hide()
+                this.cancel()
+                $('.item_lottery_refund').click(function (event) {
+                    that.openPopup($('button[data-name="lottery_refund"]'), event)
+                })
+            }
             if (window.location.href.indexOf('/blind_box/prize/') >= 0) {
                 $('button[data-name="set_on"]').hide()
                 $('button[data-name="set_off"]').hide()

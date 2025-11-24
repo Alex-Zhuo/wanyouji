@@ -327,12 +327,20 @@ blind_box_set_paid.short_description = u'后台付款'
 
 class BlindBoxOrderAdmin(AjaxAdmin, OnlyViewAdmin):
     list_display = ['order_no', 'user', 'mobile', 'blind_box', 'amount', 'refund_amount', 'status', 'create_at',
-                    'pay_at',
-                    'transaction_id']
+                    'pay_at', 'transaction_id', 'op']
     search_fields = ['=transaction_id', '=mobile', '=order_no']
     list_filter = ['status', 'pay_at', 'blind_box']
     readonly_fields = ['user', 'receipt', 'blind_box', 'order_no']
     actions = ['blind_box_refund', export_blind_box_order, blind_box_set_paid]
+
+    def op(self, obj):
+        html = ''
+        if obj.status in BlindBoxOrder.can_refund_status():
+            html = '<button type="button" class="el-button el-button--success el-button--small item_blind_box_refund" ' \
+                   'style="margin-top:8px" alt={}>申请退款</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
 
     def blind_box_refund(self, request, queryset):
         qs = queryset.filter(status__in=BlindBoxOrder.can_refund_status())
@@ -708,6 +716,15 @@ class LotteryPurchaseRecordAdmin(OnlyViewAdmin):
     search_fields = ['=mobile', '=order_no']
     readonly_fields = ['user', 'receipt', 'order_no']
     actions = ['lottery_refund', export_lottery_order, lottery_set_paid]
+
+    def op(self, obj):
+        html = ''
+        if obj.status in LotteryPurchaseRecord.can_refund_status():
+            html = '<button type="button" class="el-button el-button--success el-button--small item_lottery_refund" ' \
+                   'style="margin-top:8px" alt={}>申请退款</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
 
     def lottery_refund(self, request, queryset):
         qs = queryset.filter(status__in=LotteryPurchaseRecord.can_refund_status())
