@@ -120,6 +120,23 @@
         },
         mounted() {
             let that = this
+            if (window.location.href.indexOf('/blind_box/prize/') >= 0) {
+                $('button[data-name="set_on"]').hide()
+                $('button[data-name="set_off"]').hide()
+                $('button[data-name="add_stock"]').hide()
+                this.cancel()
+                //上架
+                $('.item_set_on').click(function (event) {
+                    that.openPopup($('button[data-name="set_on"]'), event)
+                })
+                //下架
+                $('.item_set_off').click(function (event) {
+                    that.openPopup($('button[data-name="set_off"]'), event)
+                })
+                $('.item_add_stock').click(function (event) {
+                    that.openPopup($('button[data-name="add_stock"]'), event)
+                })
+            }
             if (window.location.href.indexOf('/ticket/showproject/') >= 0) {
                 $('button[data-name="set_on"]').hide()
                 $('button[data-name="set_off"]').hide()

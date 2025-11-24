@@ -43,7 +43,7 @@ def set_on(modeladmin, request, queryset):
     messages.success(request, '执行成功')
 
 
-set_on.short_description = '批量上架'
+set_on.short_description = '上架'
 
 
 def set_off(modeladmin, request, queryset):
@@ -54,7 +54,7 @@ def set_off(modeladmin, request, queryset):
     messages.success(request, '执行成功')
 
 
-set_off.short_description = '批量下架'
+set_off.short_description = '下架'
 
 
 class PrizeDetailImageInline(admin.TabularInline):
@@ -64,7 +64,7 @@ class PrizeDetailImageInline(admin.TabularInline):
 
 class PrizeAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     list_display = ['no', 'title', 'display_order', 'status', 'source_type', 'rare_type', 'amount', 'stock',
-                    'weight', 'create_at']
+                    'weight', 'create_at', 'op']
     list_filter = ['status', 'source_type', 'rare_type']
     list_editable = ['display_order']
     search_fields = ['no', 'title']
@@ -76,6 +76,20 @@ class PrizeAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
             return ['no', 'stock']
         else:
             return ['no']
+
+    def op(self, obj):
+        html = ''
+        if obj.status == obj.STATUS_OFF:
+            html += '<button type="button" class="el-button el-button--success el-button--small item_set_on" ' \
+                    'style="margin-top:8px" alt={}>上架</button><br>'.format(obj.id)
+        else:
+            html += '<button type="button" class="el-button el-button--warning el-button--small item_set_off" ' \
+                    'style="margin-top:8px" alt={}>下架</button><br>'.format(obj.id)
+        html += '<button type="button" class="el-button el-button--primary el-button--small item_add_stock" ' \
+                'style="margin-top:8px" alt={}>修改库存数量</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
 
     def response_post_save_add(self, request, obj):
         if obj.status == Prize.STATUS_ON:
@@ -116,7 +130,7 @@ class PrizeAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
                 'msg': '执行成功，请稍后再试！'
             })
 
-    add_stock.short_description = '增加库存数量'
+    add_stock.short_description = '修改库存数量'
     add_stock.type = 'success'
     add_stock.icon = 'el-icon-s-promotion'
     # 指定为弹出层，这个参数最关键
