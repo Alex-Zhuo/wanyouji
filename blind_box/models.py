@@ -936,6 +936,10 @@ class LotteryPurchaseRecord(models.Model):
             # ult.update_times(times, add_total)
             UserLotteryTimesDetail.add_record(self.user, times=times, source_type=source_type, add_total=add_total)
 
+    def do_refund(self, refund_amount, refund_reason=None):
+        st, msg, obj = BlindOrderRefund.create_record(self, source_type=BlindOrderRefund.SR_BLIND_BOX,
+                                                      amount=refund_amount, refund_reason=refund_reason)
+        return st, msg
 
 class UserLotteryTimes(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
