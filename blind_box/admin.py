@@ -880,8 +880,8 @@ confirm_refund.short_description = '确认退款'
 
 
 class BlindOrderRefundAdmin(ChangeAndViewAdmin):
-    list_display = ['order', 'out_refund_no', 'user', 'status', 'refund_amount', 'amount',
-                    'refund_reason', 'error_msg', 'transaction_id', 'time_at', 'op']
+    list_display = ['order_no', 'out_refund_no', 'user', 'status', 'refund_amount', 'amount',
+                    'refund_reason', 'error_msg', 'transaction_id', 'time_at', 'blind_box_order', 'lottery_order', 'op']
     search_fields = ['=order_no', '=out_refund_no', '=transaction_id', '=user__mobile']
     list_filter = ['status', 'create_at']
     autocomplete_fields = ['user', 'blind_box_order', 'lottery_order', 'op_user']
