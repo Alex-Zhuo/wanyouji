@@ -11,7 +11,7 @@ from blind_box.models import (
     Prize, BlindBox, WheelWinningRecord, BlindBoxWinningRecord, WinningRecordShipmentReceipt,
     WheelActivity, WheelSection, LotteryPurchaseRecord,
     PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, UserLotteryTimes, BlindBasic, UserLotteryRecord,
-    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail, SR_GOOD
+    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail, SR_GOOD, BlindReceipt, BlindOrderRefund
 )
 from dj import technology_admin
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndViewAdmin, RemoveDeleteStackedInline, \
@@ -846,6 +846,83 @@ class UserLotteryRecordAdmin(OnlyViewAdmin):
     autocomplete_fields = ['user', 'wheel_activity']
 
 
+def cancel_refund(modeladmin, request, queryset):
+    inst = queryset.first()
+    if inst.status == BlindOrderRefund.STATUS_DEFAULT:
+        inst.set_cancel(request.user)
+    messages.success(request, '执行成功')
+
+
+cancel_refund.short_description = u'取消退款'
+
+
+def confirm_refund(modeladmin, request, queryset):
+    inst = queryset.filter(status__in=BlindOrderRefund.can_confirm_status()).first()
+    if inst:
+        from caches import run_with_lock
+        key = get_redis_name('lotrd_{}'.format(inst.id))
+        with run_with_lock(key, 5) as got:
+            if got:
+                try:
+                    st, msg = inst.set_confirm(request.user)
+                    if not st:
+                        raise AdminException(msg)
+                    messages.success(request, '执行成功')
+                except Exception as e:
+                    raise AdminException(str(e))
+            else:
+                messages.error(request, '请勿操作太快')
+    else:
+        messages.error(request, '待退款状态才可执行')
+
+
+confirm_refund.short_description = '确认退款'
+
+
+class BlindOrderRefundAdmin(ChangeAndViewAdmin):
+    list_display = ['order', 'out_refund_no', 'user', 'status', 'refund_amount', 'amount',
+                    'refund_reason', 'error_msg', 'transaction_id', 'time_at', 'op']
+    search_fields = ['=order_no', '=out_refund_no', '=transaction_id', '=user__mobile']
+    list_filter = ['status', 'create_at']
+    autocomplete_fields = ['user', 'order', 'op_user']
+    actions = [confirm_refund, cancel_refund]
+    readonly_fields = [f.name for f in BlindOrderRefund._meta.fields if
+                       f.name not in ['refund_amount', 'refund_reason']]
+
+    def time_at(self, obj):
+        html = '<div style="width:300px"><p>创建时间：{}</p>'.format(
+            obj.create_at.strftime('%Y-%m-%d %H:%M') if obj.create_at else '')
+        html += '<p>确认时间：{}</p>'.format(obj.confirm_at.strftime('%Y-%m-%d %H:%M') if obj.confirm_at else '')
+        html += '<p>完成时间：{}</p></div>'.format(obj.finish_at.strftime('%Y-%m-%d %H:%M') if obj.finish_at else '')
+        return mark_safe(html)
+
+    time_at.short_description = '时间'
+
+    def op(self, obj):
+        html = ''
+        if obj.status in BlindOrderRefund.can_confirm_status():
+            html = '<button type="button" class="el-button el-button--success el-button--small item_confirm_refund" ' \
+                   'style="margin-top:8px" alt={}>确认退款</button><br>'.format(obj.id)
+            html += '<button type="button" class="el-button el-button--warning el-button--small item_cancel_refund" ' \
+                    'style="margin-top:8px" alt={}>取消退款</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
+
+
+class BlindReceiptAdmin(OnlyViewAdmin):
+    list_display = ['payno', 'transaction_id', 'user', 'amount', 'status', 'pay_type', 'prepay_id']
+    search_fields = ['payno', 'transaction_id']
+    list_filter = ['status']
+    readonly_fields = ['biz', 'user']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 # ========== 注册到admin ==========
 admin.site.register(BlindBasic, BlindBasicAdmin)
 admin.site.register(Prize, PrizeAdmin)
@@ -858,6 +935,8 @@ admin.site.register(LotteryPurchaseRecord, LotteryPurchaseRecordAdmin)
 admin.site.register(UserLotteryTimes, UserLotteryTimesAdmin)
 admin.site.register(UserLotteryRecord, UserLotteryRecordAdmin)
 admin.site.register(WheelWinningRecord, WheelWinningRecordAdmin)
+admin.site.register(BlindOrderRefund, BlindOrderRefundAdmin)
+admin.site.register(BlindReceipt, BlindReceiptAdmin)
 
 # 注册到technology_admin
 technology_admin.register(BlindBasic, BlindBasicAdmin)
@@ -871,3 +950,5 @@ technology_admin.register(LotteryPurchaseRecord, LotteryPurchaseRecordAdmin)
 technology_admin.register(UserLotteryTimes, UserLotteryTimesAdmin)
 technology_admin.register(UserLotteryRecord, UserLotteryRecordAdmin)
 technology_admin.register(WheelWinningRecord, WheelWinningRecordAdmin)
+technology_admin.register(BlindOrderRefund, BlindOrderRefundAdmin)
+technology_admin.register(BlindReceipt, BlindReceiptAdmin)

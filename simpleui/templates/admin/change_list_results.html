@@ -127,6 +127,19 @@
                     that.openPopup($('button[data-name="coupon_refund"]'), event)
                 })
             }
+            if (window.location.href.indexOf('/blind_box/blindorderrefund/') >= 0) {
+                $('button[data-name="confirm_refund"]').hide()
+                $('button[data-name="cancel_refund"]').hide()
+                this.cancel()
+                //确认退款
+                $('.item_confirm_refund').click(function (event) {
+                    that.openPopup($('button[data-name="confirm_refund"]'), event)
+                })
+                //取消退款
+                $('.item_cancel_refund').click(function (event) {
+                    that.openPopup($('button[data-name="cancel_refund"]'), event)
+                })
+            }
             if (window.location.href.indexOf('/blind_box/blindboxorder/') >= 0) {
                 $('button[data-name="blind_box_refund"]').hide()
                 this.cancel()
