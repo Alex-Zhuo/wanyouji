@@ -670,8 +670,11 @@ class WinningRecordAbstract(models.Model):
         """
         取消订单或者退款设为无效
         """
-        self.status = self.ST_INVALID
-        self.save(update_fields=['status'])
+        if self.status not in [self.ST_UNPAID, self.ST_INVALID]:
+            # 已付款的才设为无效，和判断是否退优惠卷
+            self.status = self.ST_INVALID
+            self.save(update_fields=['status'])
+            self.invalid_coupon()
         # 归还库存
         if self.prize:
             self.prize.prize_change_stock(1)
@@ -687,6 +690,13 @@ class WinningRecordAbstract(models.Model):
                 log.error('盲盒付款发放消费券失败')
                 log.error(e)
                 pass
+
+    def invalid_coupon(self):
+        if self.source_type == SR_COUPON:
+            from coupon.models import UserCouponRecord
+            UserCouponRecord.objects.filter(user=self.user, win_prize_no=self.no,
+                                            status=UserCouponRecord.STATUS_DEFAULT).update(
+                status=UserCouponRecord.STATUS_INVALID)
 
     def set_completed(self):
         """设置为已完成"""
@@ -940,6 +950,7 @@ class LotteryPurchaseRecord(models.Model):
         st, msg, obj = BlindOrderRefund.create_record(self, source_type=BlindOrderRefund.SR_LOTTERY,
                                                       amount=refund_amount, refund_reason=refund_reason)
         return st, msg
+
 
 class UserLotteryTimes(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='用户', on_delete=models.SET_NULL, null=True)
