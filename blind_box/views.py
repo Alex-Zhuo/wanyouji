@@ -173,6 +173,7 @@ class WinningRecordCommonViewSet(DetailPKtoNoViewSet, ReturnNoDetailViewSet):
         """
         log.debug(pk)
         obj = self.get_object()
+        log.debug(obj)
         express_no = obj.express_no
         if not obj.can_query_express:
             raise CustomAPIException('还未发货')
