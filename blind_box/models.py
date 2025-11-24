@@ -1126,7 +1126,7 @@ class BlindOrderRefund(models.Model):
             self.confirm_at = timezone.now()
             self.error_msg = str(e)
             self.op_user = op_user
-            self.save(update_fields=['status', 'confirm_at', 'op_user'])
+            self.save(update_fields=['status', 'confirm_at', 'op_user', 'error_msg'])
             log.error(e)
             return False, str(e)
 
