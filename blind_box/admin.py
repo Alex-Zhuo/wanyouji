@@ -11,7 +11,7 @@ from blind_box.models import (
     Prize, BlindBox, WheelWinningRecord, BlindBoxWinningRecord, WinningRecordShipmentReceipt,
     WheelActivity, WheelSection, LotteryPurchaseRecord,
     PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, UserLotteryTimes, BlindBasic, UserLotteryRecord,
-    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail
+    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail, SR_GOOD
 )
 from dj import technology_admin
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndViewAdmin, RemoveDeleteStackedInline, \
@@ -499,10 +499,11 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
 
     def op(self, obj):
         html = ''
-        if obj.status in [WinningRecordAbstract.ST_PENDING_SHIP, WinningRecordAbstract.ST_COMPLETED]:
+        if obj.status in [WinningRecordAbstract.ST_PENDING_SHIP,
+                          WinningRecordAbstract.ST_COMPLETED] and obj.source_type == SR_GOOD:
             html += '<button type="button" class="el-button el-button--success el-button--small item_shipping_good" ' \
                     'style="margin-top:8px" alt={}>发货</button><br>'.format(obj.id)
-        elif obj.status in [WinningRecordAbstract.ST_PENDING_RECEIVE, WinningRecordAbstract.ST_PENDING_RECEIPT]:
+        if obj.status in [WinningRecordAbstract.ST_PENDING_RECEIVE, WinningRecordAbstract.ST_PENDING_RECEIPT]:
             html += '<button type="button" class="el-button el-button--warning el-button--small item_set_completed" ' \
                     'style="margin-top:8px" alt={}>设为已完成</button><br>'.format(obj.id)
         return mark_safe(html)
