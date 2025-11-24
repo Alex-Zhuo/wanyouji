@@ -995,14 +995,14 @@ class UserLotteryTimesDetail(models.Model):
 
     @classmethod
     def add_record(cls, user, times: int, source_type: int, add_total=True):
-        # try:
-            record, _ = UserLotteryTimes.get_or_create_record(user)
+        try:
+            record = UserLotteryTimes.get_or_create_record(user)
             inst = cls.objects.create(record=record, times=times, source_type=source_type)
             record.update_times(times, add_total)
             return inst
-        # except Exception as e:
-        #     log.error(e)
-        #     log.error('增加转盘次数失败')
+        except Exception as e:
+            log.error(e)
+            log.error('增加转盘次数失败')
 
 
 class UserLotteryRecord(models.Model):
@@ -1031,7 +1031,7 @@ class UserLotteryRecord(models.Model):
     def create_record(cls, user, wheel_activity: WheelActivity, is_prize=False):
         snapshot = cls.get_snapshot(wheel_activity)
         return cls.objects.create(user=user, wheel_activity=wheel_activity, mobile=user.mobile, is_prize=is_prize,
-                           snapshot=snapshot)
+                                  snapshot=snapshot)
 
 
 class WheelWinningRecord(WinningRecordAbstract):
