@@ -196,7 +196,7 @@ blind_set_off.short_description = '下架'
 
 class BlindBoxAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     list_display = ['no', 'title', 'display_order', 'status', 'type', 'grids_num', 'price', 'original_price', 'stock',
-                    'rare_weight_multiple', 'hidden_weight_multiple', 'create_at']
+                    'rare_weight_multiple', 'hidden_weight_multiple', 'create_at', 'op']
     list_filter = ['status', 'type', 'grids_num']
     list_editable = ['display_order']
     search_fields = ['no', 'title']
