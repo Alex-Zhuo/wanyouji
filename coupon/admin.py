@@ -196,7 +196,7 @@ coupon_set_paid.short_description = u'后台付款'
 
 class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
     list_display = ['order_no', 'user', 'mobile', 'coupon', 'amount', 'multiply', 'status', 'create_at', 'pay_at',
-                    'transaction_id']
+                    'transaction_id', 'op']
     search_fields = ['=transaction_id', '=mobile', '=order_no', 'coupon_name']
     list_filter = ['status', 'pay_at']
     readonly_fields = ['user', 'receipt', 'order_no', 'coupon']

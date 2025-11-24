@@ -707,7 +707,8 @@ class CouponOrder(models.Model):
         if self.status in [self.ST_DEFAULT, self.ST_CANCEL]:
             self.status = self.ST_PAID
             self.pay_at = timezone.now()
-            self.save(update_fields=['status', 'pay_at'])
+            self.transaction_id = self.receipt.transaction_id
+            self.save(update_fields=['status', 'pay_at', 'transaction_id'])
             self.send_coupon()
 
     def send_coupon(self):
