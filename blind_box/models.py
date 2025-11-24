@@ -1030,7 +1030,7 @@ class UserLotteryRecord(models.Model):
     @classmethod
     def create_record(cls, user, wheel_activity: WheelActivity, is_prize=False):
         snapshot = cls.get_snapshot(wheel_activity)
-        cls.objects.create(user=user, wheel_activity=wheel_activity, mobile=user.mobile, is_prize=is_prize,
+        return cls.objects.create(user=user, wheel_activity=wheel_activity, mobile=user.mobile, is_prize=is_prize,
                            snapshot=snapshot)
 
 
