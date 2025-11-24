@@ -175,6 +175,28 @@
                     that.openPopup($('button[data-name="add_stock"]'), event)
                 })
             }
+            if (window.location.href.indexOf('/blind_box/blindboxwinningrecord/') >= 0) {
+                $('button[data-name="shipping_good"]').hide()
+                $('button[data-name="set_completed"]').hide()
+                this.cancel()
+                $('.item_shipping_good').click(function (event) {
+                    that.openPopup($('button[data-name="shipping_good"]'), event)
+                })
+                $('.item_set_completed').click(function (event) {
+                    that.openPopup($('button[data-name="set_completed"]'), event)
+                })
+            }
+            if (window.location.href.indexOf('/blind_box/wheelwinningrecord/') >= 0) {
+                $('button[data-name="shipping_good"]').hide()
+                $('button[data-name="set_completed"]').hide()
+                this.cancel()
+                $('.item_shipping_good').click(function (event) {
+                    that.openPopup($('button[data-name="shipping_good"]'), event)
+                })
+                $('.item_set_completed').click(function (event) {
+                    that.openPopup($('button[data-name="set_completed"]'), event)
+                })
+            }
             if (window.location.href.indexOf('/ticket/showproject/') >= 0) {
                 $('button[data-name="set_on"]').hide()
                 $('button[data-name="set_off"]').hide()

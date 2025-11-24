@@ -497,6 +497,18 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
     #
     # status_display.short_description = '状态'
 
+    def op(self, obj):
+        html = ''
+        if obj.status in [WinningRecordAbstract.ST_PENDING_SHIP, WinningRecordAbstract.ST_COMPLETED]:
+            html += '<button type="button" class="el-button el-button--success el-button--small item_shipping_good" ' \
+                    'style="margin-top:8px" alt={}>发货</button><br>'.format(obj.id)
+        elif obj.status in [WinningRecordAbstract.ST_PENDING_RECEIVE, WinningRecordAbstract.ST_PENDING_RECEIPT]:
+            html += '<button type="button" class="el-button el-button--warning el-button--small item_set_completed" ' \
+                    'style="margin-top:8px" alt={}>设为已完成</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
+
     def shipping_good(self, request, queryset):
         qs = queryset.filter(status__in=[WinningRecordAbstract.ST_PENDING_SHIP, WinningRecordAbstract.ST_COMPLETED])
         if not qs:
@@ -587,7 +599,7 @@ class WinningRecordAbstractAdmin(AjaxAdmin, ChangeAndViewAdmin):
 
 
 class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
-    list_display = WinningRecordAbstractAdmin.list_display + ['blind_box_order', 'blind_box_title']
+    list_display = WinningRecordAbstractAdmin.list_display + ['blind_box_order', 'blind_box_title', 'op']
     readonly_fields = WinningRecordAbstractAdmin.readonly_fields + ['blind_box_order', 'blind_box_title']
     list_filter = WinningRecordAbstractAdmin.list_filter + ['blind_box_order']
     exclude = ['blind_box']
@@ -611,7 +623,7 @@ class BlindBoxWinningRecordAdmin(WinningRecordAbstractAdmin):
 
 
 class WheelWinningRecordAdmin(WinningRecordAbstractAdmin):
-    list_display = WinningRecordAbstractAdmin.list_display + ['lottery_record', 'wheel_name']
+    list_display = WinningRecordAbstractAdmin.list_display + ['lottery_record', 'wheel_name', 'op']
     readonly_fields = WinningRecordAbstractAdmin.readonly_fields + ['lottery_record', 'wheel_name']
     list_filter = WinningRecordAbstractAdmin.list_filter + ['lottery_record']
     exclude = ['wheel_activity']
