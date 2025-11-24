@@ -21,6 +21,7 @@ from typing import List, Optional
 from blind_box.stock_updater import prsc, StockModel
 from blind_box.lottery_utils import weighted_random_choice
 import pysnooper
+from common.utils import get_config
 
 SR_COUPON = 1
 SR_TICKET = 2
@@ -1111,9 +1112,9 @@ class BlindOrderRefund(models.Model):
             return False, '该订单未付款不能退款', None
 
     @atomic
-    def set_confirm(self, request, op_user=None):
+    def set_confirm(self, op_user=None):
         try:
-            st = self.wx_refund(request)
+            st = self.wx_refund()
             msg = self.error_msg
             if st:
                 self.status = self.STATUS_PAYING
@@ -1150,7 +1151,7 @@ class BlindOrderRefund(models.Model):
             order = self.lottery_order
         return order
 
-    def wx_refund(self, request):
+    def wx_refund(self):
         order = self.get_refund_order()
         if not order:
             raise CustomAPIException('退款订单找不到')
@@ -1159,7 +1160,8 @@ class BlindOrderRefund(models.Model):
             receipt.update_info()
         from mall.pay_service import get_mp_pay_client
         mp_pay_client = get_mp_pay_client(receipt.pay_type, receipt.wx_pay_config)
-        refund_notify_url = request.build_absolute_uri(self.get_refund_notify_url())
+        config = get_config()
+        refund_notify_url = config['template_url'] + self.get_refund_notify_url()
         result = mp_pay_client.new_refund(self, notify_url=refund_notify_url)
         self.return_code = result.get('return_code')
         self.result_code = result.get('result_code')
