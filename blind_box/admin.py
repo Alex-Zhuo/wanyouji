@@ -884,7 +884,7 @@ class BlindOrderRefundAdmin(ChangeAndViewAdmin):
                     'refund_reason', 'error_msg', 'transaction_id', 'time_at', 'op']
     search_fields = ['=order_no', '=out_refund_no', '=transaction_id', '=user__mobile']
     list_filter = ['status', 'create_at']
-    autocomplete_fields = ['user', 'order', 'op_user']
+    autocomplete_fields = ['user', 'blind_box_order', 'lottery_order', 'op_user']
     actions = [confirm_refund, cancel_refund]
     readonly_fields = [f.name for f in BlindOrderRefund._meta.fields if
                        f.name not in ['refund_amount', 'refund_reason']]
