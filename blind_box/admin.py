@@ -130,7 +130,7 @@ class PrizeAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
                 'msg': '执行成功，请稍后再试！'
             })
 
-    add_stock.short_description = '修改库存数量'
+    add_stock.short_description = '增加库存数量'
     add_stock.type = 'success'
     add_stock.icon = 'el-icon-s-promotion'
     # 指定为弹出层，这个参数最关键
@@ -202,6 +202,20 @@ class BlindBoxAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     search_fields = ['no', 'title']
     inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
     actions = [blind_set_on, blind_set_off, 'add_stock']
+
+    def op(self, obj):
+        html = ''
+        if obj.status == obj.STATUS_OFF:
+            html += '<button type="button" class="el-button el-button--success el-button--small item_blind_set_on" ' \
+                    'style="margin-top:8px" alt={}>上架</button><br>'.format(obj.id)
+        else:
+            html += '<button type="button" class="el-button el-button--warning el-button--small item_blind_set_off" ' \
+                    'style="margin-top:8px" alt={}>下架</button><br>'.format(obj.id)
+        html += '<button type="button" class="el-button el-button--primary el-button--small item_add_stock" ' \
+                'style="margin-top:8px" alt={}>修改库存数量</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
