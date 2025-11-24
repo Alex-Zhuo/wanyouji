@@ -721,7 +721,7 @@ def lottery_set_paid(modeladmin, request, queryset):
 lottery_set_paid.short_description = u'后台付款'
 
 
-class LotteryPurchaseRecordAdmin(OnlyViewAdmin):
+class LotteryPurchaseRecordAdmin(OnlyViewAdmin, AjaxAdmin):
     list_display = ['order_no', 'user', 'mobile', 'multiply', 'amount', 'refund_amount', 'status', 'create_at',
                     'pay_at', 'transaction_id', 'op']
     list_filter = ['status', 'create_at']
