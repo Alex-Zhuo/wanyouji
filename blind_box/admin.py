@@ -582,7 +582,7 @@ class WheelWinningRecordAdmin(WinningRecordAbstractAdmin):
     fieldsets = (
         ('基本信息', {
             'fields': (
-                'no', 'user', 'mobile', 'prize', 'source_type', 'instruction', 'wheel_name', 'lottery_record')
+                'no', 'user', 'mobile', 'prize', 'source_type', 'wheel_name', 'lottery_record')
         }),
         ('状态信息', {
             'fields': ('status', 'winning_at', 'receive_at', 'ship_at', 'complete_at')
