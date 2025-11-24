@@ -24,7 +24,11 @@ class CouponBasicAdmin(RemoveDeleteModelAdmin):
 
 
 def set_on(modeladmin, request, queryset):
-    queryset.update(status=Coupon.STATUS_ON)
+    qs = queryset.filter(status=Coupon.STATUS_OFF)
+    for obj in qs:
+        obj.coupon_redis_stock()
+    qs.update(status=Coupon.STATUS_ON)
+
     messages.success(request, '执行成功')
 
 
