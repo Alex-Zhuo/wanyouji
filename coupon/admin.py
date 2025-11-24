@@ -202,6 +202,15 @@ class CouponOrderAdmin(AjaxAdmin, OnlyViewAdmin):
     readonly_fields = ['user', 'receipt', 'order_no', 'coupon']
     actions = ['coupon_refund', export_coupon_order, coupon_set_paid]
 
+    def op(self, obj):
+        html = ''
+        if obj.status in CouponOrder.can_refund_status():
+            html = '<button type="button" class="el-button el-button--success el-button--small item_coupon_refund" ' \
+                   'style="margin-top:8px" alt={}>申请退款</button><br>'.format(obj.id)
+        return mark_safe(html)
+
+    op.short_description = '操作'
+
     def coupon_refund(self, request, queryset):
         qs = queryset.filter(status__in=CouponOrder.can_refund_status())
         if not qs:

@@ -120,6 +120,13 @@
         },
         mounted() {
             let that = this
+            if (window.location.href.indexOf('/coupon/couponorder/') >= 0) {
+                $('button[data-name="coupon_refund"]').hide()
+                this.cancel()
+                $('.item_coupon_refund').click(function (event) {
+                    that.openPopup($('button[data-name="coupon_refund"]'), event)
+                })
+            }
             if (window.location.href.indexOf('/blind_box/prize/') >= 0) {
                 $('button[data-name="set_on"]').hide()
                 $('button[data-name="set_off"]').hide()
