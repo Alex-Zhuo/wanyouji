@@ -14,7 +14,7 @@ from caches import get_pika_redis, get_redis_name
 import logging
 from django.db import close_old_connections
 from decimal import Decimal
-from common.utils import quantize, get_short_no
+from common.utils import quantize, get_short_no, get_config
 from django.core.exceptions import ValidationError
 from restframework_ext.exceptions import CustomAPIException
 from random import sample
@@ -832,13 +832,14 @@ class CouponOrderRefund(CommonRefundAbstract):
         if not st:
             raise CustomAPIException(msg)
 
-    def wx_refund(self, request):
+    def wx_refund(self):
         receipt = self.order.receipt
         if not receipt.transaction_id:
             receipt.update_info()
         from mall.pay_service import get_mp_pay_client
         mp_pay_client = get_mp_pay_client(receipt.pay_type, receipt.wx_pay_config)
-        refund_notify_url = request.build_absolute_uri(self.get_refund_notify_url())
+        config = get_config()
+        refund_notify_url = config['template_url'] + self.get_refund_notify_url()
         result = mp_pay_client.new_refund(self, notify_url=refund_notify_url)
         self.return_code = result.get('return_code')
         self.result_code = result.get('result_code')
