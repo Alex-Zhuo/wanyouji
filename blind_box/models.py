@@ -923,7 +923,7 @@ class LotteryPurchaseRecord(models.Model):
         self.status = self.ST_REFUNDING
         self.save(update_fields=['refund_amount', 'status'])
         # 申请退款时减抽奖次数
-        self.change_lottery_times(-1, UserLotteryTimesDetail.SR_REFUND, True)
+        self.change_lottery_times(-self.multiply, UserLotteryTimesDetail.SR_REFUND, True)
 
     def set_refunded(self):
         self.refund_at = timezone.now()
