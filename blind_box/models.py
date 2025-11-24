@@ -1162,7 +1162,7 @@ class BlindOrderRefund(models.Model):
         mp_pay_client = get_mp_pay_client(receipt.pay_type, receipt.wx_pay_config)
         config = get_config()
         refund_notify_url = config['template_url'] + self.get_refund_notify_url()
-        result = mp_pay_client.new_refund(self, notify_url=refund_notify_url)
+        result = mp_pay_client.blind_refund(self, order.actual_amount, notify_url=refund_notify_url)
         self.return_code = result.get('return_code')
         self.result_code = result.get('result_code')
         self.error_msg = '{}, {}'.format(result.get('return_msg'), result.get('err_code_des'))

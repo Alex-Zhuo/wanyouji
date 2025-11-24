@@ -240,6 +240,13 @@ class MpPayClient(PayClient):
                                          out_refund_no=refund_payment.out_refund_no,
                                          transaction_id=refund_payment.transaction_id, notify_url=notify_url)
 
+    def blind_refund(self, refund_payment, total_fee, notify_url):
+        amount = int(refund_payment.refund_amount * 100)
+        total_fee = int(total_fee * 100)
+        return self._client.refund.apply(total_fee=total_fee, refund_fee=amount,
+                                         out_refund_no=refund_payment.out_refund_no,
+                                         transaction_id=refund_payment.transaction_id, notify_url=notify_url)
+
     def refund(self, refund_payment, request):
         amount = int(refund_payment.amount * 100)
         url = request.build_absolute_uri(mall_conf.refund_notify_url)
