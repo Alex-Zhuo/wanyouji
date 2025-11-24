@@ -428,7 +428,7 @@ def export_shipment_list(modeladmin, request, queryset):
     return response
 
 
-export_shipment_list.short_description = '批量导出发货单'
+export_shipment_list.short_description = '批量导出'
 
 
 def set_completed(modeladmin, request, queryset):
