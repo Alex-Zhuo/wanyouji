@@ -1004,7 +1004,7 @@ class UserLotteryTimesDetail(models.Model):
     SOURCE_TYPE_CHOICES = ((SR_NEW, '邀请新用户获得'), (SR_BUY, '购买获得'), (SR_REFUND, '退款扣减'), (SR_LOGIN, '每日登录赠送'))
     source_type = models.PositiveSmallIntegerField('订单类型', choices=SOURCE_TYPE_CHOICES, default=SR_NEW)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
-    user_id = models.IntegerField('用户ID', null=True, editable=False)
+    user_id = models.IntegerField('用户ID', null=True, editable=False, db_index=True)
     date_at = models.DateField('日期', null=True, blank=True, editable=False, help_text='用于限制每日登录重复获得')
 
     class Meta:
