@@ -41,7 +41,7 @@ from common.utils import close_old_connections, random_str
 from renovation.models import SubPages
 from datetime import timedelta
 from django.core.validators import validate_image_file_extension
-
+from caches import run_with_lock,get_redis_name
 log = logging.getLogger(__name__)
 
 
@@ -1211,9 +1211,17 @@ class User(AbstractUser):
             self.save(update_fields=['share_code'])
         return self.share_code
 
-    @property
-    def check_can_lot_times(self):
-        return not self.day_visit_at or self.day_visit_at.date() < timezone.now().date()
+    def check_and_update_day_visit_at(self):
+        st = False
+        key = get_redis_name('day_visit{}'.format(self.id))
+        with run_with_lock(key, 60) as got:
+            if got:
+                now = timezone.now()
+                st = not self.day_visit_at or self.day_visit_at.date() < now.date()
+                if st:
+                    self.day_visit_at = now
+                    self.save(update_fields=['day_visit_at'])
+        return st
 
     # @classmethod
     # def uid_cache_key(cls):
