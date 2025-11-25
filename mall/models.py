@@ -657,6 +657,11 @@ class User(AbstractUser):
                 inst.bind_parent(share_code)
                 # from mall.celery_tasks import bind_parent_task
                 # bind_parent_task.delay(inst.id, share_code)
+            if inst.parent:
+                # 首次注册绑定上级送一次转盘
+                from blind_box.models import UserLotteryTimesDetail
+                UserLotteryTimesDetail.add_record(inst.parent, times=1, source_type=UserLotteryTimesDetail.SR_NEW,
+                                                  add_total=True)
             return inst
 
         def ext():
@@ -676,6 +681,10 @@ class User(AbstractUser):
                 inst.bind_parent(share_code)
                 # from mall.celery_tasks import bind_parent_task
                 # bind_parent_task.delay(inst.id, share_code)
+            if inst.parent:
+                from blind_box.models import UserLotteryTimesDetail
+                UserLotteryTimesDetail.add_record(inst.parent, times=1, source_type=UserLotteryTimesDetail.SR_NEW,
+                                                  add_total=True)
             return inst
 
         if lpid:
