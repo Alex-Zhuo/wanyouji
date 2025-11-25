@@ -108,14 +108,13 @@ class UserAccountViewSet(ReadOnlyModelViewSet, ReturnNoneViewSet):
 
     @action(methods=['get'], detail=False)
     def info(self, request):
-        # from caches import account_info_cache_key
-        # key = account_info_cache_key.format(request.user.id)
-        # # 获取缓存数据
-        # data = cache.get(key)
-        # if not data:
-        data = self.get_serializer(request.user.account).data
-        logger.error(data)
-        # cache.set(key, data, timeout=60)
+        from caches import account_info_cache_key
+        key = account_info_cache_key.format(request.user.id)
+        # 获取缓存数据
+        data = cache.get(key)
+        if not data:
+            data = self.get_serializer(request.user.account).data
+            cache.set(key, data, timeout=60)
         return Response(data)
 
     @action(methods=['get'], detail=False)
