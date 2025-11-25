@@ -959,7 +959,7 @@ class UserLotteryTimes(models.Model):
     total_times = models.IntegerField('总转盘次数', default=0)
     version = models.PositiveIntegerField('版本', default=0, editable=False)
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
-    update_at = models.DateTimeField('更新时间', null=True, blank=True)
+    update_at = models.DateTimeField('更新时间', null=True, blank=True, editable=False)
 
     class Meta:
         verbose_name_plural = verbose_name = '用户转盘次数'
