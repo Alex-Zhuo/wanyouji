@@ -472,7 +472,7 @@ OOsm92mSJIoI459xQicV5VZ1gT3ibaQlBFn4x5xn5tw/132', u'watermark': {u'timestamp': 1
                                      session_key=session.get('session_key'))
         if user.parent:
             from blind_box.models import UserLotteryTimesDetail
-            UserLotteryTimesDetail.add_record(user, times=1, source_type=UserLotteryTimesDetail.SR_NEW,add_total=True)
+            UserLotteryTimesDetail.add_record(user.parent, times=1, source_type=UserLotteryTimesDetail.SR_NEW, add_total=True)
         return Response(data=user.biz_get_info_dict())
 
     @action(methods=['post'], detail=False, permission_classes=[IsPermittedUser])
