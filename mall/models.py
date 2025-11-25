@@ -126,6 +126,7 @@ class User(AbstractUser):
     has_change = models.BooleanField('是否有修改权限', default=False)
     is_tg = models.BooleanField('是否技术人员账号', default=False)
     forbid_order = models.BooleanField('是否禁止下单', default=False, help_text='勾选后不允许下单')
+    day_visit_at = models.DateTimeField('当日登录时间', null=True, blank=True)
 
     class Meta(AbstractUser.Meta):
         swappable = 'AUTH_USER_MODEL'
