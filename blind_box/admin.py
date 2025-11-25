@@ -830,6 +830,7 @@ class LotteryPurchaseRecordAdmin(OnlyViewAdmin, AjaxAdmin):
 class UserLotteryTimesDetailInline(OnlyReadTabularInline):
     model = UserLotteryTimesDetail
     extra = 0
+    readonly_fields = ['create_at']
 
 
 class UserLotteryTimesAdmin(OnlyViewAdmin):
