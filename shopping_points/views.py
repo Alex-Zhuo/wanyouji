@@ -114,6 +114,7 @@ class UserAccountViewSet(ReadOnlyModelViewSet, ReturnNoneViewSet):
         # data = cache.get(key)
         # if not data:
         data = self.get_serializer(request.user.account).data
+        logger.error(data)
         # cache.set(key, data, timeout=60)
         return Response(data)
 
