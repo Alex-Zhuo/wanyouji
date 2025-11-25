@@ -1016,14 +1016,20 @@ class UserLotteryTimesDetail(models.Model):
 
     @classmethod
     def add_record(cls, user, times: int, source_type: int, add_total=True):
-        try:
-            record = UserLotteryTimes.get_or_create_record(user)
-            inst = cls.objects.create(record=record, user_id=user.id, times=times, source_type=source_type)
-            record.update_times(times, add_total)
-            return inst
-        except Exception as e:
-            log.error(e)
-            log.error('增加转盘次数失败')
+        has_login_get = None
+        date_at = timezone.now().date()
+        if source_type == cls.SR_LOGIN:
+            has_login_get = cls.objects.filter(user_id=user.id, date_at=date_at)
+        if not has_login_get:
+            try:
+                record = UserLotteryTimes.get_or_create_record(user)
+                inst = cls.objects.create(record=record, user_id=user.id, times=times, source_type=source_type,
+                                          date_at=date_at)
+                record.update_times(times, add_total)
+                return inst
+            except Exception as e:
+                log.error(e)
+                log.error('增加转盘次数失败')
 
 
 class UserLotteryRecord(models.Model):

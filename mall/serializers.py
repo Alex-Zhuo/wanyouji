@@ -118,6 +118,10 @@ class UserInfoNewSerializer(serializers.ModelSerializer):
     uid = serializers.SerializerMethodField()
 
     def get_uid(self, obj):
+        if obj.check_can_lot_times:
+            from blind_box.models import UserLotteryTimesDetail
+            UserLotteryTimesDetail.add_record(obj, times=1, source_type=UserLotteryTimesDetail.SR_LOGIN,
+                                              add_total=True)
         return obj.get_share_code()
 
     def get_token(self, obj):

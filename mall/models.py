@@ -1211,6 +1211,10 @@ class User(AbstractUser):
             self.save(update_fields=['share_code'])
         return self.share_code
 
+    @property
+    def check_can_lot_times(self):
+        return not self.day_visit_at or self.day_visit_at.date() < timezone.now().date()
+
     # @classmethod
     # def uid_cache_key(cls):
     #     return get_redis_name('uidcache')
