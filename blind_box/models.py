@@ -403,8 +403,9 @@ class BlindBox(UseShortNoAbstract):
             raise
 
     @classmethod
-    def test_draw_prize(cls, test_count=10000):
-        blind_box = cls.objects.first()
+    def test_draw_prize(cls, blind_box,test_count=10000):
+        if not blind_box:
+            blind_box = cls.objects.first()
         available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
         # 可用奖品池
         candidates = []
