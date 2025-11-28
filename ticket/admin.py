@@ -1141,7 +1141,7 @@ class SessionInfoAdmin(AjaxAdmin, RemoveDeleteModelAdmin):
                 start_at_time = '{} {} {} {} {}'.format(time_list[0], time_list[1], time_list[2], time_list[3],
                                                         time_list[4])
                 start_at = datetime.strptime(start_at_time, '%a %b %d %Y %H:%M:%S')
-            if not end_at and not start_at:
+            if not end_at or not start_at:
                 return JsonResponse(data={
                     'status': 'error',
                     'msg': '开始时间和结束时间不能同时为空'
