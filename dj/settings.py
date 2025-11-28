@@ -358,6 +358,8 @@ CELERY_TASK_TIME_LIMIT = celery_config['TASK_TIME_LIMIT'] if celery_config else 
 # 为存储结果设置过期日期，默认1天过期。如果beat开启，Celery每天会自动清除。
 # 设为0，存储结果永不过期,单位秒
 CELERY_RESULT_EXPIRES = celery_config['result_expires'] if celery_config else 3600
+# 非常重要,有些情况下可以防止死锁
+CELERYD_FORCE_EXECV = True
 # 任务限流
 CELERY_TASK_ANNOTATIONS = {'tasks.add': {'rate_limit': '10/s'}}
 CELERY_TASK_TRACK_STARTED = celery_config['TASK_TRACK_STARTED'] if celery_config else False
