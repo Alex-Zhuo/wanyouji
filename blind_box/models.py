@@ -454,6 +454,21 @@ class BlindBox(UseShortNoAbstract):
         print(results)
 
 
+class BlindBoxPrize(models.Model):
+    """盲盒详情轮播图"""
+    blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.CASCADE, related_name='blind_prize')
+    prize = models.ForeignKey(Prize, verbose_name='奖品', on_delete=models.SET_NULL, null=True)
+    ratio = models.DecimalField('中奖概率%', max_digits=13, decimal_places=2, help_text='用于前端展示,不用于计算，计算以实际权重计算', default=0)
+    display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
+
+    class Meta:
+        verbose_name_plural = verbose_name = '盲盒奖品'
+        ordering = ['-display_order']
+
+    def __str__(self):
+        return str(self.id)
+
+
 class BlindBoxCarouselImage(models.Model):
     """盲盒详情轮播图"""
     blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.CASCADE, related_name='carousel_images')

@@ -11,7 +11,7 @@ from blind_box.models import (
     Prize, BlindBox, WheelWinningRecord, BlindBoxWinningRecord, WinningRecordShipmentReceipt,
     WheelActivity, WheelSection, LotteryPurchaseRecord,
     PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, UserLotteryTimes, BlindBasic, UserLotteryRecord,
-    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail, SR_GOOD, BlindReceipt, BlindOrderRefund
+    BlindBoxOrder, WinningRecordAbstract, UserLotteryTimesDetail, SR_GOOD, BlindReceipt, BlindOrderRefund, BlindBoxPrize
 )
 from dj import technology_admin
 from dj_ext.permissions import RemoveDeleteModelAdmin, OnlyViewAdmin, ChangeAndViewAdmin, RemoveDeleteStackedInline, \
@@ -170,6 +170,18 @@ class BlindBoxCarouselImageInline(admin.TabularInline):
 class BlindBoxDetailImageInline(admin.TabularInline):
     model = BlindBoxDetailImage
     extra = 0
+
+
+class BlindBoxPrizeInline(admin.TabularInline):
+    model = BlindBoxPrize
+    extra = 0
+    autocomplete_fields = ['prize']
+    readonly_fields = ['real_ratio']
+
+    def real_ratio(self, obj):
+        return
+
+    real_ratio.short_description = '实际中奖概率'
 
 
 def blind_set_on(modeladmin, request, queryset):
