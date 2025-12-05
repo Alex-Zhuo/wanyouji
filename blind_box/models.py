@@ -478,6 +478,34 @@ class BlindBoxPrize(models.Model):
     def __str__(self):
         return str(self.id)
 
+    def get_real_ratio(self):
+        ratio = 0
+        if self.is_enabled:
+            blind_box = self.blind_box
+            qs = BlindBoxPrize.objects.filter(blind_box_id=blind_box.id, is_enabled=True, prize__status=Prize.STATUS_ON,
+                                              prize__stock__gt=0).distinct()
+            total_weight = 0
+            my_weight = 0
+            for bb in qs:
+                # 计算权重：奖品权重数 × 类型倍数
+                # 普通款：权重 = 奖品权重数
+                # 稀有款：权重 = 奖品权重数 × 稀有款权重倍数
+                # 隐藏款：权重 = 奖品权重数 × 隐藏款权重倍数
+                prize = bb.prize
+                base_weight = prize.weight
+                if prize.rare_type == Prize.RA_RARE:
+                    weight = base_weight * blind_box.rare_weight_multiple
+                elif prize.rare_type == Prize.RA_HIDDEN:
+                    weight = base_weight * blind_box.hidden_weight_multiple
+                else:
+                    weight = base_weight
+                total_weight += weight
+                if bb.id == self.id:
+                    my_weight = weight
+            prob = my_weight / my_weight
+            ratio = f"{prob * 100:.2f}%"
+        return ratio
+
 
 class BlindBoxCarouselImage(models.Model):
     """盲盒详情轮播图"""

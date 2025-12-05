@@ -179,7 +179,7 @@ class BlindBoxPrizeInline(admin.TabularInline):
     readonly_fields = ['real_ratio']
 
     def real_ratio(self, obj):
-        return
+        return obj.get_real_ratio()
 
     real_ratio.short_description = '实际中奖概率'
 
@@ -212,7 +212,7 @@ class BlindBoxAdmin(RemoveDeleteModelAdmin, AjaxAdmin):
     list_filter = ['status', 'type', 'grids_num']
     list_editable = ['display_order']
     search_fields = ['no', 'title']
-    inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline]
+    inlines = [BlindBoxCarouselImageInline, BlindBoxDetailImageInline, BlindBoxPrizeInline]
     actions = [blind_set_on, blind_set_off, 'add_stock']
 
     def op(self, obj):
