@@ -176,12 +176,18 @@ class BlindBoxPrizeInline(admin.TabularInline):
     model = BlindBoxPrize
     extra = 0
     autocomplete_fields = ['prize']
-    readonly_fields = ['real_ratio']
+    readonly_fields = ['real_ratio', 'prize_desc']
 
     def real_ratio(self, obj):
         return obj.get_real_ratio()
 
-    real_ratio.short_description = '实际中奖概率'
+    real_ratio.short_description = '实际中奖概率(下架和库存为0不参与计算)'
+
+    def prize_desc(self, obj):
+        prize = obj.prize
+        return '{}-{}-{}'.format(prize.get_rare_type_display(), prize.get_status_display(), prize.stock)
+
+    prize_desc.short_description = '奖品信息'
 
 
 def blind_set_on(modeladmin, request, queryset):
