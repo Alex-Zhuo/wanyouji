@@ -502,8 +502,9 @@ class BlindBoxPrize(models.Model):
                 total_weight += weight
                 if bb.id == self.id:
                     my_weight = weight
-            prob = my_weight / total_weight
-            ratio = f"{prob * 100:.2f}%"
+            if total_weight>0:
+                prob = my_weight / total_weight
+                ratio = f"{prob * 100:.2f}%"
         return ratio
 
 
