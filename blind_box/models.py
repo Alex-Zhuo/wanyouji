@@ -2,7 +2,7 @@
 from django.core.validators import validate_image_file_extension, FileExtensionValidator
 from django.db import models
 
-from common.config import IMAGE_FIELD_PREFIX, FILE_FIELD_PREFIX
+from common.config import IMAGE_FIELD_PREFIX, FILE_FIELD_PREFIX, VIDEO_EXT_LIST
 from mp.models import WeiXinPayConfig
 from restframework_ext.models import UseShortNoAbstract, ReceiptAbstract
 from django.utils import timezone
@@ -240,10 +240,11 @@ class BlindBox(UseShortNoAbstract):
     STATUS_ON = 1
     STATUS_CHOICES = ((STATUS_OFF, '下架'), (STATUS_ON, '上架'))
     status = models.IntegerField(u'状态', choices=STATUS_CHOICES, default=STATUS_ON, help_text='下架后则不会被抽中')
+    GR_ONE = 1
     GR_THREE = 3
     GR_SIX = 6
     GR_NINE = 9
-    GR_CHOICES = ((GR_THREE, '3格'), (GR_SIX, '6格'), (GR_NINE, '9格'))
+    GR_CHOICES = ((GR_ONE, '3格'), (GR_THREE, '3格'), (GR_SIX, '6格'), (GR_NINE, '9格'))
     grids_num = models.PositiveSmallIntegerField(u'格子数', choices=GR_CHOICES, default=GR_THREE)
     TYPE_COMMON = 1
     TYPE_RARE = 2
@@ -258,6 +259,10 @@ class BlindBox(UseShortNoAbstract):
     hidden_weight_multiple = models.PositiveSmallIntegerField('隐藏款权重倍数', default=1)
     logo = models.ImageField('盲盒封面图', upload_to=f'{IMAGE_FIELD_PREFIX}/blind/box',
                              validators=[validate_image_file_extension])
+    back_group_img = models.ImageField('盲盒背景图', upload_to=f'{IMAGE_FIELD_PREFIX}/blind/box',
+                                       validators=[validate_image_file_extension], null=True)
+    award_video = models.FileField('开奖动画', upload_to=f'{FILE_FIELD_PREFIX}/blind/box',
+                                   validators=[FileExtensionValidator(allowed_extensions=VIDEO_EXT_LIST)], null=True)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
@@ -313,7 +318,9 @@ class BlindBox(UseShortNoAbstract):
         deducted_stocks = []  # 已扣减的库存记录，格式: [(prize_id, 数量), ...]
         try:
             # 检查奖品池库存
-            available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+            # available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+            prizes_ids = list(blind_box.blind_prizes.filter(is_enabled=True).values_list('prize_id', flat=True))
+            available_prizes = Prize.objects.filter(id__in=prizes_ids, status=Prize.STATUS_ON, stock__gt=0)
             available_count = available_prizes.count()
             if available_count < grids_num:
                 raise Exception("奖品库存不足，请稍后再试！")
@@ -406,7 +413,9 @@ class BlindBox(UseShortNoAbstract):
     def test_draw_prize(cls, blind_box=None, test_count=10000):
         if not blind_box:
             blind_box = cls.objects.first()
-        available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+        # available_prizes = Prize.objects.filter(status=Prize.STATUS_ON, stock__gt=0)
+        prizes_ids = list(blind_box.blind_prizes.filter(is_enabled=True).values_list('prize_id', flat=True))
+        available_prizes = Prize.objects.filter(id__in=prizes_ids, status=Prize.STATUS_ON, stock__gt=0)
         # 可用奖品池
         candidates = []
         for prize in available_prizes:
@@ -456,9 +465,10 @@ class BlindBox(UseShortNoAbstract):
 
 class BlindBoxPrize(models.Model):
     """盲盒详情轮播图"""
-    blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.CASCADE, related_name='blind_prize')
+    blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.CASCADE, related_name='blind_prizes')
     prize = models.ForeignKey(Prize, verbose_name='奖品', on_delete=models.SET_NULL, null=True)
     ratio = models.DecimalField('中奖概率%', max_digits=13, decimal_places=2, help_text='用于前端展示,不用于计算，计算以实际权重计算', default=0)
+    is_enabled = models.BooleanField('是否启用', default=True, help_text='不勾选时不显示该奖品，实际计算概率时不参与计算')
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
 
     class Meta:

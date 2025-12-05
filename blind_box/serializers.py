@@ -10,7 +10,7 @@ import simplejson as json
 from blind_box.models import (
     Prize, BlindBox, BlindBoxWinningRecord, WheelWinningRecord, WheelActivity, WheelSection,
     LotteryPurchaseRecord, PrizeDetailImage, BlindBoxCarouselImage, BlindBoxDetailImage, BlindBasic, BlindBoxOrder,
-    BlindReceipt, SR_GOOD, UserLotteryTimes, UserLotteryRecord, SR_COUPON
+    BlindReceipt, SR_GOOD, UserLotteryTimes, UserLotteryRecord, SR_COUPON, BlindBoxPrize
 )
 from restframework_ext.exceptions import CustomAPIException
 from caches import get_redis_name, run_with_lock
@@ -87,18 +87,32 @@ class BlindBoxSerializer(serializers.ModelSerializer):
                   'price', 'original_price', 'logo']
 
 
+class BlindBoxPrizeSerializer(serializers.ModelSerializer):
+    prize = PrizeSerializer()
+
+    class Meta:
+        model = BlindBoxPrize
+        fields = ['ratio', 'prize']
+
+
 class BlindBoxDetailSerializer(BlindBoxSerializer):
     carousel_images = BlindBoxCarouselImageSerializer(many=True, read_only=True)
     detail_images = BlindBoxDetailImageSerializer(many=True, read_only=True)
     config = serializers.SerializerMethodField()
+    prizes_data = serializers.SerializerMethodField()
 
     def get_config(self, obj):
         bl = BlindBasic.get()
         return dict(rule=bl.box_rule)
 
+    def get_prizes_data(self, obj):
+        qs = obj.blind_prizes.filter(is_enabled=True)
+        return BlindBoxPrizeSerializer(qs, many=True, context=self.context).data
+
     class Meta:
         model = BlindBox
-        fields = BlindBoxSerializer.Meta.fields + ['carousel_images', 'detail_images', 'desc', 'config']
+        fields = BlindBoxSerializer.Meta.fields + ['carousel_images', 'detail_images', 'desc', 'config',
+                                                   'back_group_img', 'award_video', 'prizes_data']
 
 
 class WheelSectionSerializer(serializers.ModelSerializer):
