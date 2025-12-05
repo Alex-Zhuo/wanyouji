@@ -476,6 +476,7 @@ class BlindBoxPrize(models.Model):
     class Meta:
         verbose_name_plural = verbose_name = '盲盒奖品'
         ordering = ['-display_order']
+        unique_together = ['blind_box', 'prize']
 
     def __str__(self):
         return str(self.id)
