@@ -185,7 +185,7 @@ class BlindBoxPrizeInline(admin.TabularInline):
 
     def prize_desc(self, obj):
         prize = obj.prize
-        return '{}-{}-{}'.format(prize.get_rare_type_display(), prize.get_status_display(), prize.stock)
+        return '{}-{}-库存({})'.format(prize.get_rare_type_display(), prize.get_status_display(), prize.stock)
 
     prize_desc.short_description = '奖品信息'
 
