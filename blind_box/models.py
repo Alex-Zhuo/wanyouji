@@ -467,7 +467,8 @@ class BlindBoxPrize(models.Model):
     """盲盒详情轮播图"""
     blind_box = models.ForeignKey(BlindBox, verbose_name='盲盒', on_delete=models.CASCADE, related_name='blind_prizes')
     prize = models.ForeignKey(Prize, verbose_name='奖品', on_delete=models.SET_NULL, null=True)
-    ratio = models.DecimalField('中奖概率%', max_digits=13, decimal_places=2, help_text='用于前端展示,不用于计算，计算以实际权重计算', default=0)
+    ratio = models.DecimalField('中奖概率%', max_digits=13, decimal_places=2, help_text='用于前端展示,不用于计算，计算以实际权重计算',
+                                default=0.00)
     is_enabled = models.BooleanField('是否启用', default=True, help_text='不勾选时不显示该奖品，实际计算概率时不参与计算')
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
 
@@ -502,7 +503,7 @@ class BlindBoxPrize(models.Model):
                 total_weight += weight
                 if bb.id == self.id:
                     my_weight = weight
-            if total_weight>0:
+            if total_weight > 0:
                 prob = my_weight / total_weight
                 ratio = f"{prob * 100:.2f}%"
         return ratio
