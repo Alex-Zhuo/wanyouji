@@ -262,7 +262,8 @@ class BlindBox(UseShortNoAbstract):
     back_group_img = models.ImageField('盲盒背景图', upload_to=f'{IMAGE_FIELD_PREFIX}/blind/box',
                                        validators=[validate_image_file_extension], null=True)
     award_video = models.FileField('开奖动画', upload_to=f'{FILE_FIELD_PREFIX}/blind/box',
-                                   validators=[FileExtensionValidator(allowed_extensions=VIDEO_EXT_LIST)], null=True)
+                                   validators=[FileExtensionValidator(allowed_extensions=VIDEO_EXT_LIST)], null=True,
+                                   blank=True)
     display_order = models.PositiveSmallIntegerField('排序', default=0, help_text='越大排越前')
     create_at = models.DateTimeField('创建时间', auto_now_add=True)
 
