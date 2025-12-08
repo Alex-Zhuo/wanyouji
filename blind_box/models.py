@@ -324,7 +324,8 @@ class BlindBox(UseShortNoAbstract):
             available_prizes = Prize.objects.filter(id__in=prizes_ids, status=Prize.STATUS_ON, stock__gt=0)
             available_count = available_prizes.count()
             if available_count < grids_num:
-                raise Exception("奖品库存不足，请稍后再试！")
+                log.error(f"奖品池奖品不足")
+                raise Exception("奖品池奖品不足，请稍后再试！")
             # 可用奖品池
             candidates = []
             for prize in available_prizes:
@@ -350,8 +351,8 @@ class BlindBox(UseShortNoAbstract):
                         'weight': weight
                     })
             if len(candidates) < grids_num:
-                log.error(f"奖品不足")
-                raise Exception(f"奖品库存不足，请稍后再试.")
+                log.error(f"奖品池奖品不足")
+                raise Exception(f"奖品池奖品不足，请稍后再试.")
             for i in list(range(grids_num)):
                 # 获取可抽取的奖品（排除本次开盒已抽出的奖品）
                 # 循环尝试抽取，直到成功或没有候选奖品
