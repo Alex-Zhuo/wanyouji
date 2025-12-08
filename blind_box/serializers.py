@@ -53,7 +53,8 @@ class PrizeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prize
-        fields = ['no', 'title', 'head_image', 'source_type', 'source_type_display', 'rare_type', 'rare_type_display']
+        fields = ['no', 'title', 'head_image', 'source_type', 'source_type_display', 'rare_type', 'rare_type_display',
+                  'amount']
 
 
 class PrizeDetailSerializer(PrizeSerializer):
