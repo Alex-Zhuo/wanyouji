@@ -244,7 +244,7 @@ class BlindBox(UseShortNoAbstract):
     GR_THREE = 3
     GR_SIX = 6
     GR_NINE = 9
-    GR_CHOICES = ((GR_ONE, '3格'), (GR_THREE, '3格'), (GR_SIX, '6格'), (GR_NINE, '9格'))
+    GR_CHOICES = ((GR_ONE, '1格'), (GR_THREE, '3格'), (GR_SIX, '6格'), (GR_NINE, '9格'))
     grids_num = models.PositiveSmallIntegerField(u'格子数', choices=GR_CHOICES, default=GR_THREE)
     TYPE_COMMON = 1
     TYPE_RARE = 2
