@@ -2153,7 +2153,7 @@ class TicketFile(models.Model):
         unique_together = ['session', 'color']
 
     def __str__(self):
-        return '{},{}'.format(self.session.id, str(self.session))
+        return '{},{}'.format(self.id, str(self.session))
 
     @property
     def is_cy(self):
