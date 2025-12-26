@@ -1298,7 +1298,7 @@ class CyTicketOrderDetailSerializer(TicketOrderDetailNewSerializer):
         if obj.status in [TicketOrder.STATUS_PAID, TicketOrder.STATUS_FINISH]:
             qs = TicketUserCode.objects.filter(order=obj)
             code = qs.first()
-            if code and code.is_cy_code:
+            if code and code.is_cy_code and code.cy_code.check_in_code:
                 data = TicketUserCodeCySerializer(qs, many=True, context=self.context).data
         return data
 
