@@ -1712,7 +1712,7 @@ class CyTicketCode(models.Model):
                                                                   session_id=session.id, product_id=session.product_id,
                                                                   snapshot=json.dumps(code_snapshot))
             check_in_code_img = None
-            if check_in_type == 1:
+            if check_in_code and check_in_type == 1:
                 img_dir, file_path, filename = create_code_qr(check_in_code, 'codes')
                 check_in_code_img = '{}/{}'.format(img_dir, filename)
             cls_data = cls(ticket_code=ticket_code, cy_order=cy_order, ticket_id=ticket_id, ticket_no=ticket_no,
