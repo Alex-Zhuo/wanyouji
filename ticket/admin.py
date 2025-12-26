@@ -1545,13 +1545,13 @@ re_push_delivery.short_description = u'重新核销'
 class TicketOrderRealNameInline(OnlyReadTabularInline):
     model = TicketOrderRealName
     extra = 0
-    exclude = ['id_card']
-    readonly_fields = ['s_id_card']
-
-    def s_id_card(self, obj):
-        return s_id_card(obj.id_card) if obj.id_card else None
-
-    s_id_card.short_description = u'身份证号'
+    # exclude = ['id_card']
+    # readonly_fields = ['s_id_card']
+    #
+    # def s_id_card(self, obj):
+    #     return s_id_card(obj.id_card) if obj.id_card else None
+    #
+    # s_id_card.short_description = u'身份证号'
 
 
 class TicketOrderDiscountInline(OnlyReadTabularInline):
