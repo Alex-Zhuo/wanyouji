@@ -1369,13 +1369,20 @@ def export_ticket_order_old(modeladmin, request, queryset):
                     discount_pack = discount.amount
                 elif discount.discount_type == TicketOrderDiscount.DISCOUNT_PROMOTION:
                     discount_promotion = discount.amount
+        real_name_desc = None
+        if hasattr(record, 'real_name_order'):
+            for rl in record.real_name_order.all():
+                if not real_name_desc:
+                    real_name_desc = f'{rl.name}-{rl.mobile}-{rl.id_card}'
+                else:
+                    real_name_desc += f',{rl.name}-{rl.mobile}-{rl.id_card}'
         data = [str(record.user), record.mobile, record.show_express_address,
                 str(record.agent) if record.agent else None,
                 record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
                 record.order_no, record.receipt.payno, record.receipt.transaction_id, record.multiply, record.amount,
                 record.actual_amount, record.express_fee,
                 record.get_status_display(), record.title, create_at, pay_at, start_at, str(record.venue),
-                record.get_channel_type_display(), discount_coupon, discount_promotion, discount_pack]
+                record.get_channel_type_display(), discount_coupon, discount_promotion, discount_pack, real_name_desc]
         ws.append(data)
     wb.save(response)
     return response

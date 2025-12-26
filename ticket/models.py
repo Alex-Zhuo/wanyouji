@@ -1083,7 +1083,8 @@ class ContractInfo(models.Model):
 
 
 class SessionInfo(UseNoAbstract):
-    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.SET_NULL,  null=True, related_name='session_info')
+    show = models.ForeignKey(ShowProject, verbose_name='项目', on_delete=models.SET_NULL, null=True,
+                             related_name='session_info')
     venue_id = models.IntegerField('场馆ID', editable=False, default=0)
     title = models.CharField('场次名称', max_length=60, help_text='60个字内,不填则默认项目名称，其他平台使用', null=True,
                              blank=True)
@@ -3175,7 +3176,7 @@ class TicketOrder(models.Model):
     def export_fields(cls):
         return ['下单用户', '联系电话', '详细地址', '推荐人', '付款类型', '微信商户', '演出场次座位', '票档描述', '订单号',
                 '商户订单号', '微信支付单号', '数量', '订单总价', '实际支付金额', '邮费', '状态', '演出名称',
-                '下单时间', '支付时间', '开演时间', '演出场馆', '渠道类型', '消费卷优惠', '营销活动优惠', '套票优惠']
+                '下单时间', '支付时间', '开演时间', '演出场馆', '渠道类型', '消费卷优惠', '营销活动优惠', '套票优惠', '实名信息']
 
     @classmethod
     def export_express_fields(cls):
@@ -4372,6 +4373,13 @@ class TicketOrder(models.Model):
                 seat_desc_t, level_desc_t = tu.get_export_data(record.venue)
                 seat_desc = seat_desc + ',{}'.format(seat_desc_t) if seat_desc else seat_desc_t
                 level_desc = level_desc + level_desc_t if level_desc else level_desc_t
+            real_name_desc = None
+            if hasattr(record, 'real_name_order'):
+                for rl in record.real_name_order.all():
+                    if not real_name_desc:
+                        real_name_desc = f'{rl.name}-{rl.mobile}-{rl.id_card}'
+                    else:
+                        real_name_desc += f',{rl.name}-{rl.mobile}-{rl.id_card}'
             data = [str(record.user), record.mobile, record.show_express_address,
                     str(record.agent) if record.agent else None,
                     record.get_pay_type_display(), pay_desc, seat_desc, level_desc,
@@ -4379,7 +4387,7 @@ class TicketOrder(models.Model):
                     record.amount, record.actual_amount, record.express_fee,
                     record.get_status_display(), record.title, create_at, pay_at, start_at,
                     str(record.venue), record.get_channel_type_display(), discount_coupon, discount_promotion,
-                    discount_pack]
+                    discount_pack, real_name_desc]
             ws.append(data)
         # _write_row_by_xlwt(ws, ['END'], row_index)
         wb.save(filepath)
