@@ -914,7 +914,6 @@ class TicketOrderViewSet(SerializerSelector, ReturnNoDetailViewSet):
                 data = CyTicketOrderDetailSerializer(order, context={'request': request}).data
         except TicketOrder.DoesNotExist:
             raise Http404
-        log.debug(data)
         return Response(data)
 
     @action(methods=['post'], detail=False)
