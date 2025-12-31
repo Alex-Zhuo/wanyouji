@@ -220,7 +220,8 @@ class CyCategory(ChoicesCommon):
 
 
 class CyVenue(models.Model):
-    venue = models.OneToOneField(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True, related_name='cy_venue')
+    venue = models.OneToOneField(Venues, verbose_name='场馆', on_delete=models.SET_NULL, null=True,
+                                 related_name='cy_venue')
     province_name = models.CharField("省", max_length=32)
     city_name = models.CharField("市", max_length=32)
     cy_no = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='场馆ID')
@@ -260,7 +261,8 @@ class CyVenue(models.Model):
 
 class CyShowEvent(models.Model):
     # 基本信息
-    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.SET_NULL, null=True, related_name='cy_show')
+    show = models.OneToOneField(ShowProject, verbose_name='节目', on_delete=models.SET_NULL, null=True,
+                                related_name='cy_show')
     category = models.PositiveSmallIntegerField(
         choices=[
             (1, '演出'),
@@ -1286,7 +1288,7 @@ class CyOrder(models.Model):
     exchange_qr_code_img = models.ImageField('换二维票码二维码', null=True, blank=True,
                                              upload_to=f'{IMAGE_FIELD_PREFIX}/cy_cloud/order',
                                              validators=[validate_image_file_extension])
-    code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(1, '文本码'), (3, 'URL链接')], default=1)
+    code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(0, '无'), (1, '文本码'), (3, 'URL链接')], default=1)
     delivery_method = models.ForeignKey(CyDeliveryMethods, verbose_name='配送方式', null=True, on_delete=models.PROTECT)
     # ST_DEFAULT = 0
     # ST_PAY = 1
@@ -1507,9 +1509,9 @@ class CyOrder(models.Model):
                     try:
                         cy_order_detail = cy.order_detail(order_no=self.cy_order_no)
                         fields = ['exchange_code', 'exchange_qr_code', 'code_type', 'order_state']
-                        self.exchange_code = cy_order_detail.get('exchange_code')
-                        self.exchange_qr_code = cy_order_detail.get('exchange_qr_code')
-                        self.code_type = cy_order_detail.get('code_type')
+                        self.exchange_code = cy_order_detail.get('exchange_code', None)
+                        self.exchange_qr_code = cy_order_detail.get('exchange_qr_code', None)
+                        self.code_type = cy_order_detail.get('code_type', 0)
                         self.order_state = self.ST_OUT
                         if self.exchange_qr_code and self.code_type == 1:
                             img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
