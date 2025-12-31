@@ -205,6 +205,7 @@ class CyOrderAdmin(AllOnlyViewAdmin):
                     'exchange_qr_code', 'code_type', 'delivery_method', 'created_at', 'updated_at']
     inlines = [CyTicketCodeInline]
     search_fields = ['cy_order_no']
+    list_filter = ['order_state']
 
 
 class CyOrderRefundAdmin(AllOnlyViewAdmin):

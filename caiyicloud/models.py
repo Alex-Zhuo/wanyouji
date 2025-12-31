@@ -1537,7 +1537,7 @@ class CyOrder(models.Model):
 
     @classmethod
     def notify_issue_ticket(cls, cyy_order_no: str):
-        order = cls.objects.filter(cy_order_no=cyy_order_no).first()
+        order = cls.objects.filter(cy_order_no=cyy_order_no, order_state=cls.ST_PAY).first()
         if order:
             st, msg = order.set_ticket_code()
             return st, msg
