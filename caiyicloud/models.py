@@ -1511,7 +1511,7 @@ class CyOrder(models.Model):
                         fields = ['exchange_code', 'exchange_qr_code', 'code_type', 'order_state']
                         self.exchange_code = cy_order_detail.get('exchange_code', None)
                         self.exchange_qr_code = cy_order_detail.get('exchange_qr_code', None)
-                        self.code_type = cy_order_detail.get('code_type', 0)
+                        self.code_type = cy_order_detail.get('code_type') or 0
                         self.order_state = self.ST_OUT
                         if self.exchange_qr_code and self.code_type == 1:
                             img_dir, file_path, filename = create_code_qr(self.exchange_qr_code, 'exchange')
@@ -1521,7 +1521,6 @@ class CyOrder(models.Model):
                         CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
                     except Exception as e:
                         log.error(e)
-                        log.error(cy_order_detail)
                         st = False
                         msg = '获取code失败'
             if not self.exchange_code:
