@@ -1288,7 +1288,7 @@ class CyOrder(models.Model):
     exchange_qr_code_img = models.ImageField('换二维票码二维码', null=True, blank=True,
                                              upload_to=f'{IMAGE_FIELD_PREFIX}/cy_cloud/order',
                                              validators=[validate_image_file_extension])
-    code_type = models.PositiveSmallIntegerField('二维码类型', choices=[(0, '无'), (1, '文本码'), (3, 'URL链接')], default=1)
+    code_type = models.SmallIntegerField('二维码类型', choices=[(0, '无'), (1, '文本码'), (3, 'URL链接')], default=0)
     delivery_method = models.ForeignKey(CyDeliveryMethods, verbose_name='配送方式', null=True, on_delete=models.PROTECT)
     # ST_DEFAULT = 0
     # ST_PAY = 1
@@ -1521,6 +1521,7 @@ class CyOrder(models.Model):
                         CyTicketCode.ticket_create(cy_order_detail['ticket_list'], self)
                     except Exception as e:
                         log.error(e)
+                        log.error(cy_order_detail)
                         st = False
                         msg = '获取code失败'
             if not self.exchange_code:
