@@ -161,7 +161,7 @@ class VenuesSerializer(VenuesNewSerializer):
                                                     'map', 'price', 'layers_data', 'lat', 'lng']
 
 
-class VenuesOrderSerializer(PKtoNoSerializer):
+class VenuesOrderSerializer(VenuesNewSerializer):
     custom_code = serializers.SerializerMethodField()
 
     def get_custom_code(self, obj):
@@ -171,8 +171,8 @@ class VenuesOrderSerializer(PKtoNoSerializer):
 
     class Meta:
         model = Venues
-        fields = PKtoNoSerializer.Meta.fields + ['name', 'address', 'custom_mobile', 'custom_wechat',
-                                                 'custom_code', 'lat', 'lng']
+        fields = VenuesNewSerializer.Meta.fields + ['address', 'custom_mobile', 'custom_wechat',
+                                                    'custom_code', 'lat', 'lng']
 
 
 class SeatCreateSerializer(serializers.ModelSerializer):

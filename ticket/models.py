@@ -3821,7 +3821,7 @@ class TicketOrder(models.Model):
         session = self.session
         from common.utils import get_config
         config = get_config()
-        data = dict(show_name=self.title, show_id=session.show.id, venue_name=session.show.venues.name, price_list=dd,
+        data = dict(show_name=self.title, show_no=session.show.no, show_id=session.show.id, venue_name=session.show.venues.name, price_list=dd,
                     logo=session.show.logo_mobile.url,
                     start_at=session.start_at.strftime('%Y-%m-%d %H:%M'),
                     has_seat=session.has_seat,
