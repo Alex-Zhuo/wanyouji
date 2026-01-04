@@ -1448,7 +1448,7 @@ class ShowCommentCreateSerializer(serializers.ModelSerializer):
 
     def validate_show_id(self, value):
         try:
-            show = ShowProject.objects.get(no=value)
+            show = ShowProject.objects.get(pk=int(value))
             return show
         except ShowProject.DoesNotExist:
             raise CustomAPIException('找不到演出')
