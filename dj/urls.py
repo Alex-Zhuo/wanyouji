@@ -36,7 +36,7 @@ from common.utils import get_config
 from statistical.urls import router as STL_ROUTER
 from coupon.urls import router as COUPON_ROUTER
 from ticket.views import TicketReceiptViewSet
-# from xiaohongshu.views import XhsWxaViewSet
+from xiaohongshu.views import XhsWxaViewSet
 from renovation.urls import router as RENOVATION_ROUTER
 from ai_agent.urls import router as AIAGENT_ROUTER
 from blind_box.urls import router as BLINDBOX_ROUTER
@@ -59,7 +59,7 @@ router.register(r'mpclient', MpClientView, basename='mpclient')
 # router.register(r'tab_pages', SubPagesViewSet)
 # router.register(r'mpviewnew', MpViewNew, basename='mpviewnew')
 # router.register(r'ks', KShouWxaViewSet, basename='ks')
-# router.register(r'xiaohs', XhsWxaViewSet, basename='xhs')
+router.register(r'xiaohs', XhsWxaViewSet, basename='xhs')
 router.register(r'cy', CaiYiViewSet, basename='caiyi')
 urlpatterns = [
     url(r'^ueditor/', include('DjangoUeditor.urls')),
